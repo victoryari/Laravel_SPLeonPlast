@@ -1,0 +1,153 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Producto;
+use App\Models\TipoProducto;
+use App\Models\UnidadMedida;
+use Carbon\Carbon;
+
+class ProductoController extends Controller
+{
+    /**
+     * Listado de productos activos con sus relaciones cargadas, búsqueda y filtros.
+     */
+    public function index(Request $request)
+    {
+        $search = $request->input('search');
+        $tipoFiltro = $request->input('codigo_tipo_producto');
+
+        // Inicializamos la consulta base
+        $query = Producto::with(['tipo', 'unidad'])->where('estado', 1);
+
+        // Filtro por búsqueda predictiva (Código o Descripción)
+        if (!empty($search)) {
+            $query->where(function($q) use ($search) {
+                $q->where('codigo', 'LIKE', "%{$search}%")
+                  ->orWhere('descripcion', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Filtro por tipo de producto
+        if (!empty($tipoFiltro)) {
+            $query->where('codigo_tipo_producto', $tipoFiltro);
+        }
+
+        // Ejecutamos la paginación
+        $productos = $query->orderBy('descripcion', 'asc')->paginate(10);
+        
+        // Aseguramos que los enlaces de paginación conserven los filtros actuales
+        $productos->appends(['search' => $search, 'codigo_tipo_producto' => $tipoFiltro]);
+
+        // Cargamos los tipos para el select del filtro
+        $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+
+        return view('tablas_maestras.producto.index', compact('productos', 'tipos', 'search', 'tipoFiltro'));
+    }
+
+    /**
+     * Mostrar formulario de creación.
+     */
+    public function create()
+    {
+        $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        $unidades = UnidadMedida::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        
+        return view('tablas_maestras.producto.create', compact('tipos', 'unidades'));
+    }
+
+    /**
+     * Guardar el nuevo producto en la base de datos.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'codigo' => 'required|string|max:15|unique:producto,codigo',
+            'codigo_tipo_producto' => 'required|exists:tipo_producto,codigo',
+            'descripcion' => 'nullable|string|max:150',
+            'codigo_unidad_medida' => 'nullable|exists:unidad_medida,codigo',
+            'codigo_color' => 'nullable|string|max:50',
+            'es_producto_proceso' => 'nullable|integer',
+        ], [
+            'codigo.required' => 'El código es obligatorio.',
+            'codigo.unique' => 'Este código de producto ya está registrado.',
+            'codigo_tipo_producto.required' => 'Debe seleccionar un tipo de producto.',
+            'codigo_tipo_producto.exists' => 'El tipo de producto seleccionado no es válido.',
+        ]);
+
+        Producto::create([
+            'codigo' => strtoupper($request->codigo),
+            'codigo_tipo_producto' => $request->codigo_tipo_producto,
+            'descripcion' => $request->descripcion,
+            'codigo_unidad_medida' => $request->codigo_unidad_medida,
+            'codigo_color' => $request->codigo_color,
+            'es_producto_proceso' => $request->es_producto_proceso ?? 0, 
+            'estado' => 1,
+            'fecha_creacion' => Carbon::now(),
+        ]);
+
+        return redirect()->route('productos.index')
+            ->with('success', 'Producto registrado exitosamente.');
+    }
+
+    /**
+     * Mostrar formulario de edición.
+     */
+    public function edit($codigo)
+    {
+        $producto = Producto::where('codigo', $codigo)->firstOrFail();
+        
+        if ($producto->estado == 0) {
+            return redirect()->route('productos.index')->with('error', 'No se puede editar un producto anulado.');
+        }
+
+        $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        $unidades = UnidadMedida::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+
+        return view('tablas_maestras.producto.edit', compact('producto', 'tipos', 'unidades'));
+    }
+
+    /**
+     * Actualizar los datos del producto.
+     */
+    public function update(Request $request, $codigo)
+    {
+        $producto = Producto::where('codigo', $codigo)->firstOrFail();
+
+        $request->validate([
+            'codigo_tipo_producto' => 'required|exists:tipo_producto,codigo',
+            'descripcion' => 'nullable|string|max:150',
+            'codigo_unidad_medida' => 'nullable|exists:unidad_medida,codigo',
+            'codigo_color' => 'nullable|string|max:50',
+            'es_producto_proceso' => 'nullable|integer',
+        ], [
+            'codigo_tipo_producto.required' => 'El tipo de producto es obligatorio.',
+        ]);
+
+        $producto->update([
+            'codigo_tipo_producto' => $request->codigo_tipo_producto,
+            'descripcion' => $request->descripcion,
+            'codigo_unidad_medida' => $request->codigo_unidad_medida,
+            'codigo_color' => $request->codigo_color,
+            'es_producto_proceso' => $request->es_producto_proceso ?? 0,
+        ]);
+
+        return redirect()->route('productos.index')
+            ->with('success', 'Producto actualizado correctamente.');
+    }
+
+    /**
+     * Anulación lógica del registro.
+     */
+    public function destroy($codigo)
+    {
+        $producto = Producto::where('codigo', $codigo)->firstOrFail();
+        
+        $producto->estado = 0;
+        $producto->save();
+
+        return redirect()->route('productos.index')
+            ->with('success', 'Registro anulado correctamente.');
+    }
+}
