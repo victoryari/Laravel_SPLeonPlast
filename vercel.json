@@ -1,5 +1,4 @@
 {
-    "outputDirectory": "public",
     "buildCommand": "npm run build",
     "framework": null,
     "functions": {
@@ -8,17 +7,12 @@
         }
     },
     "rewrites": [
+        { "source": "/build/(.*)", "destination": "/public/build/$1" },
         { "source": "/(.*)", "destination": "/api/index.php" }
     ],
     "headers": [
         {
             "source": "/build/(.*)",
-            "headers": [
-                { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-            ]
-        },
-        {
-            "source": "/assets/(.*)",
             "headers": [
                 { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
             ]
