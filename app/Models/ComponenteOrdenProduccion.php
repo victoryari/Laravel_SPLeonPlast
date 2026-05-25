@@ -11,7 +11,7 @@ class ComponenteOrdenProduccion extends Model
 
     protected $table = 'componentes_orden_produccion_global';
     protected $primaryKey = 'id_op_componentes';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'idop',

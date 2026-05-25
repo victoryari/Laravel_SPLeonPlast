@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE roles CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE modulos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE rol_modulo CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
+        if (Schema::getConnection()->getDriverName() === 'mysql') {
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE roles CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE modulos CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE rol_modulo CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;');
+        }
     }
 
     /**

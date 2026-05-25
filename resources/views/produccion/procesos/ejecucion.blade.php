@@ -84,7 +84,33 @@
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Cant. (KG)</label>
                     <input type="number" id="cantidad_global" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3" step="0.01">
                 </div>
-                
+            </div>
+
+            <div class="flex flex-wrap items-end gap-4 mt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Trabajador</label>
+                    <select id="trabajador_global" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                        <option value="">-- Seleccione --</option>
+                        @foreach($trabajadores as $t)
+                            <option value="{{ $t->codigo }}">{{ $t->nombre }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Inicio</label>
+                    <input type="time" id="hora_ini_global" value="08:00"
+                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Fin</label>
+                    <input type="time" id="hora_fin_global" value="17:00"
+                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                </div>
+
+                <div class="flex-1"></div>
+
                 <button type="button" onclick="cargarComponentes()" class="px-5 py-2 {{ $es_inyectado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700' }} text-white font-medium rounded-md shadow-sm transition">
                     <i class="fas fa-box-open mr-2"></i>Cargar
                 </button>
@@ -126,7 +152,7 @@
                         </thead>
                         <tbody id="tbody_items" class="bg-white divide-y divide-gray-200">
                             @foreach($registrados as $r)
-                            <tr class="bg-slate-50">
+                            <tr id="row_display_{{ $r->id_op_componentes }}" class="bg-slate-50">
                                 <td class="px-3 py-2 whitespace-nowrap">
                                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-200 text-slate-800">
                                         {{ $r->codigo_tipo_producto }}
@@ -144,6 +170,9 @@
                                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio }} - {{ $r->hora_fin }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
                                     @if($estado_proceso_actual !== 'COMPLETADO')
+                                    <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-blue-500 hover:text-blue-700 mr-2" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
                                     <button type="button" onclick="eliminarRegistrado({{ $r->id_op_componentes }})" class="text-red-500 hover:text-red-700" title="Desactivar">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
@@ -181,6 +210,71 @@
                     </div>
                 </div>
             </form>
+
+            @foreach($registrados as $r)
+            <div id="row_edit_{{ $r->id_op_componentes }}" class="hidden mb-2">
+                <form action="{{ route('ordenes.procesos.componentes.update', [$orden->idop, $proceso->id, $r->id_op_componentes]) }}" method="POST" class="flex flex-wrap items-end gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                    @csrf
+                    @method('PUT')
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Cantidad</label>
+                        <input type="number" name="cantidad" step="0.01" min="0.01"
+                            value="{{ $r->cantidad }}"
+                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500"
+                            {{ $r->codigo_tipo_producto === 'ACT' ? 'readonly' : '' }}>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Trabajador</label>
+                        <select name="codigo_trabajador"
+                            class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">--</option>
+                            @foreach($trabajadores as $t)
+                                <option value="{{ $t->codigo }}" {{ $r->codigo_trabajador == $t->codigo ? 'selected' : '' }}>
+                                    {{ $t->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Inicio</label>
+                        <input type="date" name="fecha_inicio" value="{{ $r->fecha_inicio ?? '' }}"
+                            class="w-36 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Fin</label>
+                        <input type="date" name="fecha_fin" value="{{ $r->fecha_fin ?? '' }}"
+                            class="w-36 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Hora Inicio</label>
+                        <input type="time" name="hora_inicio" value="{{ $r->hora_inicio ?? '' }}"
+                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Hora Fin</label>
+                        <input type="time" name="hora_fin" value="{{ $r->hora_fin ?? '' }}"
+                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <div class="flex gap-2 items-center">
+                        <button type="submit"
+                            class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition">
+                            <i class="fas fa-save mr-1"></i> Actualizar
+                        </button>
+                        <button type="button" onclick="cancelarEdicion({{ $r->id_op_componentes }})"
+                            class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold rounded-lg transition">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+            @endforeach
         </div>
     </div>
 </div>
@@ -282,11 +376,16 @@
         }
         if(!f || c <= 0) return alert('Seleccione Fórmula y especifique una cantidad mayor a 0.');
         
+        const trabajador = document.getElementById('trabajador_global').value;
+        const horaIni    = document.getElementById('hora_ini_global').value;
+        const horaFin    = document.getElementById('hora_fin_global').value;
+
         fetch(url).then(r => r.json()).then(data => {
             if (data.success) {
                 data.componentes.forEach(comp => {
                     const cant = (c * parseFloat(comp.cantidad_nominal)).toFixed(2);
-                    agregarFila({ ...comp, cantidad: cant, formula: f, centro: centro, molde: molde });
+                    agregarFila({ ...comp, cantidad: cant, formula: f, centro, molde,
+                                 codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin });
                 });
             } else {
                 alert(data.message);
@@ -308,7 +407,9 @@
         let centrosHtml = '<option value="">--</option>' + centros.map(c=>`<option value="${c.codigo}" ${item.centro==c.codigo?'selected':''}>${c.codigo}</option>`).join('');
         let moldesHtml = esInyectado ? `<td><select class="form-control text-xs py-1 border-gray-300 rounded c-molde">${moldesData.map(m=>`<option value="${m.codigo}" ${item.molde==m.codigo?'selected':''}>${m.codigo}</option>`).join('')}</select></td>` : '';
         let unitsHtml = unidadesData.map(u=>`<option value="${u.codigo}" ${u.codigo=='KG'?'selected':''}>${u.codigo}</option>`).join('');
-        let trabsHtml = '<option value="">--</option>' + trabajadores.map(t=>`<option value="${t.codigo}">${t.nombre}</option>`).join('');
+        let trabsHtml = '<option value="">--</option>' + trabajadores.map(t=>
+            `<option value="${t.codigo}" ${item.codigo_trabajador==t.codigo?'selected':''}>${t.nombre}</option>`
+        ).join('');
 
         let html = `<tr id="${rowId}" class="nueva-fila bg-white">
             <td class="px-2 py-2"><select class="form-control text-xs py-1 border-gray-300 rounded c-tipo" style="width: 70px;">${tiposHtml}</select></td>
@@ -329,11 +430,14 @@
             
             <td class="px-2 py-2"><select class="form-control text-xs py-1 border-gray-300 rounded c-trab" style="width: 100px;">${trabsHtml}</select></td>
             
-            <td style="display:none;"><input type="date" class="c-fecha_ini" value="${today}"><input type="date" class="c-fecha_fin" value="${today}"></td>
+            <td style="display:none;">
+                <input type="hidden" class="c-formula" value="${item.formula||document.getElementById('formula_selector')?.value||''}">
+                <input type="date" class="c-fecha_ini" value="${today}"><input type="date" class="c-fecha_fin" value="${today}">
+            </td>
             
             <td class="px-2 py-2 flex space-x-1">
-                <input type="time" class="form-control text-xs py-1 border-gray-300 rounded c-hora_ini w-20" value="08:00">
-                <input type="time" class="form-control text-xs py-1 border-gray-300 rounded c-hora_fin w-20" value="17:00">
+                <input type="time" class="form-control text-xs py-1 border-gray-300 rounded c-hora_ini w-20" value="${item.hora_ini||'08:00'}">
+                <input type="time" class="form-control text-xs py-1 border-gray-300 rounded c-hora_fin w-20" value="${item.hora_fin||'17:00'}">
             </td>
             
             <td class="px-2 py-2 text-center">
@@ -365,7 +469,7 @@
                 cantidad: cant,
                 codigo_unidad_medida: r.querySelector('.c-um').value,
                 codigo_color: null,
-                codigo_formula: document.getElementById('formula_selector').value || null,
+                codigo_formula: r.querySelector('.c-formula').value || null,
                 codigo_trabajador: r.querySelector('.c-trab').value,
                 fecha_inicio: r.querySelector('.c-fecha_ini').value,
                 hora_inicio: r.querySelector('.c-hora_ini').value,
@@ -386,6 +490,16 @@
             form.action = `${urlDeleteBase}/${id}`;
             form.submit();
         }
+    }
+
+    function editarRegistrado(id) {
+        document.getElementById('row_display_' + id).classList.add('hidden');
+        document.getElementById('row_edit_' + id).classList.remove('hidden');
+    }
+
+    function cancelarEdicion(id) {
+        document.getElementById('row_edit_' + id).classList.add('hidden');
+        document.getElementById('row_display_' + id).classList.remove('hidden');
     }
     
     function confirmarCierre() { 

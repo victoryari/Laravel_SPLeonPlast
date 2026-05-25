@@ -115,6 +115,13 @@ Route::middleware('auth')->group(function () {
             // Ajustes Manuales
             Route::get('/ajuste', [InventarioController::class, 'ajuste'])->name('inventario.ajuste');
             Route::post('/ajuste', [InventarioController::class, 'storeAjuste'])->name('inventario.store_ajuste');
+
+            // Bandeja de Ajustes (CRUD)
+            Route::get('/ajuste/lista', [InventarioController::class, 'ajustesIndex'])->name('inventario.ajuste.lista');
+            Route::get('/ajuste/{kardex}', [InventarioController::class, 'showAjuste'])->name('inventario.ajuste.show');
+            Route::get('/ajuste/{kardex}/editar', [InventarioController::class, 'editAjuste'])->name('inventario.ajuste.edit');
+            Route::put('/ajuste/{kardex}', [InventarioController::class, 'updateAjuste'])->name('inventario.ajuste.update');
+            Route::delete('/ajuste/{kardex}', [InventarioController::class, 'destroyAjuste'])->name('inventario.ajuste.destroy');
         });
 
         // 4. Extornos y Auditoría (SOLO Administrador)
@@ -144,6 +151,7 @@ Route::middleware('auth')->group(function () {
         Route::get('ordenes/{orden}/procesos/{proceso}/ejecutar', [OrdenProcesoController::class, 'ejecutar'])->name('ordenes.procesos.ejecutar');
         Route::post('ordenes/{orden}/procesos/{proceso}/componentes', [OrdenProcesoController::class, 'storeComponentes'])->name('ordenes.procesos.componentes.store');
         Route::delete('ordenes/{orden}/procesos/{proceso}/componentes/{componente}', [OrdenProcesoController::class, 'destroyComponente'])->name('ordenes.procesos.componentes.destroy');
+        Route::put('ordenes/{orden}/procesos/{proceso}/componentes/{componente}', [OrdenProcesoController::class, 'updateComponente'])->name('ordenes.procesos.componentes.update');
         Route::post('ordenes/{orden}/procesos/{proceso}/finalizar', [OrdenProcesoController::class, 'finalizar'])->name('ordenes.procesos.finalizar');
         Route::get('api/formulas/composicion', [OrdenProcesoController::class, 'getFormulaComponents'])->name('api.formulas.composicion');
     });

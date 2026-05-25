@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Inventario, MovimientoInventario, Compra, Almacen, Producto, ProduccionIngresoProceso};
+use App\Models\{Inventario, MovimientoInventario, Kardex, Compra, Almacen, Producto, ProduccionIngresoProceso, UnidadMedida};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Auth};
 
@@ -132,6 +132,13 @@ class InventarioController extends Controller
                 throw new \Exception("La cantidad real ingresada debe ser mayor a cero.");
             }
 
+            if ($cantidad_real > $cantidad_reportada) {
+                throw new \Exception(
+                    "La cantidad real ($cantidad_real) no puede exceder la cantidad reportada ($cantidad_reportada). "
+                    . "Si hay sobreproducción, registre un nuevo proceso."
+                );
+            }
+
             $lote = $ingreso->lote_produccion;
             $idop = $ingreso->idop;
             $id_proceso = $ingreso->id_proceso;
@@ -148,7 +155,7 @@ class InventarioController extends Controller
             }
 
             // Movimiento inventario
-            DB::table('movimientos_inventario')->insert([
+            $movId = DB::table('movimientos_inventario')->insertGetId([
                 'codigo_almacen' => $almacen_destino,
                 'codigo_producto' => $codigo_prod,
                 'lote' => $lote,
@@ -162,7 +169,8 @@ class InventarioController extends Controller
                 'observaciones' => $observacion_kardex,
                 'usuario_movimiento' => $usuario_movimiento,
                 'fecha_movimiento' => now(),
-                'estado' => 1
+                'estado' => 1,
+                'tiene_kardex' => true
             ]);
 
             // Actualizar Inventario General
@@ -179,6 +187,7 @@ class InventarioController extends Controller
                     'fecha_ultimo_movimiento' => now(),
                     'usuario_ultimo_movimiento' => $usuario_movimiento
                 ]);
+                $nuevoStockPEP = $registroInventario->stock_actual + $cantidad_real;
             } else {
                 DB::table('inventario')->insert([
                     'codigo_producto' => $codigo_prod,
@@ -193,7 +202,24 @@ class InventarioController extends Controller
                     'fecha_ultimo_movimiento' => now(),
                     'usuario_ultimo_movimiento' => $usuario_movimiento
                 ]);
+                $nuevoStockPEP = $cantidad_real;
             }
+
+            // Kardex INGRESO por recepción de PEP
+            DB::table('kardex')->insert([
+                'codigo_almacen'       => $almacen_destino,
+                'codigo_producto'      => $codigo_prod,
+                'fecha_movimiento'     => now(),
+                'tipo_movimiento'      => 'INGRESO',
+                'documento'            => 'RECEPCION_PEP',
+                'numero_documento'     => $num_ref,
+                'cantidad_entrada'     => $cantidad_real,
+                'cantidad_salida'      => 0,
+                'cantidad_saldo'       => $nuevoStockPEP,
+                'codigo_referencia_movimiento' => $movId,
+                'observaciones'        => $observacion_kardex,
+                'usuario_registro'     => $usuario_movimiento
+            ]);
 
             // Actualizar produccion_ingresos_proceso
             $ingreso->update([
@@ -213,27 +239,47 @@ class InventarioController extends Controller
 
     // 3. KARDEX DETALLADO
     public function kardex(Request $request) {
-        $movimientos = DB::table('kardex')
+        $query = DB::table('kardex')
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
-            ->select('kardex.*', 'producto.descripcion as producto')
-            ->orderBy('fecha_movimiento', 'desc')
-            ->paginate(10);
-        return view('inventario.kardex', compact('movimientos'));
+            ->select('kardex.*', 'producto.descripcion as producto');
+
+        if ($request->filled('documento')) {
+            $query->where('kardex.documento', $request->documento);
+        }
+
+        if ($request->filled('codigo_producto')) {
+            $query->where('kardex.codigo_producto', 'LIKE', "%{$request->codigo_producto}%");
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->where('kardex.fecha_movimiento', '>=', $request->fecha_desde . ' 00:00:00');
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->where('kardex.fecha_movimiento', '<=', $request->fecha_hasta . ' 23:59:59');
+        }
+
+        $movimientos = $query->orderBy('kardex.fecha_movimiento', 'desc')->paginate(15);
+        $tiposDocumento = DB::table('kardex')->select('documento')->distinct()->orderBy('documento')->pluck('documento');
+
+        return view('inventario.kardex', compact('movimientos', 'tiposDocumento'));
     }
 
     // 4. AJUSTE MANUAL
     public function ajuste() {
         $productos = Producto::where('estado', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('inventario.ajuste', compact('productos', 'almacenes'));
+        $unidadesMedida = UnidadMedida::where('estado', 1)->get();
+        return view('inventario.ajuste', compact('productos', 'almacenes', 'unidadesMedida'));
     }
 
     public function storeAjuste(Request $request) {
         $request->validate([
-            'codigo_producto' => 'required',
-            'codigo_almacen'  => 'required',
-            'cantidad'        => 'required|numeric|min:0.01',
-            'tipo'            => 'required|in:INGRESO,SALIDA'
+            'codigo_producto'      => 'required',
+            'codigo_almacen'       => 'required',
+            'cantidad'             => 'required|numeric|min:0.01',
+            'tipo'                 => 'required|in:INGRESO,SALIDA',
+            'codigo_unidad_medida' => 'required'
         ]);
 
         try {
@@ -259,16 +305,17 @@ class InventarioController extends Controller
             );
 
             DB::table('kardex')->insert([
-                'codigo_almacen'   => $request->codigo_almacen,
-                'codigo_producto'  => $request->codigo_producto,
-                'fecha_movimiento' => now(),
-                'tipo_movimiento'  => 'AJUSTE',
-                'documento'        => 'TICKET',
-                'numero_documento' => 'AJ-' . date('YmdHis'),
-                'cantidad_entrada' => $request->tipo === 'INGRESO' ? $request->cantidad : 0,
-                'cantidad_salida'  => $request->tipo === 'SALIDA' ? $request->cantidad : 0,
-                'cantidad_saldo'   => $nuevo_saldo,
-                'usuario_registro' => Auth::id()
+                'codigo_almacen'       => $request->codigo_almacen,
+                'codigo_producto'      => $request->codigo_producto,
+                'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                'fecha_movimiento'     => now(),
+                'tipo_movimiento'      => 'AJUSTE',
+                'documento'            => 'TICKET',
+                'numero_documento'     => 'AJ-' . date('YmdHis'),
+                'cantidad_entrada'     => $request->tipo === 'INGRESO' ? $request->cantidad : 0,
+                'cantidad_salida'      => $request->tipo === 'SALIDA' ? $request->cantidad : 0,
+                'cantidad_saldo'       => $nuevo_saldo,
+                'usuario_registro'     => Auth::id()
             ]);
 
             DB::commit();
@@ -276,6 +323,247 @@ class InventarioController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
+
+    // 4.2 BANDEJA DE AJUSTES (Lista con filtros)
+    public function ajustesIndex(Request $request) {
+        $query = DB::table('kardex')
+            ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
+            ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->leftJoin('unidad_medida', 'kardex.codigo_unidad_medida', '=', 'unidad_medida.codigo')
+            ->where('kardex.tipo_movimiento', 'AJUSTE')
+            ->select(
+                'kardex.*',
+                'producto.descripcion as producto',
+                'almacen.descripcion as almacen',
+                'unidad_medida.descripcion as unidad_medida'
+            );
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('producto.descripcion', 'LIKE', "%{$search}%")
+                  ->orWhere('kardex.codigo_producto', 'LIKE', "%{$search}%")
+                  ->orWhere('kardex.numero_documento', 'LIKE', "%{$search}%")
+                  ->orWhere('kardex.observaciones', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('codigo_almacen')) {
+            $query->where('kardex.codigo_almacen', $request->codigo_almacen);
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->where('kardex.fecha_movimiento', '>=', $request->fecha_desde . ' 00:00:00');
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->where('kardex.fecha_movimiento', '<=', $request->fecha_hasta . ' 23:59:59');
+        }
+
+        $ajustes = $query->orderBy('kardex.fecha_movimiento', 'desc')->paginate(15);
+        $almacenes = Almacen::where('activo', 1)->get();
+
+        return view('inventario.ajuste_lista', compact('ajustes', 'almacenes'));
+    }
+
+    // 4.3 VER DETALLE DE AJUSTE
+    public function showAjuste($id) {
+        $ajuste = DB::table('kardex')
+            ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
+            ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->leftJoin('unidad_medida', 'kardex.codigo_unidad_medida', '=', 'unidad_medida.codigo')
+            ->leftJoin('users', 'kardex.usuario_registro', '=', 'users.id')
+            ->where('kardex.id_kardex', $id)
+            ->where('kardex.tipo_movimiento', 'AJUSTE')
+            ->select(
+                'kardex.*',
+                'producto.descripcion as producto',
+                'almacen.descripcion as almacen',
+                'unidad_medida.descripcion as unidad_medida',
+                'unidad_medida.codigo as codigo_unidad_medida',
+                'users.name as usuario_nombre'
+            )
+            ->firstOrFail();
+
+        $movimientosPosteriores = DB::table('kardex')
+            ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
+            ->where('kardex.codigo_producto', $ajuste->codigo_producto)
+            ->where('kardex.codigo_almacen', $ajuste->codigo_almacen)
+            ->where('kardex.id_kardex', '!=', $id)
+            ->where('kardex.fecha_movimiento', '>=', $ajuste->fecha_movimiento)
+            ->where('kardex.tipo_movimiento', '!=', 'AJUSTE')
+            ->select('kardex.*', 'producto.descripcion as producto')
+            ->orderBy('kardex.fecha_movimiento', 'asc')
+            ->get();
+
+        return view('inventario.ajuste_show', compact('ajuste', 'movimientosPosteriores'));
+    }
+
+    // 4.4 EDITAR AJUSTE (solo campos editables: cantidad, unidad_medida, observaciones)
+    public function editAjuste($id) {
+        $ajuste = DB::table('kardex')
+            ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
+            ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->where('kardex.id_kardex', $id)
+            ->where('kardex.tipo_movimiento', 'AJUSTE')
+            ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen')
+            ->firstOrFail();
+
+        $productos = Producto::where('estado', 1)->get();
+        $almacenes = Almacen::where('activo', 1)->get();
+        $unidadesMedida = UnidadMedida::where('estado', 1)->get();
+
+        return view('inventario.ajuste_edit', compact('ajuste', 'productos', 'almacenes', 'unidadesMedida'));
+    }
+
+    public function updateAjuste(Request $request, $id) {
+        $request->validate([
+            'codigo_unidad_medida' => 'required',
+            'cantidad'             => 'required|numeric|min:0.01',
+            'tipo'                 => 'required|in:INGRESO,SALIDA',
+            'observaciones'        => 'nullable|string|max:255'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $ajusteOriginal = DB::table('kardex')->where('id_kardex', $id)->where('tipo_movimiento', 'AJUSTE')->lockForUpdate()->first();
+            if (!$ajusteOriginal) {
+                throw new \Exception("Ajuste no encontrado.");
+            }
+
+            $movimientosPosteriores = DB::table('kardex')
+                ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                ->where('id_kardex', '!=', $id)
+                ->where('fecha_movimiento', '>=', $ajusteOriginal->fecha_movimiento)
+                ->orderBy('fecha_movimiento', 'asc')
+                ->get();
+
+            if ($movimientosPosteriores->isNotEmpty()) {
+                $originalEntrada = $ajusteOriginal->cantidad_entrada;
+                $originalSalida  = $ajusteOriginal->cantidad_salida;
+
+                $nuevaEntrada = $request->tipo === 'INGRESO' ? $request->cantidad : 0;
+                $nuevaSalida  = $request->tipo === 'SALIDA' ? $request->cantidad : 0;
+
+                $diferencia = $request->tipo === 'INGRESO'
+                    ? $nuevaEntrada - $originalEntrada
+                    : ($nuevaSalida - $originalSalida) * -1;
+
+                $saldosAjustados = [];
+                $saldoActual = ($ajusteOriginal->cantidad_saldo ?? 0) + $diferencia;
+
+                $saldosAjustados[] = [
+                    'id'     => $id,
+                    'saldo'  => $saldoActual,
+                ];
+
+                foreach ($movimientosPosteriores as $mov) {
+                    $saldoActual = $saldoActual + ($mov->cantidad_entrada - $mov->cantidad_salida);
+                    $saldosAjustados[] = [
+                        'id'    => $mov->id_kardex,
+                        'saldo' => $saldoActual,
+                    ];
+                }
+
+                foreach ($saldosAjustados as $item) {
+                    DB::table('kardex')->where('id_kardex', $item['id'])->update(['cantidad_saldo' => $item['saldo']]);
+                }
+
+                DB::table('inventario')
+                    ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                    ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                    ->update(['stock_actual' => $saldoActual, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]);
+            } else {
+                $saldoAnterior = DB::table('kardex')
+                    ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                    ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                    ->where('id_kardex', '<', $id)
+                    ->orderBy('id_kardex', 'desc')
+                    ->value('cantidad_saldo') ?? 0;
+
+                $nuevo_saldo = $saldoAnterior + ($nuevaEntrada - $nuevaSalida);
+
+                DB::table('inventario')
+                    ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                    ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                    ->update(['stock_actual' => $nuevo_saldo, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]);
+            }
+
+            DB::table('kardex')->where('id_kardex', $id)->update([
+                'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                'cantidad_entrada'     => $request->tipo === 'INGRESO' ? $request->cantidad : 0,
+                'cantidad_salida'      => $request->tipo === 'SALIDA' ? $request->cantidad : 0,
+                'observaciones'        => $request->observaciones,
+            ]);
+
+            DB::commit();
+            return redirect()->route('inventario.ajuste.lista')->with('success', 'Ajuste actualizado exitosamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al actualizar: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    // 4.5 ELIMINAR AJUSTE (con validación de movimientos posteriores)
+    public function destroyAjuste(Request $request, $id) {
+        try {
+            DB::beginTransaction();
+
+            $ajuste = DB::table('kardex')->where('id_kardex', $id)->where('tipo_movimiento', 'AJUSTE')->lockForUpdate()->first();
+            if (!$ajuste) {
+                throw new \Exception("Ajuste no encontrado.");
+            }
+
+            if (str_contains($ajuste->observaciones ?? '', '[EXTORNADO]')) {
+                return back()->with('error', 'Este ajuste ya fue extornado. No se puede eliminar.');
+            }
+
+            $movimientosPosteriores = DB::table('kardex')
+                ->where('codigo_producto', $ajuste->codigo_producto)
+                ->where('codigo_almacen', $ajuste->codigo_almacen)
+                ->where('id_kardex', '!=', $id)
+                ->where('fecha_movimiento', '>=', $ajuste->fecha_movimiento)
+                ->orderBy('fecha_movimiento', 'asc')
+                ->get();
+
+            if ($movimientosPosteriores->isNotEmpty()) {
+                $docs = $movimientosPosteriores->map(function ($m) {
+                    $tipo = match($m->tipo_movimiento) {
+                        'INGRESO'  => 'Ingreso',
+                        'SALIDA'   => 'Salida',
+                        'TRASPASO' => 'Traspaso',
+                        'EXTORNO'  => 'Extorno',
+                        default    => $m->tipo_movimiento,
+                    };
+                    return "{$tipo} #{$m->numero_documento} ({$m->fecha_movimiento})";
+                })->implode(', ');
+
+                return back()->with('error', "No se puede eliminar el ajuste porque tiene {$movimientosPosteriores->count()} movimiento(s) posterior(es) que dependen de este saldo: {$docs}. Puede extornar el ajuste desde la sección de Extornos para revertir su efecto.");
+            }
+
+            $saldoAnterior = DB::table('kardex')
+                ->where('codigo_producto', $ajuste->codigo_producto)
+                ->where('codigo_almacen', $ajuste->codigo_almacen)
+                ->where('id_kardex', '<', $id)
+                ->orderBy('id_kardex', 'desc')
+                ->value('cantidad_saldo') ?? 0;
+
+            DB::table('inventario')
+                ->where('codigo_producto', $ajuste->codigo_producto)
+                ->where('codigo_almacen', $ajuste->codigo_almacen)
+                ->update(['stock_actual' => $saldoAnterior, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]);
+
+            DB::table('kardex')->where('id_kardex', $id)->delete();
+
+            DB::commit();
+            return redirect()->route('inventario.ajuste.lista')->with('success', 'Ajuste eliminado correctamente y stock revertido.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al eliminar: ' . $e->getMessage());
         }
     }
 

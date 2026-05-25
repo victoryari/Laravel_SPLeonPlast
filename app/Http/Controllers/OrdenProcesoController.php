@@ -83,6 +83,9 @@ class OrdenProcesoController extends Controller
             DB::beginTransaction();
             
             $proceso = OrdenProceso::findOrFail($id);
+            if ($proceso->estado_avance === 'COMPLETADO') {
+                throw new \Exception("No se puede anular un proceso que ya está COMPLETADO.");
+            }
             $orden_id = $proceso->idop;
             
             // 1. VALIDACIÓN DE BLOQUEO: Verificar si el PEP generado ya fue consumido
@@ -128,8 +131,13 @@ class OrdenProcesoController extends Controller
                         ->where('codigo_producto', $ing->codigo_producto_proceso)
                         ->where('lote', $ing->lote_produccion)
                         ->value('codigo_almacen');
+
+                    $stockPEP = DB::table('inventario')
+                        ->where('codigo_producto', $ing->codigo_producto_proceso)
+                        ->where('lote', $ing->lote_produccion)
+                        ->value('stock_actual') ?? 0;
                         
-                    DB::table('movimientos_inventario')->insert([
+                    $movIdExt = DB::table('movimientos_inventario')->insertGetId([
                         'codigo_almacen' => $codigo_almacen,
                         'codigo_producto' => $ing->codigo_producto_proceso,
                         'lote' => $ing->lote_produccion,
@@ -142,7 +150,24 @@ class OrdenProcesoController extends Controller
                         'idop' => $orden_id,
                         'observaciones' => 'Anulación de proceso',
                         'usuario_movimiento' => $usuario_id,
-                        'fecha_movimiento' => now()
+                        'fecha_movimiento' => now(),
+                        'estado' => 1,
+                        'tiene_kardex' => true
+                    ]);
+
+                    DB::table('kardex')->insert([
+                        'codigo_almacen'       => $codigo_almacen,
+                        'codigo_producto'      => $ing->codigo_producto_proceso,
+                        'fecha_movimiento'     => now(),
+                        'tipo_movimiento'      => 'EXTORNO',
+                        'documento'            => 'EXTORNO_PROD',
+                        'numero_documento'     => $numero_ref_prefijo,
+                        'cantidad_entrada'     => 0,
+                        'cantidad_salida'      => $ing->cantidad,
+                        'cantidad_saldo'       => $stockPEP,
+                        'codigo_referencia_movimiento' => $movIdExt,
+                        'observaciones'        => "Anulación de PEP por anulación de proceso OP-{$orden_id}",
+                        'usuario_registro'     => $usuario_id
                     ]);
                 }
             }
@@ -155,6 +180,7 @@ class OrdenProcesoController extends Controller
                 ->where('estado', 1)
                 ->get();
                 
+            $resumenDevoluciones = [];
             foreach ($consumos as $s) {
                 // Devolver stock al inventario
                 DB::table('inventario')
@@ -173,9 +199,15 @@ class OrdenProcesoController extends Controller
                     ->where('codigo_almacen', $s->codigo_almacen)
                     ->where('stock_actual', '>', 0)
                     ->update(['estado' => 1]);
+
+                $stockDevuelto = DB::table('inventario')
+                    ->where('codigo_producto', $s->codigo_producto)
+                    ->where('lote', $s->lote)
+                    ->where('codigo_almacen', $s->codigo_almacen)
+                    ->value('stock_actual') ?? $s->cantidad;
                     
                 // Registrar el ingreso por devolución
-                DB::table('movimientos_inventario')->insert([
+                $movDevId = DB::table('movimientos_inventario')->insertGetId([
                     'codigo_almacen' => $s->codigo_almacen,
                     'codigo_producto' => $s->codigo_producto,
                     'lote' => $s->lote,
@@ -189,7 +221,42 @@ class OrdenProcesoController extends Controller
                     'observaciones' => 'Devolución por anulación de proceso',
                     'usuario_movimiento' => $usuario_id,
                     'fecha_movimiento' => now(),
-                    'estado' => 1
+                    'estado' => 1,
+                    'tiene_kardex' => true
+                ]);
+
+                $key = $s->codigo_producto . '|' . $s->codigo_almacen;
+                if (!isset($resumenDevoluciones[$key])) {
+                    $resumenDevoluciones[$key] = [
+                        'producto' => $s->codigo_producto,
+                        'almacen' => $s->codigo_almacen,
+                        'cantidad' => 0,
+                        'primer_mov_id' => $movDevId,
+                        'stock_final' => $stockDevuelto
+                    ];
+                }
+                $resumenDevoluciones[$key]['cantidad'] += $s->cantidad;
+            }
+
+            foreach ($resumenDevoluciones as $dev) {
+                $stockFinal = DB::table('inventario')
+                    ->where('codigo_producto', $dev['producto'])
+                    ->where('codigo_almacen', $dev['almacen'])
+                    ->sum('stock_actual') ?? $dev['stock_final'];
+
+                DB::table('kardex')->insert([
+                    'codigo_almacen'       => $dev['almacen'],
+                    'codigo_producto'      => $dev['producto'],
+                    'fecha_movimiento'     => now(),
+                    'tipo_movimiento'      => 'EXTORNO',
+                    'documento'            => 'EXTORNO_CONS',
+                    'numero_documento'     => $numero_ref_prefijo,
+                    'cantidad_entrada'     => $dev['cantidad'],
+                    'cantidad_salida'      => 0,
+                    'cantidad_saldo'       => $stockFinal,
+                    'codigo_referencia_movimiento' => $dev['primer_mov_id'],
+                    'observaciones'        => "Devolución de MTP por anulación de proceso OP-{$orden_id}",
+                    'usuario_registro'     => $usuario_id
                 ]);
             }
             
@@ -354,6 +421,7 @@ class OrdenProcesoController extends Controller
             
             $trace_movimientos = 0;
             $trace_componentes = count($componentes);
+            $consumosResumen = []; // [key => ['producto','almacen','cantidad','primer_mov_id']]
 
             $proceso = OrdenProceso::findOrFail($id);
             $es_actividad = ($proceso->codigo_proceso == '1');
@@ -419,6 +487,7 @@ class OrdenProcesoController extends Controller
                     ->where('i.codigo_producto', $codigo_prod)
                     ->where('a.activo', 1)
                     ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); })
+                    ->lockForUpdate()
                     ->sum('i.stock_actual') ?? 0;
 
                 if ($stock_disp < $cant_req) {
@@ -460,53 +529,25 @@ class OrdenProcesoController extends Controller
                         ];
                     }
                     $grupos_pep[$key]['cant'] += $cantidad;
+                } elseif (!empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] === 'PEP') {
+                    $codigo_pep = $this->determinarPEPdesdeProducto($codigo_producto);
+                    if (!empty($codigo_pep)) {
+                        $key = $codigo_pep . '_' . ($codigo_color ?: 'SC');
+                        if (!isset($grupos_pep[$key])) {
+                            $grupos_pep[$key] = [
+                                'codigo_pep' => $codigo_pep,
+                                'descripcion_pep' => DB::table('producto')->where('codigo', $codigo_pep)->value('descripcion'),
+                                'formula' => null,
+                                'color' => $codigo_color,
+                                'cant' => 0,
+                                'unidad' => $comp['codigo_unidad_medida'] ?? 'KG'
+                            ];
+                        }
+                        $grupos_pep[$key]['cant'] += $cantidad;
+                    }
                 }
 
-                $cantidad_restante = $cantidad;
-                $lotes = DB::table('inventario as i')
-                    ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
-                    ->select('i.id_inventario', 'i.stock_actual', 'i.lote', 'i.costo_promedio', 'i.codigo_almacen')
-                    ->where('i.codigo_producto', $codigo_producto)
-                    ->where('a.activo', 1)
-                    ->where('i.stock_actual', '>', 0)
-                    ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); })
-                    ->orderBy('i.fecha_vencimiento', 'asc')
-                    ->orderBy('i.id_inventario', 'asc')
-                    ->get();
-                
-                foreach ($lotes as $lote) {
-                    if ($cantidad_restante <= 0) break;
-                    $consumo = min($lote->stock_actual, $cantidad_restante);
-                    
-                    DB::table('movimientos_inventario')->insert([
-                        'codigo_almacen' => $lote->codigo_almacen,
-                        'codigo_producto' => $codigo_producto,
-                        'lote' => $lote->lote,
-                        'tipo_movimiento' => 'SALIDA',
-                        'cantidad' => $consumo,
-                        'costo_unitario' => $lote->costo_promedio,
-                        'total' => $consumo * $lote->costo_promedio,
-                        'documento_referencia' => 'PRODUCCION',
-                        'numero_referencia' => $numero_referencia,
-                        'idop' => $idop,
-                        'observaciones' => 'Consumo proceso',
-                        'usuario_movimiento' => $usuario_id,
-                        'fecha_movimiento' => now(),
-                        'estado' => 1
-                    ]);
-                    
-                    $trace_movimientos++;
-                    $nuevo_stock = $lote->stock_actual - $consumo;
-                    
-                    DB::table('inventario')->where('id_inventario', $lote->id_inventario)->update([
-                        'stock_actual' => $nuevo_stock,
-                        'estado' => ($nuevo_stock > 0 ? 1 : 0)
-                    ]);
-                    
-                    $cantidad_restante -= $consumo;
-                }
-
-                ComponenteOrdenProduccion::create([
+                $componente = ComponenteOrdenProduccion::create([
                     'idop' => $idop,
                     'id_proceso' => $id,
                     'codigo_tipo_producto' => $comp['codigo_tipo_producto'] ?? 'MTP',
@@ -532,7 +573,100 @@ class OrdenProcesoController extends Controller
                     'hora_fin' => $comp['hora_fin'],
                     'estado' => 1
                 ]);
+                $idComponente = $componente->id_op_componentes;
+
+                $cantidad_restante = $cantidad;
+                $lotes = DB::table('inventario as i')
+                    ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
+                    ->select('i.id_inventario', 'i.stock_actual', 'i.lote', 'i.costo_promedio', 'i.codigo_almacen')
+                    ->where('i.codigo_producto', $codigo_producto)
+                    ->where('a.activo', 1)
+                    ->where('i.stock_actual', '>', 0)
+                    ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); })
+                    ->orderBy('i.fecha_vencimiento', 'asc')
+                    ->orderBy('i.id_inventario', 'asc')
+                    ->lockForUpdate()
+                    ->get();
+                
+                foreach ($lotes as $lote) {
+                    if ($cantidad_restante <= 0) break;
+                    $consumo = min($lote->stock_actual, $cantidad_restante);
+                    
+                    $movId = DB::table('movimientos_inventario')->insertGetId([
+                        'codigo_almacen' => $lote->codigo_almacen,
+                        'codigo_producto' => $codigo_producto,
+                        'lote' => $lote->lote,
+                        'tipo_movimiento' => 'SALIDA',
+                        'cantidad' => $consumo,
+                        'costo_unitario' => $lote->costo_promedio,
+                        'total' => $consumo * $lote->costo_promedio,
+                        'documento_referencia' => 'PRODUCCION',
+                        'numero_referencia' => $numero_referencia,
+                        'idop' => $idop,
+                        'componente_origen_id' => $idComponente,
+                        'observaciones' => 'Consumo proceso',
+                        'usuario_movimiento' => $usuario_id,
+                        'fecha_movimiento' => now(),
+                        'estado' => 1
+                    ]);
+                    
+                    $key = $codigo_producto . '|' . $lote->codigo_almacen;
+                    if (!isset($consumosResumen[$key])) {
+                        $consumosResumen[$key] = [
+                            'producto' => $codigo_producto,
+                            'almacen' => $lote->codigo_almacen,
+                            'cantidad' => 0,
+                            'primer_mov_id' => $movId
+                        ];
+                    }
+                    $consumosResumen[$key]['cantidad'] += $consumo;
+                    
+                    $trace_movimientos++;
+                    $nuevo_stock = $lote->stock_actual - $consumo;
+                    
+                    DB::table('inventario')->where('id_inventario', $lote->id_inventario)->update([
+                        'stock_actual' => $nuevo_stock,
+                        'estado' => ($nuevo_stock > 0 ? 1 : 0)
+                    ]);
+                    
+                    $cantidad_restante -= $consumo;
+                }
+
+                if ($cantidad_restante > 0) {
+                    throw new \Exception(
+                        "Stock insuficiente para el producto {$codigo_producto}. "
+                        . "Faltan " . number_format($cantidad_restante, 4) . " unidades."
+                    );
+                }
             }
+
+            // Kardex SALIDA por cada producto consumido
+            foreach ($consumosResumen as $resumen) {
+                $stockActual = DB::table('inventario')
+                    ->where('codigo_producto', $resumen['producto'])
+                    ->where('codigo_almacen', $resumen['almacen'])
+                    ->sum('stock_actual') ?? 0;
+
+                DB::table('kardex')->insert([
+                    'codigo_almacen'       => $resumen['almacen'],
+                    'codigo_producto'      => $resumen['producto'],
+                    'fecha_movimiento'     => now(),
+                    'tipo_movimiento'      => 'SALIDA',
+                    'documento'            => 'PRODUCCION',
+                    'numero_documento'     => $numero_referencia,
+                    'cantidad_entrada'     => 0,
+                    'cantidad_salida'      => $resumen['cantidad'],
+                    'cantidad_saldo'       => $stockActual,
+                    'codigo_referencia_movimiento' => $resumen['primer_mov_id'],
+                    'observaciones'        => 'Consumo de producción',
+                    'usuario_registro'     => $usuario_id
+                ]);
+            }
+
+            DB::table('movimientos_inventario')
+                ->where('numero_referencia', $numero_referencia)
+                ->where('documento_referencia', 'PRODUCCION')
+                ->update(['tiene_kardex' => true]);
 
             if ($merma_kg > 0) {
                 $merma_restante = $merma_kg;
@@ -591,8 +725,29 @@ class OrdenProcesoController extends Controller
                     ]);
                 }
 
-                DB::table('movimientos_inventario')->insert([
-                    'codigo_almacen' => 'ALM-REC', 'codigo_producto' => $codigo_merma, 'lote' => $lote_merma, 'tipo_movimiento' => 'INGRESO', 'cantidad' => $merma_kg, 'costo_unitario' => 0, 'total' => 0, 'documento_referencia' => 'PRODUCCION', 'numero_referencia' => $numero_referencia, 'idop' => $idop, 'observaciones' => 'Ingreso por merma de proceso', 'usuario_movimiento' => $usuario_id, 'fecha_movimiento' => now(), 'estado' => 1
+                $movMermaId = DB::table('movimientos_inventario')->insertGetId([
+                    'codigo_almacen' => 'ALM-REC', 'codigo_producto' => $codigo_merma, 'lote' => $lote_merma, 'tipo_movimiento' => 'INGRESO', 'cantidad' => $merma_kg, 'costo_unitario' => 0, 'total' => 0, 'documento_referencia' => 'PRODUCCION', 'numero_referencia' => $numero_referencia, 'idop' => $idop, 'observaciones' => 'Ingreso por merma de proceso', 'usuario_movimiento' => $usuario_id, 'fecha_movimiento' => now(), 'estado' => 1, 'tiene_kardex' => true
+                ]);
+
+                $stockMerma = DB::table('inventario')
+                    ->where('codigo_producto', $codigo_merma)
+                    ->where('codigo_almacen', 'ALM-REC')
+                    ->where('lote', $lote_merma)
+                    ->value('stock_actual') ?? $merma_kg;
+
+                DB::table('kardex')->insert([
+                    'codigo_almacen'       => 'ALM-REC',
+                    'codigo_producto'      => $codigo_merma,
+                    'fecha_movimiento'     => now(),
+                    'tipo_movimiento'      => 'INGRESO',
+                    'documento'            => 'PRODUCCION',
+                    'numero_documento'     => $numero_referencia,
+                    'cantidad_entrada'     => $merma_kg,
+                    'cantidad_salida'      => 0,
+                    'cantidad_saldo'       => $stockMerma,
+                    'codigo_referencia_movimiento' => $movMermaId,
+                    'observaciones'        => 'Ingreso por merma de proceso',
+                    'usuario_registro'     => $usuario_id
                 ]);
                 
                 $merma_registrada = true;
@@ -608,6 +763,303 @@ class OrdenProcesoController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al procesar: ' . $e->getMessage());
+        }
+    }
+
+    public function updateComponente(Request $request, $idop, $id, $id_componente)
+    {
+        $request->validate([
+            'cantidad'        => 'required|numeric|min:0.01',
+            'codigo_trabajador' => 'nullable|string|max:20',
+            'fecha_inicio'    => 'nullable|date',
+            'fecha_fin'       => 'nullable|date',
+            'hora_inicio'     => 'nullable',
+            'hora_fin'        => 'nullable',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $componente = ComponenteOrdenProduccion::where('id_op_componentes', $id_componente)
+                ->where('id_proceso', $id)
+                ->where('estado', 1)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $proceso = OrdenProceso::findOrFail($id);
+            if ($proceso->estado_avance === 'COMPLETADO') {
+                throw new \Exception("No se puede modificar un componente de un proceso COMPLETADO.");
+            }
+
+            if ($componente->codigo_tipo_producto === 'ACT') {
+                $componente->update([
+                    'codigo_trabajador' => $request->codigo_trabajador,
+                    'descripcion_trabajador' => $request->codigo_trabajador
+                        ? DB::table('trabajador')->where('codigo', $request->codigo_trabajador)->value('nombre')
+                        : $componente->descripcion_trabajador,
+                    'fecha_inicio' => $request->fecha_inicio ?? $componente->fecha_inicio,
+                    'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
+                    'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
+                    'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
+                ]);
+                DB::commit();
+                return back()->with('success', 'Actividad actualizada correctamente.');
+            }
+
+            $nuevaCantidad = floatval($request->cantidad);
+            $originalCantidad = floatval($componente->cantidad);
+            $diferencia = $nuevaCantidad - $originalCantidad;
+
+            $movimientosOrigen = DB::table('movimientos_inventario')
+                ->where('componente_origen_id', $id_componente)
+                ->where('documento_referencia', 'PRODUCCION')
+                ->where('estado', 1)
+                ->orderBy('id_movimiento', 'asc')
+                ->get();
+
+            if ($movimientosOrigen->isEmpty()) {
+                $componente->update([
+                    'codigo_trabajador' => $request->codigo_trabajador,
+                    'descripcion_trabajador' => $request->codigo_trabajador
+                        ? DB::table('trabajador')->where('codigo', $request->codigo_trabajador)->value('nombre')
+                        : $componente->descripcion_trabajador,
+                    'fecha_inicio' => $request->fecha_inicio ?? $componente->fecha_inicio,
+                    'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
+                    'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
+                    'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
+                    'cantidad'     => $nuevaCantidad,
+                ]);
+                DB::commit();
+                return back()->with('success', 'Componente actualizado (sin movimientos de inventario asociados).');
+            }
+
+            $codigo_producto = $componente->codigo_producto;
+            $numero_referencia = $movimientosOrigen->first()->numero_referencia;
+            $idop = $componente->idop;
+            $usuario_id = Auth::user()->id_usuario ?? 5;
+
+            $pepGenerado = DB::table('produccion_ingresos_proceso')
+                ->where('id_proceso', $id)
+                ->where('estado', 'APROBADO')
+                ->exists();
+
+            if ($pepGenerado && $diferencia != 0) {
+                throw new \Exception(
+                    "No se puede modificar la cantidad porque el PEP asociado ya fue recibido en almacén. "
+                    . "Solo puede editar los datos de trabajador y fechas."
+                );
+            }
+
+            if ($diferencia > 0) {
+                $stockDisp = DB::table('inventario as i')
+                    ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
+                    ->where('i.codigo_producto', $codigo_producto)
+                    ->where('a.activo', 1)
+                    ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); })
+                    ->lockForUpdate()
+                    ->sum('i.stock_actual') ?? 0;
+
+                if ($stockDisp < $diferencia) {
+                    throw new \Exception(
+                        "Stock insuficiente para aumentar la cantidad. "
+                        . "Disponible: " . number_format($stockDisp, 2)
+                        . ", Requerido adicional: " . number_format($diferencia, 2)
+                    );
+                }
+
+                $cantidad_restante = $diferencia;
+                $lotes = DB::table('inventario as i')
+                    ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
+                    ->select('i.id_inventario', 'i.stock_actual', 'i.lote', 'i.costo_promedio', 'i.codigo_almacen')
+                    ->where('i.codigo_producto', $codigo_producto)
+                    ->where('a.activo', 1)
+                    ->where('i.stock_actual', '>', 0)
+                    ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); })
+                    ->orderBy('i.fecha_vencimiento', 'asc')
+                    ->orderBy('i.id_inventario', 'asc')
+                    ->lockForUpdate()
+                    ->get();
+
+                $consumosResumen = [];
+                foreach ($lotes as $lote) {
+                    if ($cantidad_restante <= 0) break;
+                    $consumo = min($lote->stock_actual, $cantidad_restante);
+
+                    $movId = DB::table('movimientos_inventario')->insertGetId([
+                        'codigo_almacen'          => $lote->codigo_almacen,
+                        'codigo_producto'         => $codigo_producto,
+                        'lote'                    => $lote->lote,
+                        'tipo_movimiento'         => 'SALIDA',
+                        'cantidad'                => $consumo,
+                        'costo_unitario'          => $lote->costo_promedio,
+                        'total'                   => $consumo * $lote->costo_promedio,
+                        'documento_referencia'    => 'PRODUCCION',
+                        'numero_referencia'       => $numero_referencia . '-AJ-' . $id_componente,
+                        'idop'                    => $idop,
+                        'componente_origen_id'    => $id_componente,
+                        'observaciones'           => 'Ajuste por edición de componente #' . $id_componente,
+                        'usuario_movimiento'      => $usuario_id,
+                        'fecha_movimiento'        => now(),
+                        'estado'                  => 1,
+                        'tiene_kardex'            => true,
+                    ]);
+
+                    $key = $codigo_producto . '|' . $lote->codigo_almacen;
+                    if (!isset($consumosResumen[$key])) {
+                        $consumosResumen[$key] = [
+                            'producto' => $codigo_producto,
+                            'almacen'  => $lote->codigo_almacen,
+                            'cantidad' => 0,
+                            'primer_mov_id' => $movId,
+                        ];
+                    }
+                    $consumosResumen[$key]['cantidad'] += $consumo;
+
+                    $nuevo_stock_lote = $lote->stock_actual - $consumo;
+                    DB::table('inventario')
+                        ->where('id_inventario', $lote->id_inventario)
+                        ->update([
+                            'stock_actual' => $nuevo_stock_lote,
+                            'estado'       => ($nuevo_stock_lote > 0 ? 1 : 0),
+                        ]);
+
+                    $cantidad_restante -= $consumo;
+                }
+
+                if ($cantidad_restante > 0) {
+                    throw new \Exception(
+                        "Stock insuficiente para el producto {$codigo_producto}. "
+                        . "Faltan " . number_format($cantidad_restante, 4) . " unidades."
+                    );
+                }
+
+                foreach ($consumosResumen as $resumen) {
+                    $stockActual = DB::table('inventario')
+                        ->where('codigo_producto', $resumen['producto'])
+                        ->where('codigo_almacen', $resumen['almacen'])
+                        ->sum('stock_actual') ?? 0;
+
+                    DB::table('kardex')->insert([
+                        'codigo_almacen'              => $resumen['almacen'],
+                        'codigo_producto'             => $resumen['producto'],
+                        'fecha_movimiento'            => now(),
+                        'tipo_movimiento'             => 'SALIDA',
+                        'documento'                   => 'PRODUCCION',
+                        'numero_documento'            => $numero_referencia . '-AJ-' . $id_componente,
+                        'cantidad_entrada'            => 0,
+                        'cantidad_salida'             => $resumen['cantidad'],
+                        'cantidad_saldo'              => $stockActual,
+                        'codigo_referencia_movimiento' => $resumen['primer_mov_id'],
+                        'observaciones'               => 'Ajuste por edición de componente #' . $id_componente,
+                        'usuario_registro'            => $usuario_id,
+                    ]);
+                }
+            }
+
+            if ($diferencia < 0) {
+                $devolver = abs($diferencia);
+
+                foreach ($movimientosOrigen as $mov) {
+                    if ($devolver <= 0) break;
+
+                    $devolverLote = min($mov->cantidad, $devolver);
+
+                    DB::table('inventario')
+                        ->where('codigo_producto', $mov->codigo_producto)
+                        ->where('lote', $mov->lote)
+                        ->where('codigo_almacen', $mov->codigo_almacen)
+                        ->update([
+                            'stock_actual' => DB::raw("stock_actual + {$devolverLote}"),
+                            'estado'       => 1,
+                        ]);
+
+                    $movDevId = DB::table('movimientos_inventario')->insertGetId([
+                        'codigo_almacen'          => $mov->codigo_almacen,
+                        'codigo_producto'         => $mov->codigo_producto,
+                        'lote'                    => $mov->lote,
+                        'tipo_movimiento'         => 'INGRESO',
+                        'cantidad'                => $devolverLote,
+                        'costo_unitario'          => $mov->costo_unitario,
+                        'total'                   => $devolverLote * $mov->costo_unitario,
+                        'documento_referencia'    => 'DEVOLUCION_EDIT',
+                        'numero_referencia'       => $numero_referencia . '-AJ-' . $id_componente,
+                        'idop'                    => $idop,
+                        'componente_origen_id'    => $id_componente,
+                        'observaciones'           => 'Devolución por edición de componente #' . $id_componente,
+                        'usuario_movimiento'      => $usuario_id,
+                        'fecha_movimiento'        => now(),
+                        'estado'                  => 1,
+                        'tiene_kardex'            => true,
+                    ]);
+
+                    $stockActual = DB::table('inventario')
+                        ->where('codigo_producto', $mov->codigo_producto)
+                        ->where('codigo_almacen', $mov->codigo_almacen)
+                        ->sum('stock_actual') ?? 0;
+
+                    DB::table('kardex')->insert([
+                        'codigo_almacen'              => $mov->codigo_almacen,
+                        'codigo_producto'             => $mov->codigo_producto,
+                        'fecha_movimiento'            => now(),
+                        'tipo_movimiento'             => 'INGRESO',
+                        'documento'                   => 'DEVOLUCION_EDIT',
+                        'numero_documento'            => $numero_referencia . '-AJ-' . $id_componente,
+                        'cantidad_entrada'            => $devolverLote,
+                        'cantidad_salida'             => 0,
+                        'cantidad_saldo'              => $stockActual,
+                        'codigo_referencia_movimiento' => $movDevId,
+                        'observaciones'               => 'Devolución por edición de componente #' . $id_componente,
+                        'usuario_registro'            => $usuario_id,
+                    ]);
+
+                    $devolver -= $devolverLote;
+                }
+            }
+
+            if (!empty($componente->codigo_formula_produccion)) {
+                $codigo_pep = $this->determinarCodigoPEP($componente->codigo_formula_produccion);
+            } elseif ($componente->codigo_tipo_producto === 'PEP') {
+                $codigo_pep = $this->determinarPEPdesdeProducto($componente->codigo_producto);
+            } else {
+                $codigo_pep = null;
+            }
+
+            if ($codigo_pep && $diferencia != 0) {
+                $pepRow = DB::table('produccion_ingresos_proceso')
+                    ->where('id_proceso', $id)
+                    ->where('codigo_producto_proceso', $codigo_pep)
+                    ->first();
+                if ($pepRow) {
+                    if ($pepRow->estado === 'APROBADO' && $diferencia < 0) {
+                        throw new \Exception("No se puede reducir la cantidad porque el PEP asociado ya fue recibido en almacén.");
+                    }
+                    $nuevaCantidadPEP = max(0, $pepRow->cantidad + $diferencia);
+                    if ($nuevaCantidadPEP <= 0) {
+                        DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->delete();
+                    } else {
+                        DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->update(['cantidad' => $nuevaCantidadPEP]);
+                    }
+                }
+            }
+
+            $componente->update([
+                'codigo_trabajador' => $request->codigo_trabajador,
+                'descripcion_trabajador' => $request->codigo_trabajador
+                    ? DB::table('trabajador')->where('codigo', $request->codigo_trabajador)->value('nombre')
+                    : $componente->descripcion_trabajador,
+                'fecha_inicio' => $request->fecha_inicio ?? $componente->fecha_inicio,
+                'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
+                'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
+                'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
+                'cantidad'     => $nuevaCantidad,
+            ]);
+
+            DB::commit();
+            return back()->with('success', 'Componente #' . $id_componente . ' actualizado correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al actualizar componente: ' . $e->getMessage());
         }
     }
 
@@ -628,9 +1080,126 @@ class OrdenProcesoController extends Controller
     public function destroyComponente($idop, $id, $id_componente)
     {
         try {
-            ComponenteOrdenProduccion::where('id_op_componentes', $id_componente)->update(['estado' => 0]);
-            return back()->with('success', 'Registro desactivado correctamente.');
+            DB::beginTransaction();
+
+            $componente = ComponenteOrdenProduccion::where('id_op_componentes', $id_componente)
+                ->where('id_proceso', $id)
+                ->where('estado', 1)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $proceso = OrdenProceso::findOrFail($id);
+            if ($proceso->estado_avance === 'COMPLETADO') {
+                throw new \Exception("No se puede eliminar un componente de un proceso COMPLETADO.");
+            }
+
+            $usuario_id = Auth::user()->id_usuario ?? 1;
+
+            if ($componente->codigo_tipo_producto !== 'ACT') {
+                $movimientos = DB::table('movimientos_inventario')
+                    ->where('componente_origen_id', $id_componente)
+                    ->where('tipo_movimiento', 'SALIDA')
+                    ->where('documento_referencia', 'PRODUCCION')
+                    ->where('estado', 1)
+                    ->get();
+
+                $numero_referencia_ext = "OP-{$idop}-PROC-{$id}-COMP-{$id_componente}";
+
+                foreach ($movimientos as $mov) {
+                    DB::table('inventario')
+                        ->where('codigo_producto', $mov->codigo_producto)
+                        ->where('lote', $mov->lote)
+                        ->where('codigo_almacen', $mov->codigo_almacen)
+                        ->update([
+                            'stock_actual' => DB::raw("stock_actual + {$mov->cantidad}"),
+                            'fecha_ultimo_movimiento' => now()
+                        ]);
+
+                    DB::table('inventario')
+                        ->where('codigo_producto', $mov->codigo_producto)
+                        ->where('lote', $mov->lote)
+                        ->where('codigo_almacen', $mov->codigo_almacen)
+                        ->where('stock_actual', '>', 0)
+                        ->where('estado', 0)
+                        ->update(['estado' => 1]);
+
+                    $stockActual = DB::table('inventario')
+                        ->where('codigo_producto', $mov->codigo_producto)
+                        ->where('lote', $mov->lote)
+                        ->where('codigo_almacen', $mov->codigo_almacen)
+                        ->value('stock_actual') ?? $mov->cantidad;
+
+                    $movExtId = DB::table('movimientos_inventario')->insertGetId([
+                        'codigo_almacen' => $mov->codigo_almacen,
+                        'codigo_producto' => $mov->codigo_producto,
+                        'lote' => $mov->lote,
+                        'tipo_movimiento' => 'INGRESO',
+                        'cantidad' => $mov->cantidad,
+                        'costo_unitario' => $mov->costo_unitario,
+                        'total' => $mov->cantidad * $mov->costo_unitario,
+                        'documento_referencia' => 'EXTORNO_CONS',
+                        'numero_referencia' => $numero_referencia_ext,
+                        'idop' => $idop,
+                        'observaciones' => "Devolución por anulación de componente #{$id_componente}",
+                        'usuario_movimiento' => $usuario_id,
+                        'fecha_movimiento' => now(),
+                        'estado' => 1,
+                        'tiene_kardex' => true
+                    ]);
+
+                    DB::table('kardex')->insert([
+                        'codigo_almacen'       => $mov->codigo_almacen,
+                        'codigo_producto'      => $mov->codigo_producto,
+                        'fecha_movimiento'     => now(),
+                        'tipo_movimiento'      => 'EXTORNO',
+                        'documento'            => 'EXTORNO_CONS',
+                        'numero_documento'     => $numero_referencia_ext,
+                        'cantidad_entrada'     => $mov->cantidad,
+                        'cantidad_salida'      => 0,
+                        'cantidad_saldo'       => $stockActual,
+                        'codigo_referencia_movimiento' => $movExtId,
+                        'observaciones'        => "Devolución por anulación de componente OP-{$idop}",
+                        'usuario_registro'     => $usuario_id
+                    ]);
+
+                    DB::table('movimientos_inventario')
+                        ->where('id_movimiento', $mov->id_movimiento)
+                        ->update(['tiene_kardex' => true]);
+                }
+            }
+
+            if (!empty($componente->codigo_formula_produccion)) {
+                $codigo_pep = $this->determinarCodigoPEP($componente->codigo_formula_produccion);
+            } elseif ($componente->codigo_tipo_producto === 'PEP') {
+                $codigo_pep = $this->determinarPEPdesdeProducto($componente->codigo_producto);
+            } else {
+                $codigo_pep = null;
+            }
+
+            if ($codigo_pep) {
+                $pepRow = DB::table('produccion_ingresos_proceso')
+                    ->where('id_proceso', $id)
+                    ->where('codigo_producto_proceso', $codigo_pep)
+                    ->first();
+                if ($pepRow) {
+                    if ($pepRow->estado === 'APROBADO') {
+                        throw new \Exception("No se puede eliminar el componente porque el PEP asociado ya fue recibido en almacén.");
+                    }
+                    $nuevaCantidadPEP = max(0, $pepRow->cantidad - $componente->cantidad);
+                    if ($nuevaCantidadPEP <= 0) {
+                        DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->delete();
+                    } else {
+                        DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->update(['cantidad' => $nuevaCantidadPEP]);
+                    }
+                }
+            }
+
+            $componente->update(['estado' => 0]);
+
+            DB::commit();
+            return back()->with('success', 'Registro desactivado correctamente. Stock restaurado, extorno registrado en kardex y PEP ajustado.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return back()->with('error', 'Error al desactivar: ' . $e->getMessage());
         }
     }
@@ -641,6 +1210,19 @@ class OrdenProcesoController extends Controller
         if ($res) return $res;
         $res = DB::table('producto')->where('codigo', $codigo_formula)->where('codigo_tipo_producto', 'PEP')->where('estado', 1)->value('codigo');
         return $res ?: null;
+    }
+
+    private function determinarPEPdesdeProducto($codigo_producto)
+    {
+        if (str_starts_with($codigo_producto, 'MZ07-')) {
+            $codigo_inyectado = str_replace('MZ07-', 'CA07-', $codigo_producto);
+            $existe = DB::table('producto')
+                ->where('codigo', $codigo_inyectado)
+                ->where('estado', 1)
+                ->exists();
+            if ($existe) return $codigo_inyectado;
+        }
+        return null;
     }
 
     private function generarCodigoPEP($codigo, $color, $proceso_id) {

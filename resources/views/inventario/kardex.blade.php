@@ -11,17 +11,48 @@
 
 
 
-    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <form action="{{ route('inventario.kardex') }}" method="GET" class="relative w-full md:w-96">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por producto o documento..." 
-                class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 bg-slate-50 shadow-inner">
-            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6">
+        <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo Documento</label>
+                <select name="documento"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    <option value="">Todos</option>
+                    @foreach($tiposDocumento as $td)
+                        <option value="{{ $td }}" {{ request('documento') == $td ? 'selected' : '' }}>{{ $td }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Producto</label>
+                <input type="text" name="codigo_producto" value="{{ request('codigo_producto') }}"
+                    placeholder="Código o descripción..."
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Desde</label>
+                <input type="date" name="fecha_desde" value="{{ request('fecha_desde') }}"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Hasta</label>
+                <input type="date" name="fecha_hasta" value="{{ request('fecha_hasta') }}"
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                    class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow transition">
+                    <i class="fas fa-search mr-1"></i> Filtrar
+                </button>
+                <a href="{{ route('inventario.kardex') }}"
+                    class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">
+                    Limpiar
+                </a>
+                <button type="button" onclick="window.print()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition ml-auto">
+                    <i class="fas fa-print mr-1"></i> Imprimir
+                </button>
+            </div>
         </form>
-        <div class="flex gap-2">
-            <button onclick="window.print()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition">
-                <i class="fas fa-print mr-2"></i> Imprimir Reporte
-            </button>
-        </div>
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

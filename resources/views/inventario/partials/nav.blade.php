@@ -19,8 +19,12 @@
             <i class="fas fa-history mr-2"></i> Kardex
         </a>
         
-        <a href="{{ route('inventario.ajuste') }}" class="whitespace-nowrap py-4 px-6 font-bold text-sm border-b-2 {{ request()->routeIs('inventario.ajuste') ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors' }}">
-            <i class="fas fa-sliders-h mr-2"></i> Ajuste Manual
+        <a href="{{ route('inventario.ajuste') }}" class="whitespace-nowrap py-4 px-6 font-bold text-sm border-b-2 {{ request()->routeIs('inventario.ajuste') && !request()->routeIs('inventario.ajuste.lista') ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors' }}">
+            <i class="fas fa-plus-circle mr-2"></i> Nuevo Ajuste
+        </a>
+
+        <a href="{{ route('inventario.ajuste.lista') }}" class="whitespace-nowrap py-4 px-6 font-bold text-sm border-b-2 {{ request()->routeIs('inventario.ajuste.lista') ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-colors' }}">
+            <i class="fas fa-list mr-2"></i> Lista de Ajustes
         </a>
     </nav>
 </div>

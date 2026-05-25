@@ -77,15 +77,32 @@
                     </select>
                 </div>
 
-                <!-- Cantidad -->
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-2">
-                        Cantidad
-                    </label>
-                    <input type="number" name="cantidad" step="0.01" min="0.01"
-                        placeholder="0.00"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                        required>
+                <!-- Cantidad + Unidad Medida -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Cantidad
+                        </label>
+                        <input type="number" name="cantidad" step="0.01" min="0.01"
+                            placeholder="0.00"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Unidad de Medida
+                        </label>
+                        <select name="codigo_unidad_medida"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                            required>
+                            <option value="">-- Seleccione --</option>
+                            @foreach($unidadesMedida as $u)
+                                <option value="{{ $u->codigo }}">
+                                    {{ $u->codigo }} - {{ $u->descripcion }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Motivo -->

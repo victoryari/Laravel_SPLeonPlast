@@ -97,9 +97,11 @@
                             
                             @if(Auth::user()->hasAccess('inventario.kardex'))<a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700' }} rounded transition">Kardex de Movimientos</a>@endif
                             
-                            @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste') ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700' }} rounded transition">Ajuste Manual</a>@endif
+                            {{-- @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste') && !request()->routeIs('inventario.ajuste.lista') ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700' }} rounded transition">Nuevo Ajuste</a>@endif --}}
 
-                            @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extorno') ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700' }} rounded transition">Extornos</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700' }} rounded transition">Lista de Ajustes</a>@endif
+
+                            @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-300 hover:bg-slate-700' }} rounded transition">Extornos</a>@endif
                         </div>
                     </div>
                     @endif
