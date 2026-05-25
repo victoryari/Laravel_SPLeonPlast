@@ -49,4 +49,12 @@ class Producto extends Model
     {
         return $this->belongsTo(UnidadMedida::class, 'codigo_unidad_medida', 'codigo');
     }
+
+    /**
+     * Relación con la tabla Color.
+     */
+    public function color()
+    {
+        return $this->belongsTo(Color::class, 'codigo_color', 'codigo');
+    }
 }

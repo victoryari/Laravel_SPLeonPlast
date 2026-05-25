@@ -38,7 +38,7 @@ class UsuarioController extends Controller
     public function create()
     {
         $trabajadores = Trabajador::activos()->orderBy('nombre', 'asc')->get();
-        $roles = ['Administrador', 'Supervisor', 'Especialista'];
+        $roles = \App\Models\Rol::orderBy('nombre')->pluck('nombre');
         
         return view('usuarios.create', compact('trabajadores', 'roles'));
     }
@@ -46,7 +46,7 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'codigo_trabajador' => 'nullable|exists:trabajador,codigo',
+            'codigo_trabajador' => 'required|exists:trabajador,codigo',
             'nombre_usuario' => 'required|string|max:50|unique:usuarios,nombre_usuario',
             'password' => 'required|string|min:6',
             'email' => 'nullable|email|max:100',
@@ -71,7 +71,7 @@ class UsuarioController extends Controller
     {
         $usuario = Usuario::findOrFail($id);
         $trabajadores = Trabajador::activos()->orderBy('nombre', 'asc')->get();
-        $roles = ['Administrador', 'Supervisor', 'Especialista'];
+        $roles = \App\Models\Rol::orderBy('nombre')->pluck('nombre');
 
         return view('usuarios.edit', compact('usuario', 'trabajadores', 'roles'));
     }

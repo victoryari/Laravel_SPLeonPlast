@@ -64,10 +64,10 @@
                 {{-- Trabajador --}}
                 <div class="col-span-1 md:col-span-2">
                     <label for="codigo_trabajador" class="block text-sm font-medium text-gray-700 mb-1">
-                        Vincular a Trabajador <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
+                        Vincular a Trabajador <span class="text-red-500">*</span>
                     </label>
-                    <select name="codigo_trabajador" id="codigo_trabajador" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                        <option value="">Ninguno (Usuario Externo / Genérico)</option>
+                    <select name="codigo_trabajador" id="codigo_trabajador" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                        <option value="">Seleccione un trabajador...</option>
                         @foreach($trabajadores as $trabajador)
                             <option value="{{ $trabajador->codigo }}" {{ old('codigo_trabajador') == $trabajador->codigo ? 'selected' : '' }}>
                                 {{ $trabajador->codigo }} - {{ $trabajador->nombre }}

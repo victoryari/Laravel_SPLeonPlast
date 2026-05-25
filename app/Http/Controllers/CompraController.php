@@ -29,6 +29,17 @@ class CompraController extends Controller
         return view('compras.index', compact('compras'));
     }
 
+    public function create() 
+    {
+        // Obtenemos los registros activos para enviarlos al formulario de nueva compra
+        $proveedores = Proveedor::where('activo', 1)->get();
+        $productos = Producto::where('estado', 1)->get();
+        $almacenes = Almacen::where('activo', 1)->get();
+
+        // Retorna la vista de tu formulario (asegúrate de que tu archivo blade se llame create.blade.php)
+        return view('compras.create', compact('proveedores', 'productos', 'almacenes'));
+    }
+
     public function show($id)
     {
         // Cargamos la compra con sus relaciones para evitar consultas extra en la vista

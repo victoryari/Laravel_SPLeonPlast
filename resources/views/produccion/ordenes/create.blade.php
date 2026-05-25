@@ -1,0 +1,98 @@
+@extends('layouts.app')
+
+@section('title', 'Nueva Orden de Producción')
+
+@section('content')
+<div class="container mx-auto max-w-3xl pb-8 md:pb-10">
+    <div class="flex justify-between items-center mb-6 gap-4">
+        <div>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Nueva Orden de Producción</h1>
+            <p class="text-xs sm:text-sm text-gray-600">Complete los campos para registrar una nueva orden</p>
+        </div>
+        <a href="{{ route('produccion.ordenes.index') }}" class="shrink-0 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+            <i class="fas fa-arrow-left"></i>
+            <span class="hidden sm:inline ml-2">Volver</span>
+        </a>
+    </div>
+
+    @if($errors->any())
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
+            <ul class="list-disc list-inside">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500">
+        <form action="{{ route('produccion.ordenes.store') }}" method="POST">
+                @csrf
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Nro OP --}}
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="codigo_op" class="block text-sm font-medium text-gray-700 mb-1">
+                            📌 Número de OP <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="codigo_op" id="codigo_op" required placeholder="Ej: OP-2024-001" value="{{ old('codigo_op') }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Identificador único de la orden</p>
+                    </div>
+
+                    {{-- Fecha --}}
+                    <div>
+                        <label for="fecha" class="block text-sm font-medium text-gray-700 mb-1">
+                            📅 Fecha <span class="text-red-500">*</span>
+                        </label>
+                        <input type="date" name="fecha" id="fecha" required value="{{ old('fecha', date('Y-m-d')) }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    {{-- Hora Inicio --}}
+                    <div>
+                        <label for="hora_inicio" class="block text-sm font-medium text-gray-700 mb-1">
+                            ⏰ Hora de OP
+                        </label>
+                        <input type="time" name="hora_inicio" id="hora_inicio" value="{{ old('hora_inicio', date('H:i')) }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <p class="mt-1 text-xs text-gray-500">Hora estimada de inicio</p>
+                    </div>
+
+                    {{-- Producto --}}
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="codigo_producto_proceso" class="block text-sm font-medium text-gray-700 mb-1">
+                            🏭 Producto <span class="text-red-500">*</span>
+                        </label>
+                        <select name="codigo_producto_proceso" id="codigo_producto_proceso" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Seleccionar producto...</option>
+                            @foreach($productos_proceso as $producto)
+                                <option value="{{ $producto->codigo }}" {{ old('codigo_producto_proceso') == $producto->codigo ? 'selected' : '' }}>
+                                    {{ $producto->descripcion }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Observaciones --}}
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="texto_obs" class="block text-sm font-medium text-gray-700 mb-1">
+                            📝 Observaciones
+                        </label>
+                        <textarea name="texto_obs" id="texto_obs" rows="3" placeholder="Información adicional relevante para esta orden..."
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ old('texto_obs') }}</textarea>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-5 border-t border-gray-200 flex justify-end space-x-3">
+                    <a href="{{ route('produccion.ordenes.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+                        <i class="fas fa-save mr-2"></i> Crear Orden
+                    </button>
+                </div>
+            </form>
+    </div>
+</div>
+@endsection

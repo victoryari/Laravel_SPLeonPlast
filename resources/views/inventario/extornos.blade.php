@@ -39,17 +39,17 @@
         </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
         <div class="overflow-x-auto">
-            <table class="w-full text-left whitespace-nowrap text-xs sm:text-sm">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-600 border-b border-gray-200">
-                        <th class="px-4 md:px-6 py-3 font-bold uppercase tracking-wider">Fecha / Hora</th>
-                        <th class="px-4 md:px-6 py-3 font-bold uppercase tracking-wider">Producto y Almacén</th>
-                        <th class="px-4 md:px-6 py-3 font-bold uppercase tracking-wider">Tipo</th>
-                        <th class="px-4 md:px-6 py-3 font-bold uppercase tracking-wider">Documento</th>
-                        <th class="px-4 md:px-6 py-3 font-bold uppercase tracking-wider text-center">Cantidad</th>
-                        <th class="px-4 md:px-6 py-3 font-bold uppercase tracking-wider text-center">Acción</th>
+                    <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold border-b border-slate-700">
+                        <th class="p-4 border-r border-slate-700">Fecha / Hora</th>
+                        <th class="p-4 border-r border-slate-700">Producto y Almacén</th>
+                        <th class="p-4 border-r border-slate-700">Tipo</th>
+                        <th class="p-4 border-r border-slate-700">Documento</th>
+                        <th class="p-4 border-r border-slate-700 text-center">Cantidad</th>
+                        <th class="p-4 text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">

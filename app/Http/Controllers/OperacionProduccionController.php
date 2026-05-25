@@ -67,7 +67,7 @@ class OperacionProduccionController extends Controller
             'descripcion' => $request->descripcion
         ]);
 
-        return redirect()->route('operaciones.index')->with('success', 'Operación actualizada correctamente.');
+        return redirect()->route('operaciones_produccion.index')->with('success', 'Operación actualizada correctamente.');
     }
 
     public function destroy($codigo)
@@ -76,6 +76,6 @@ class OperacionProduccionController extends Controller
         // Soft Delete: Solo desactivamos el registro
         $operacion->update(['estado' => 0]);
 
-        return redirect()->route('operaciones.index')->with('success', 'Operación anulada correctamente.');
+        return redirect()->route('operaciones_produccion.index')->with('success', 'Operación anulada correctamente.');
     }
 }

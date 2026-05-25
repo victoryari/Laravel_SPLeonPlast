@@ -164,24 +164,34 @@
 </div>
 
 <div id="modalProveedor" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div class="bg-slate-800 p-4 flex justify-between items-center">
-            <h3 class="text-white font-bold"><i class="fas fa-building mr-2"></i>Nuevo Proveedor</h3>
-            <button type="button" onclick="document.getElementById('modalProveedor').classList.add('hidden')" class="text-slate-300 hover:text-white">
-                <i class="fas fa-times"></i>
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
+        
+        <!-- Cabecera adaptada al diseño de tus secciones con fondo claro y borde inferior -->
+        <div class="bg-slate-50/50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-building text-blue-500"></i> Nuevo Proveedor
+            </h3>
+            <button type="button" onclick="document.getElementById('modalProveedor').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fas fa-times text-lg"></i>
             </button>
         </div>
-        <form id="formNuevoProveedor" class="p-6 space-y-4">
+        
+        <form id="formNuevoProveedor" class="p-6 space-y-5">
             <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">RUC <span class="text-red-500">*</span></label>
-                <input type="text" name="ruc" class="w-full border-slate-300 rounded-lg text-sm focus:ring-blue-500" required maxlength="11">
+                <!-- Etiqueta ajustada con mb-2 para mantener el mismo espaciado -->
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">RUC <span class="text-red-500">*</span></label>
+                <!-- Inputs adaptados al estilo principal (bg-slate-50, focus en borde azul y padding de 2.5) -->
+                <input type="text" name="ruc" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required maxlength="11" placeholder="Ej. 20123456789">
             </div>
+            
             <div>
-                <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Razón Social <span class="text-red-500">*</span></label>
-                <input type="text" name="razon_social" class="w-full border-slate-300 rounded-lg text-sm focus:ring-blue-500" required>
+                <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Razón Social <span class="text-red-500">*</span></label>
+                <input type="text" name="razon_social" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required placeholder="Nombre de la empresa">
             </div>
-            <button type="submit" class="w-full bg-green-600 text-white py-2.5 rounded-lg font-bold hover:bg-green-700 transition">
-                Guardar y Seleccionar
+            
+            <!-- Botón adaptado al estilo del botón "Registrar Compra" (py-3, rounded-xl) -->
+            <button type="submit" class="w-full mt-4 bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold transition-all flex justify-center items-center gap-2">
+                <i class="fas fa-save"></i> Guardar y Seleccionar
             </button>
         </form>
     </div>

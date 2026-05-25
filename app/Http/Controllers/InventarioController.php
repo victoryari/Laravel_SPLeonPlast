@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Inventario, MovimientoInventario, Compra, Almacen, Producto};
+use App\Models\{Inventario, MovimientoInventario, Compra, Almacen, Producto, ProduccionIngresoProceso};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Auth};
 
@@ -37,9 +37,13 @@ class InventarioController extends Controller
             ->where('estado', 'PENDIENTE')
             ->orderBy('fecha_compra', 'asc')
             ->get();
-            // NUEVO: Consultamos los almacenes para el selector
+            
+        $produccionPendientes = ProduccionIngresoProceso::where('estado', 'PENDIENTE')
+            ->orderBy('fecha_ingreso', 'asc')
+            ->get();
+
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('inventario.recepciones', compact('comprasPendientes', 'almacenes'));
+        return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'almacenes'));
     }
 
     // 2.1 PROCESAR RECEPCIÓN
@@ -100,10 +104,110 @@ class InventarioController extends Controller
 
             $compra->update(['estado' => 'RECIBIDA']);
             DB::commit();
-            return redirect()->route('inventario.recepciones')->with('success', 'Mercadería ingresada al Kardex correctamente.');
+            return back()->with('success', 'Recepción procesada y stock actualizado correctamente.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al procesar: ' . $e->getMessage());
+            return back()->with('error', 'Error al procesar recepción: ' . $e->getMessage());
+        }
+    }
+
+    // 2.2 PROCESAR RECEPCIÓN PRODUCCIÓN (PEP)
+    public function procesarRecepcionProduccion(Request $request, $id) {
+        try {
+            DB::beginTransaction();
+
+            $ingreso = ProduccionIngresoProceso::where('id_ingreso', $id)->where('estado', 'PENDIENTE')->lockForUpdate()->first();
+
+            if (!$ingreso) {
+                throw new \Exception("El registro de producción no existe, ya fue aprobado o fue anulado.");
+            }
+
+            $almacen_destino = !empty($request->codigo_almacen) ? trim($request->codigo_almacen) : $ingreso->codigo_almacen;
+            $codigo_prod = $ingreso->codigo_producto_proceso;
+            $cantidad_reportada = floatval($ingreso->cantidad);
+            $cantidad_real = $request->has('cantidad_real') ? floatval($request->cantidad_real) : $cantidad_reportada;
+
+            if ($cantidad_real <= 0) {
+                throw new \Exception("La cantidad real ingresada debe ser mayor a cero.");
+            }
+
+            $lote = $ingreso->lote_produccion;
+            $idop = $ingreso->idop;
+            $id_proceso = $ingreso->id_proceso;
+            $usuario_movimiento = Auth::id() ?? 5;
+
+            $doc_ref = "PRODUCCION_PEP";
+            $num_ref = "OP-{$idop}-PROC-{$id_proceso}";
+            
+            $observacion_kardex = "Aprobación de Ingreso de Producto en Proceso (PEP)";
+            if ($cantidad_real != $cantidad_reportada) {
+                $diferencia = $cantidad_real - $cantidad_reportada;
+                $signo = $diferencia > 0 ? '+' : '';
+                $observacion_kardex .= ". [DIFERENCIA BÁSCULA] Reportado: {$cantidad_reportada} | Real: {$cantidad_real} | Dif: {$signo}{$diferencia}";
+            }
+
+            // Movimiento inventario
+            DB::table('movimientos_inventario')->insert([
+                'codigo_almacen' => $almacen_destino,
+                'codigo_producto' => $codigo_prod,
+                'lote' => $lote,
+                'tipo_movimiento' => 'INGRESO',
+                'cantidad' => $cantidad_real,
+                'costo_unitario' => 0,
+                'total' => 0,
+                'documento_referencia' => $doc_ref,
+                'numero_referencia' => $num_ref,
+                'idop' => $idop,
+                'observaciones' => $observacion_kardex,
+                'usuario_movimiento' => $usuario_movimiento,
+                'fecha_movimiento' => now(),
+                'estado' => 1
+            ]);
+
+            // Actualizar Inventario General
+            $registroInventario = DB::table('inventario')
+                ->where('codigo_producto', $codigo_prod)
+                ->where('codigo_almacen', $almacen_destino)
+                ->where('lote', $lote)
+                ->lockForUpdate()
+                ->first();
+
+            if ($registroInventario) {
+                DB::table('inventario')->where('id_inventario', $registroInventario->id_inventario)->update([
+                    'stock_actual' => $registroInventario->stock_actual + $cantidad_real,
+                    'fecha_ultimo_movimiento' => now(),
+                    'usuario_ultimo_movimiento' => $usuario_movimiento
+                ]);
+            } else {
+                DB::table('inventario')->insert([
+                    'codigo_producto' => $codigo_prod,
+                    'codigo_almacen' => $almacen_destino,
+                    'lote' => $lote,
+                    'stock_actual' => $cantidad_real,
+                    'stock_minimo' => 0,
+                    'stock_maximo' => 0,
+                    'costo_promedio' => 0,
+                    'ultimo_costo' => 0,
+                    'estado' => 1,
+                    'fecha_ultimo_movimiento' => now(),
+                    'usuario_ultimo_movimiento' => $usuario_movimiento
+                ]);
+            }
+
+            // Actualizar produccion_ingresos_proceso
+            $ingreso->update([
+                'estado' => 'APROBADO',
+                'cantidad' => $cantidad_real,
+                'codigo_almacen' => $almacen_destino
+            ]);
+
+            DB::commit();
+            return back()->with('success', "El Producto en Proceso ({$codigo_prod}) ha sido ingresado al almacén exitosamente con cantidad {$cantidad_real}.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al procesar recepción de producción: ' . $e->getMessage());
         }
     }
 

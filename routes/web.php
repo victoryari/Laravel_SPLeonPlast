@@ -7,7 +7,8 @@ use App\Http\Controllers\{
     FormulaController, OperacionProduccionController, CentroTrabajoController,
     TrabajadorController, ProveedorController, ActividadProduccionController,
     MoldeController, ColorController, UsuarioController, CompraController,
-    InventarioController, AlmacenController
+    InventarioController, AlmacenController, RolController,
+    OrdenProduccionController, OrdenProcesoController, ReporteController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -74,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('moldes', MoldeController::class)->names('moldes');
         Route::resource('colores', ColorController::class)->names('colores');
         Route::resource('usuarios', UsuarioController::class)->names('usuarios');
+        Route::resource('roles', RolController::class)->names('roles');
 
         // Proveedores (Con soporte AJAX)
         Route::post('proveedores/ajax', [ProveedorController::class, 'storeAjax'])->name('proveedores.storeAjax');
@@ -108,6 +110,7 @@ Route::middleware('auth')->group(function () {
             // Recepciones
             Route::get('/recepciones', [InventarioController::class, 'recepciones'])->name('inventario.recepciones');
             Route::post('/recibir/{id}', [InventarioController::class, 'procesarRecepcion'])->name('inventario.procesar_recepcion');
+            Route::post('/recibir-produccion/{id}', [InventarioController::class, 'procesarRecepcionProduccion'])->name('inventario.procesar_recepcion_produccion');
 
             // Ajustes Manuales
             Route::get('/ajuste', [InventarioController::class, 'ajuste'])->name('inventario.ajuste');
@@ -122,12 +125,65 @@ Route::middleware('auth')->group(function () {
     });
 
     // =========================================================
+    // MÓDULO DE PRODUCCIÓN
+    // =========================================================
+    Route::prefix('produccion')->group(function () {
+        // Órdenes de Producción
+        Route::resource('ordenes', OrdenProduccionController::class)->names([
+            'index' => 'produccion.ordenes.index',
+            'create' => 'produccion.ordenes.create',
+            'store' => 'produccion.ordenes.store',
+            'destroy' => 'produccion.ordenes.destroy',
+        ])->except(['show', 'edit', 'update']);
+        
+        // Procesos de la Orden
+        Route::get('ordenes/{orden}/procesos', [OrdenProcesoController::class, 'index'])->name('ordenes.procesos.index');
+        Route::get('ordenes/{orden}/procesos/create', [OrdenProcesoController::class, 'create'])->name('ordenes.procesos.create');
+        Route::post('ordenes/{orden}/procesos', [OrdenProcesoController::class, 'store'])->name('ordenes.procesos.store');
+        Route::delete('procesos/{proceso}', [OrdenProcesoController::class, 'destroy'])->name('ordenes.procesos.destroy');
+        Route::get('ordenes/{orden}/procesos/{proceso}/ejecutar', [OrdenProcesoController::class, 'ejecutar'])->name('ordenes.procesos.ejecutar');
+        Route::post('ordenes/{orden}/procesos/{proceso}/componentes', [OrdenProcesoController::class, 'storeComponentes'])->name('ordenes.procesos.componentes.store');
+        Route::delete('ordenes/{orden}/procesos/{proceso}/componentes/{componente}', [OrdenProcesoController::class, 'destroyComponente'])->name('ordenes.procesos.componentes.destroy');
+        Route::post('ordenes/{orden}/procesos/{proceso}/finalizar', [OrdenProcesoController::class, 'finalizar'])->name('ordenes.procesos.finalizar');
+        Route::get('api/formulas/composicion', [OrdenProcesoController::class, 'getFormulaComponents'])->name('api.formulas.composicion');
+    });
+
+    // =========================================================
     // OTROS ROLES (Dashboards específicos)
     // =========================================================
-    Route::get('/supervisor/dashboard', function () { return view('supervisor.dashboard'); })
-        ->name('supervisor.dashboard')->middleware('role:Supervisor');
+    Route::get('/supervisor/dashboard', function () {
+        $ordenesActivas = DB::table('orden_produccion_global')
+            ->where('activo', 1)
+            ->whereIn('estado', ['PENDIENTE', 'EN_PROCESO'])
+            ->count();
 
-    Route::get('/especialista/dashboard', function () { return view('especialista.dashboard'); })
-        ->name('especialista.dashboard')->middleware('role:Especialista');
+        $pendientesValidar = DB::table('produccion_ingresos_proceso')
+            ->where('estado', 'PENDIENTE')
+            ->count();
+
+        $produccionDia = DB::table('componentes_orden_produccion_global')
+            ->whereDate('fecha_creacion', now()->toDateString())
+            ->where('estado', 1)
+            ->sum('cantidad');
+
+        return view('supervisor.dashboard', compact('ordenesActivas', 'pendientesValidar', 'produccionDia'));
+    })->name('supervisor.dashboard')->middleware('role:Supervisor');
+
+    Route::get('/especialista/dashboard', function () {
+        $totalFormulas = DB::table('formula_produccion')->where('estado', 1)->count();
+        $totalComposiciones = DB::table('composicion_formula')->count();
+        $totalProductos = DB::table('producto')->where('estado', 1)->count();
+        $totalProcesos = DB::table('proceso_produccion')->where('estado', 1)->count();
+        return view('especialista.dashboard', compact('totalFormulas', 'totalComposiciones', 'totalProductos', 'totalProcesos'));
+    })->name('especialista.dashboard')->middleware('role:Especialista');
+
+    // =========================================================
+    // MÓDULO DE REPORTES
+    // =========================================================
+    Route::prefix('reportes')->name('reportes.')->group(function () {
+        Route::get('/', [ReporteController::class, 'index'])->name('index');
+        Route::get('/produccion', [ReporteController::class, 'produccion'])->name('produccion');
+        Route::get('/inventario', [ReporteController::class, 'inventario'])->name('inventario');
+    });
 
 });
