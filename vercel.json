@@ -1,12 +1,13 @@
 {
-    "buildCommand": "npm run build",
-    "outputDirectory": "public",
+    "buildCommand": "npm run build && mkdir -p .vercel-dist/public && cp -r public/* .vercel-dist/public/ && mkdir -p .vercel-dist/api && cp api/index.php .vercel-dist/api/",
+    "outputDirectory": ".vercel-dist",
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.9.0"
         }
     },
     "rewrites": [
+        { "source": "/build/(.*)", "destination": "/public/build/$1" },
         { "source": "/(.*)", "destination": "/api/index.php" }
     ],
     "headers": [
@@ -33,6 +34,5 @@
         "SESSION_DRIVER": "array",
         "VIEW_COMPILED_PATH": "/tmp/views",
         "SSR_TEMP_PATH": "/tmp/ssr"
-    },
-    "cleanUrls": true
+    }
 }
