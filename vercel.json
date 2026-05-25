@@ -1,14 +1,11 @@
 {
-    "buildCommand": "npm run build && mkdir -p .vercel-dist/public && cp -r public/* .vercel-dist/public/ && mkdir -p .vercel-dist/api && cp api/index.php .vercel-dist/api/",
-    "outputDirectory": ".vercel-dist",
-    "functions": {
-        "api/index.php": {
-            "runtime": "vercel-php@0.9.0"
-        }
-    },
-    "rewrites": [
-        { "source": "/build/(.*)", "destination": "/public/build/$1" },
-        { "source": "/(.*)", "destination": "/api/index.php" }
+    "builds": [
+        { "src": "api/index.php", "use": "vercel-php@0.9.0" },
+        { "src": "public/**", "use": "@vercel/static" }
+    ],
+    "routes": [
+        { "src": "/build/(.*)", "dest": "public/build/$1" },
+        { "src": "/(.*)", "dest": "/api/index.php" }
     ],
     "headers": [
         {
