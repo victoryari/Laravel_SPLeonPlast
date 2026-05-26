@@ -194,13 +194,18 @@
     let tablaBody = document.getElementById('tbodyProductos');
     const searchUrl = '{{ route("api.productos.search") }}';
     let productoSeleccionado = null;
+    
+    // Datos de almacenes como JSON para usarlos en el template dinámico
+    const almacenesData = {!! json_encode($almacenes->map(fn($a) => ['codigo' => $a->codigo_almacen, 'descripcion' => $a->descripcion])->all()) !!};
 
     function getProductName(text) {
         const m = text.match(/\]\s*(.*)/);
         return m ? m[1] : text;
     }
 
-    const templateHTML = `
+    function generarTemplateHTML() {
+        let opcionesAlmacen = almacenesData.map(a => `<option value="${a.codigo}">${a.descripcion}</option>`).join('');
+        return `
         <tr class="fila-producto">
             <td class="p-1">
                 <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title=""></span>
@@ -208,9 +213,7 @@
             </td>
             <td class="p-1">
                 <select class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" style="height:28px">
-                    @foreach($almacenes as $a)
-                        <option value="{{ $a->codigo_almacen }}">{{ $a->descripcion }}</option>
-                    @endforeach
+                    ${opcionesAlmacen}
                 </select>
             </td>
             <td class="p-1">
@@ -227,10 +230,11 @@
             </td>
         </tr>
     `;
+    }
 
     function agregarFila(producto) {
         const div = document.createElement('div');
-        div.innerHTML = templateHTML;
+        div.innerHTML = generarTemplateHTML();
         const tr = div.firstElementChild;
 
         const idx = filaIdx++;
