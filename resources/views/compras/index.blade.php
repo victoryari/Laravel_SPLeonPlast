@@ -73,7 +73,7 @@
                                     @case('RECIBIDA')
                                         <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold border border-green-200">RECIBIDA</span>
                                         @break
-                                    @case('ANULADA')
+                                    @case('CANCELADA')
                                         <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-bold border border-red-200">ANULADA</span>
                                         @break
                                     @default

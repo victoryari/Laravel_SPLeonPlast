@@ -34,8 +34,8 @@
                             <div class="md:col-span-4">
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Tipo Doc. <span class="text-red-500">*</span></label>
                                 <select name="tipo_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg block p-2.5" required>
-                                    @foreach(['FACTURA', 'BOLETA', 'GUIA', 'TICKET'] as $tipo)
-                                        <option value="{{ $tipo }}" {{ $compra->tipo_documento == $tipo ? 'selected' : '' }}>{{ $tipo }}</option>
+                                    @foreach(['FACTURA' => 'FACTURA', 'BOLETA' => 'BOLETA', 'GUIA_REMISION' => 'GUÍA DE REMISIÓN', 'OTRO' => 'OTRO'] as $val => $label)
+                                        <option value="{{ $val }}" {{ $compra->tipo_documento == $val ? 'selected' : '' }}>{{ $label }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -162,6 +162,12 @@
     let filaIdx = {{ count($compra->detalles) }};
     let tabla = document.querySelector('#tablaProductos tbody');
 
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2(select2Config); } catch(e) {}
+        }
+    });
+
     const select2Config = {
         ajax: {
             url: '{{ route("api.productos.search") }}',
@@ -177,8 +183,24 @@
         language: { inputTooShort: function() { return 'Escriba al menos 1 car\u00e1cter'; } }
     };
 
+    function initSelect2() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2(select2Config); } catch(e) {}
+        }
+    }
+
+    function destroySelect2() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2('destroy'); } catch(e) {}
+        }
+    }
+
+    function reinitSelect2() {
+        destroySelect2();
+        initSelect2();
+    }
+
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
-        try { $('.select-prod').select2('destroy'); } catch(e) {}
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
@@ -192,7 +214,7 @@
         
         tabla.appendChild(tr);
         filaIdx++;
-        try { $('.select-prod').select2(select2Config); } catch(e) {}
+        reinitSelect2();
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {
@@ -222,15 +244,12 @@
         const igv = st * 0.18;
         const total = st + igv;
 
-        document.getElementById('txt_sub').innerText = 'S/ ' + st.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('txt_igv').innerText = 'S/ ' + igv.toLocaleString('en-US', {minimumFractionDigits: 2});
-        document.getElementById('txt_total').innerText = 'S/ ' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+        document.getElementById('txt_sub').innerText = 'S/ ' + st.toFixed(2);
+        document.getElementById('txt_igv').innerText = 'S/ ' + igv.toFixed(2);
+        document.getElementById('txt_total').innerText = 'S/ ' + total.toFixed(2);
         
         document.getElementById('h_sub').value = st.toFixed(2);
         document.getElementById('h_igv').value = igv.toFixed(2);
         document.getElementById('h_total').value = total.toFixed(2);
     }
-
-    try { $('.select-prod').select2(select2Config); } catch(e) {}
-</script>
 @endsection

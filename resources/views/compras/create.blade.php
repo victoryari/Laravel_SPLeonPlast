@@ -34,8 +34,8 @@
                                 <select name="tipo_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required>
                                     <option value="FACTURA">FACTURA</option>
                                     <option value="BOLETA">BOLETA</option>
-                                    <option value="GUIA">GUÍA DE REMISIÓN</option>
-                                    <option value="TICKET">TICKET</option>
+                                    <option value="GUIA_REMISION">GUÍA DE REMISIÓN</option>
+                                    <option value="OTRO">OTRO</option>
                                 </select>
                             </div>
                             <div class="md:col-span-3">
@@ -201,6 +201,12 @@
     let filaIdx = 1;
     let tabla = document.querySelector('#tablaProductos tbody');
 
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2(select2Config); } catch(e) {}
+        }
+    });
+
     const select2Config = {
         ajax: {
             url: '{{ route("api.productos.search") }}',
@@ -216,8 +222,24 @@
         language: { inputTooShort: function() { return 'Escriba al menos 1 car\u00e1cter'; } }
     };
 
+    function initSelect2() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2(select2Config); } catch(e) {}
+        }
+    }
+
+    function destroySelect2() {
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2('destroy'); } catch(e) {}
+        }
+    }
+
+    function reinitSelect2() {
+        destroySelect2();
+        initSelect2();
+    }
+
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
-        try { $('.select-prod').select2('destroy'); } catch(e) {}
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
         tr.querySelector('.out-sub').value = '0.00';
@@ -231,7 +253,7 @@
         
         tabla.appendChild(tr);
         filaIdx++;
-        try { $('.select-prod').select2(select2Config); } catch(e) {}
+        reinitSelect2();
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {
@@ -265,8 +287,6 @@
         document.getElementById('h_igv').value = igv.toFixed(2);
         document.getElementById('h_total').value = total.toFixed(2);
     }
-
-    try { $('.select-prod').select2(select2Config); } catch(e) {}
 
     document.getElementById('formNuevoProveedor').addEventListener('submit', async (e) => {
         e.preventDefault();

@@ -11,7 +11,11 @@
                     {{ $compra->tipo_documento }}: {{ $compra->serie_documento }}-{{ $compra->numero_documento }}
                 </h1>
                 <span class="px-3 py-1 rounded-full text-xs font-bold 
-                    {{ $compra->estado == 'PENDIENTE' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700' }}">
+                    @switch($compra->estado)
+                        @case('PENDIENTE') bg-amber-100 text-amber-700 @break
+                        @case('CANCELADA') bg-red-100 text-red-700 @break
+                        @default bg-green-100 text-green-700
+                    @endswitch">
                     {{ $compra->estado }}
                 </span>
             </div>

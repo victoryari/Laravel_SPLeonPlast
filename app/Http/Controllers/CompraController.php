@@ -47,6 +47,19 @@ class CompraController extends Controller
     }
 
     public function store(Request $request) {
+        $request->validate([
+            'tipo_documento' => 'required|string|max:50',
+            'serie_documento' => 'required|string|max:20',
+            'numero_documento' => 'required|string|max:50',
+            'fecha_compra' => 'required|date',
+            'ruc_proveedor' => 'required|string|max:20',
+            'productos' => 'required|array|min:1',
+            'productos.*.codigo' => 'required|string|max:50',
+            'productos.*.cantidad' => 'required|numeric|min:0.01',
+            'productos.*.precio' => 'required|numeric|min:0',
+            'productos.*.codigo_almacen' => 'required|string|max:20',
+        ]);
+
         try {
             DB::beginTransaction();
             $prov = Proveedor::where('ruc', $request->ruc_proveedor)->first();
@@ -98,6 +111,19 @@ class CompraController extends Controller
     }
 
     public function update(Request $request, $id) {
+        $request->validate([
+            'tipo_documento' => 'required|string|max:50',
+            'serie_documento' => 'required|string|max:20',
+            'numero_documento' => 'required|string|max:50',
+            'fecha_compra' => 'required|date',
+            'ruc_proveedor' => 'required|string|max:20',
+            'productos' => 'required|array|min:1',
+            'productos.*.codigo' => 'required|string|max:50',
+            'productos.*.cantidad' => 'required|numeric|min:0.01',
+            'productos.*.precio' => 'required|numeric|min:0',
+            'productos.*.codigo_almacen' => 'required|string|max:20',
+        ]);
+
         try {
             DB::beginTransaction();
             $compra = Compra::findOrFail($id);
@@ -107,6 +133,7 @@ class CompraController extends Controller
                 'tipo_documento' => $request->tipo_documento,
                 'serie_documento' => strtoupper($request->serie_documento),
                 'numero_documento' => $request->numero_documento,
+                'fecha_compra' => $request->fecha_compra,
                 'proveedor' => $prov->razon_social ?? $compra->proveedor,
                 'ruc_proveedor' => $request->ruc_proveedor,
                 'subtotal' => $request->total_subtotal,
@@ -132,6 +159,19 @@ class CompraController extends Controller
             }
             DB::commit();
             return redirect()->route('compras.index')->with('success', 'Actualizado.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function anular($id) {
+        try {
+            DB::beginTransaction();
+            $compra = Compra::findOrFail($id);
+            $compra->update(['estado' => 'CANCELADA']);
+            DB::commit();
+            return redirect()->route('compras.index')->with('success', 'Compra anulada correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', $e->getMessage());
