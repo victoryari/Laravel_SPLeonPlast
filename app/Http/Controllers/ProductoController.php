@@ -138,6 +138,29 @@ class ProductoController extends Controller
     }
 
     /**
+     * Búsqueda AJAX para Select2 (código + descripción).
+     */
+    public function searchAjax(Request $request)
+    {
+        $search = $request->input('q', '');
+        $productos = Producto::where('estado', 1)
+            ->where(function ($q) use ($search) {
+                $q->where('codigo', 'LIKE', "%{$search}%")
+                  ->orWhere('descripcion', 'LIKE', "%{$search}%");
+            })
+            ->orderBy('descripcion', 'asc')
+            ->limit(15)
+            ->get(['codigo', 'descripcion']);
+
+        return response()->json(
+            $productos->map(fn($p) => [
+                'id'   => $p->codigo,
+                'text' => "[{$p->codigo}] {$p->descripcion}",
+            ])
+        );
+    }
+
+    /**
      * Anulación lógica del registro.
      */
     public function destroy($codigo)

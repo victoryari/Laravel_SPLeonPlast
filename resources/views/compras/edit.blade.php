@@ -90,9 +90,8 @@
                                     <tr class="fila-producto">
                                         <td class="p-2">
                                             <select name="productos[{{ $index }}][codigo]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-prod" required>
-                                                    @foreach($productos as $prod)
-                                                    <option value="{{ $prod->codigo }}" {{ $det->codigo_producto == $prod->codigo ? 'selected' : '' }}>[{{ $prod->codigo }}] {{ $prod->descripcion }}</option>
-                                                @endforeach
+                                                <option value="">Seleccionar...</option>
+                                                <option value="{{ $det->codigo_producto }}" selected>[{{ $det->codigo_producto }}] {{ $det->descripcion_producto }}</option>
                                             </select>
                                         </td>
                                         <td class="p-2">
@@ -163,6 +162,21 @@
     let filaIdx = {{ count($compra->detalles) }};
     let tabla = document.querySelector('#tablaProductos tbody');
 
+    const select2Config = {
+        ajax: {
+            url: '{{ route("api.productos.search") }}',
+            dataType: 'json',
+            delay: 300,
+            data: function(params) { return { q: params.term }; },
+            processResults: function(data) { return { results: data }; },
+            cache: true
+        },
+        minimumInputLength: 1,
+        placeholder: 'Buscar por c\u00f3digo o nombre...',
+        width: '100%',
+        language: { inputTooShort: function() { return 'Escriba al menos 1 car\u00e1cter'; } }
+    };
+
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
         try { $('.select-prod').select2('destroy'); } catch(e) {}
         const tr = document.querySelector('.fila-producto').cloneNode(true);
@@ -178,10 +192,9 @@
         
         tabla.appendChild(tr);
         filaIdx++;
-        try { $('.select-prod').select2(); } catch(e) {}
+        try { $('.select-prod').select2(select2Config); } catch(e) {}
     });
 
-    // Escuchar cambios para cálculos
     document.getElementById('tablaProductos').addEventListener('input', e => {
         if(e.target.classList.contains('input-cant') || e.target.classList.contains('input-prec')) {
             const fila = e.target.closest('tr');
@@ -192,7 +205,6 @@
         }
     });
 
-    // Eliminar fila
     document.getElementById('tablaProductos').addEventListener('click', e => {
         if(e.target.closest('.btn-del')) {
             if(document.querySelectorAll('.fila-producto').length > 1) {
@@ -219,6 +231,6 @@
         document.getElementById('h_total').value = total.toFixed(2);
     }
 
-    try { $('.select-prod').select2({ width: 'resolve' }); } catch(e) {}
+    try { $('.select-prod').select2(select2Config); } catch(e) {}
 </script>
 @endsection

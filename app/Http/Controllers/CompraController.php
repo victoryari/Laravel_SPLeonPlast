@@ -31,13 +31,10 @@ class CompraController extends Controller
 
     public function create() 
     {
-        // Obtenemos los registros activos para enviarlos al formulario de nueva compra
         $proveedores = Proveedor::where('activo', 1)->get();
-        $productos = Producto::where('estado', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
 
-        // Retorna la vista de tu formulario (asegúrate de que tu archivo blade se llame create.blade.php)
-        return view('compras.create', compact('proveedores', 'productos', 'almacenes'));
+        return view('compras.create', compact('proveedores', 'almacenes'));
     }
 
     public function show($id)
@@ -96,9 +93,8 @@ class CompraController extends Controller
     public function edit($id) {
         $compra = Compra::with('detalles')->findOrFail($id);
         $proveedores = Proveedor::where('activo', 1)->get();
-        $productos = Producto::where('estado', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('compras.edit', compact('compra', 'proveedores', 'productos', 'almacenes'));
+        return view('compras.edit', compact('compra', 'proveedores', 'almacenes'));
     }
 
     public function update(Request $request, $id) {
