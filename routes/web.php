@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::match(['GET', 'POST'], '/productos/search-ajax', [ProductoController::class, 'searchAjax'])->name('api.productos.search');
+    Route::get('/productos/search-ajax', [ProductoController::class, 'searchAjax'])->name('api.productos.search');
 
     // =========================================================
     // MODULO ADMINISTRATIVO (Tablas Maestras)
