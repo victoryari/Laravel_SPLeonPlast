@@ -2,6 +2,7 @@
 @section('title', 'Registrar Nueva Compra')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -95,7 +96,7 @@
                                             <select name="productos[0][codigo]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-prod" required>
                                                 <option value="">Seleccionar...</option>
                                                 @foreach($productos as $prod)
-                                                    <option value="{{ $prod->codigo }}">{{ $prod->descripcion }}</option>
+                                                    <option value="{{ $prod->codigo }}">[{{ $prod->codigo }}] {{ $prod->descripcion }}</option>
                                                 @endforeach
                                             </select>
                                         </td>
@@ -197,11 +198,15 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     let filaIdx = 1;
-    const tabla = document.querySelector('#tablaProductos tbody');
+    let tabla = document.querySelector('#tablaProductos tbody');
+    $('.select-prod').select2({ width: 'resolve' });
 
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
+        $('.select-prod').select2('destroy');
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
         tr.querySelector('.out-sub').value = '0.00';
@@ -209,12 +214,13 @@
         tr.querySelector('.select-alm').value = '';
         
         tr.querySelector('.select-prod').name = `productos[${filaIdx}][codigo]`;
-        tr.querySelector('.select-alm').name = `productos[${filaIdx}][codigo_almacen]`; // CORREGIDO AQUÍ
+        tr.querySelector('.select-alm').name = `productos[${filaIdx}][codigo_almacen]`;
         tr.querySelector('.input-cant').name = `productos[${filaIdx}][cantidad]`;
         tr.querySelector('.input-prec').name = `productos[${filaIdx}][precio]`;
         
         tabla.appendChild(tr);
         filaIdx++;
+        $('.select-prod').select2();
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {

@@ -2,6 +2,7 @@
 @section('title', 'Editar Compra')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -89,8 +90,8 @@
                                     <tr class="fila-producto">
                                         <td class="p-2">
                                             <select name="productos[{{ $index }}][codigo]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-prod" required>
-                                                @foreach($productos as $prod)
-                                                    <option value="{{ $prod->codigo }}" {{ $det->codigo_producto == $prod->codigo ? 'selected' : '' }}>{{ $prod->descripcion }}</option>
+                                                    @foreach($productos as $prod)
+                                                    <option value="{{ $prod->codigo }}" {{ $det->codigo_producto == $prod->codigo ? 'selected' : '' }}>[{{ $prod->codigo }}] {{ $prod->descripcion }}</option>
                                                 @endforeach
                                             </select>
                                         </td>
@@ -156,21 +157,21 @@
     </form>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    // Iniciar el índice con el número de filas existentes
     let filaIdx = {{ count($compra->detalles) }};
-    const tabla = document.querySelector('#tablaProductos tbody');
+    let tabla = document.querySelector('#tablaProductos tbody');
+    $('.select-prod').select2({ width: 'resolve' });
 
-    // Clonar fila
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
+        $('.select-prod').select2('destroy');
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         
-        // Limpiar valores del clon
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
         tr.querySelector('.out-sub').value = '0.00';
         tr.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
         
-        // Actualizar nombres de los inputs con el nuevo índice
         tr.querySelector('.select-prod').name = `productos[${filaIdx}][codigo]`;
         tr.querySelector('.select-alm').name = `productos[${filaIdx}][codigo_almacen]`;
         tr.querySelector('.input-cant').name = `productos[${filaIdx}][cantidad]`;
@@ -178,6 +179,7 @@
         
         tabla.appendChild(tr);
         filaIdx++;
+        $('.select-prod').select2();
     });
 
     // Escuchar cambios para cálculos
