@@ -203,10 +203,9 @@
 <script>
     let filaIdx = 1;
     let tabla = document.querySelector('#tablaProductos tbody');
-    $('.select-prod').select2({ width: 'resolve' });
 
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
-        $('.select-prod').select2('destroy');
+        try { $('.select-prod').select2('destroy'); } catch(e) {}
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
         tr.querySelector('.out-sub').value = '0.00';
@@ -220,7 +219,7 @@
         
         tabla.appendChild(tr);
         filaIdx++;
-        $('.select-prod').select2();
+        try { $('.select-prod').select2(); } catch(e) {}
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {
@@ -254,6 +253,8 @@
         document.getElementById('h_igv').value = igv.toFixed(2);
         document.getElementById('h_total').value = total.toFixed(2);
     }
+
+    try { $('.select-prod').select2({ width: 'resolve' }); } catch(e) {}
 
     document.getElementById('formNuevoProveedor').addEventListener('submit', async (e) => {
         e.preventDefault();
