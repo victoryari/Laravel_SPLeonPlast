@@ -30,6 +30,8 @@
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "database",
+        "SESSION_SECURE_COOKIE": "true",
+        "SESSION_DOMAIN": ".leonplast-laravel.vercel.app",
         "VIEW_COMPILED_PATH": "/tmp/views",
         "SSR_TEMP_PATH": "/tmp/ssr",
         "MYSQL_ATTR_SSL_CA": "storage/app/certs/global-bundle.pem",
