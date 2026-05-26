@@ -89,9 +89,8 @@
                                     @foreach($compra->detalles as $index => $det)
                                     <tr class="fila-producto">
                                         <td class="p-2">
-                                            <select name="productos[{{ $index }}][codigo]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-prod" required>
+                                            <select name="productos[{{ $index }}][codigo]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-prod" data-selected="{{ $det->codigo_producto }}" required>
                                                 <option value="">Seleccionar...</option>
-                                                <option value="{{ $det->codigo_producto }}" selected>[{{ $det->codigo_producto }}] {{ $det->descripcion_producto }}</option>
                                             </select>
                                         </td>
                                         <td class="p-2">
@@ -162,50 +161,43 @@
     let filaIdx = {{ count($compra->detalles) }};
     let tabla = document.querySelector('#tablaProductos tbody');
 
+    const searchUrl = '{{ route("api.productos.search") }}';
+
+    async function cargarProductos(select, selectedCode) {
+        try {
+            const res = await fetch(searchUrl + '?q=');
+            const productos = await res.json();
+            select.innerHTML = '<option value="">Seleccionar...</option>';
+            productos.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.text;
+                if (p.id === selectedCode) opt.selected = true;
+                select.appendChild(opt);
+            });
+        } catch(e) {
+            select.innerHTML = '<option value="">Error al cargar</option>';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.select-prod').forEach(s => {
+            const currentVal = s.getAttribute('data-selected') || '';
+            cargarProductos(s, currentVal);
+        });
         if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
-            try { $('.select-prod').select2(select2Config); } catch(e) {}
+            try {
+                $('.select-prod').select2({ajax: {url: searchUrl, dataType: 'json', delay: 300, data: function(p) { return {q: p.term}; }, processResults: function(d) { return {results: d}; }, cache: true}, minimumInputLength: 0, placeholder: 'Buscar por código o nombre...', width: '100%'});
+            } catch(e) {}
         }
     });
 
-    const select2Config = {
-        ajax: {
-            url: '{{ route("api.productos.search") }}',
-            dataType: 'json',
-            delay: 300,
-            data: function(params) { return { q: params.term }; },
-            processResults: function(data) { return { results: data }; },
-            cache: true
-        },
-        minimumInputLength: 0,
-        placeholder: 'Buscar por c\u00f3digo o nombre...',
-        width: '100%',
-        language: { inputTooShort: function() { return 'Escriba al menos 1 car\u00e1cter'; } }
-    };
-
-    function initSelect2() {
-        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
-            try { $('.select-prod').select2(select2Config); } catch(e) {}
-        }
-    }
-
-    function destroySelect2() {
-        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
-            try { $('.select-prod').select2('destroy'); } catch(e) {}
-        }
-    }
-
-    function reinitSelect2() {
-        destroySelect2();
-        initSelect2();
-    }
-
-    document.getElementById('btnAgregarFila').addEventListener('click', () => {
+    document.getElementById('btnAgregarFila').addEventListener('click', async () => {
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
         tr.querySelector('.out-sub').value = '0.00';
-        tr.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+        tr.querySelectorAll('select').forEach(s => s.innerHTML = '<option value="">Cargando...</option>');
         
         tr.querySelector('.select-prod').name = `productos[${filaIdx}][codigo]`;
         tr.querySelector('.select-alm').name = `productos[${filaIdx}][codigo_almacen]`;
@@ -213,8 +205,11 @@
         tr.querySelector('.input-prec').name = `productos[${filaIdx}][precio]`;
         
         tabla.appendChild(tr);
+        await cargarProductos(tr.querySelector('.select-prod'));
         filaIdx++;
-        reinitSelect2();
+        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
+            try { $('.select-prod').select2('destroy'); $('.select-prod').select2({ajax: {url: searchUrl, dataType: 'json', delay: 300, data: function(p) { return {q: p.term}; }, processResults: function(d) { return {results: d}; }, cache: true}, minimumInputLength: 0, placeholder: 'Buscar por código o nombre...', width: '100%'}); } catch(e) {}
+        }
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {
