@@ -70,35 +70,42 @@
                     </h2>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse table-fixed">
+                        <colgroup>
+                            <col class="w-[40%]">
+                            <col class="w-[15%]">
+                            <col class="w-[13%]">
+                            <col class="w-[16%]">
+                            <col class="w-[16%]">
+                        </colgroup>
                         <thead>
-                            <tr class="bg-slate-50 text-xs uppercase text-slate-500 tracking-wider">
-                                <th class="p-4 font-semibold">Producto</th>
-                                <th class="p-4 font-semibold text-center">Almacén</th>
-                                <th class="p-4 font-semibold text-center">Cant.</th>
-                                <th class="p-4 font-semibold text-right">P. Unit.</th>
-                                <th class="p-4 font-semibold text-right">Total</th>
+                            <tr class="bg-slate-50 text-[11px] uppercase text-slate-500 tracking-wider">
+                                <th class="p-2 font-semibold">Producto</th>
+                                <th class="p-2 font-semibold text-center">Almacén</th>
+                                <th class="p-2 font-semibold text-center">Cant.</th>
+                                <th class="p-2 font-semibold text-right">P. Unit.</th>
+                                <th class="p-2 font-semibold text-right">Total</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm">
+                        <tbody class="divide-y divide-slate-100">
                             @foreach($compra->detalles as $detalle)
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="p-4">
-                                    <div class="font-medium text-slate-800">{{ $detalle->descripcion_producto }}</div>
-                                    <div class="text-xs text-slate-500">{{ $detalle->codigo_producto }}</div>
+                            <tr class="text-xs hover:bg-slate-50/50 transition-colors">
+                                <td class="p-2">
+                                    <div class="truncate font-medium text-slate-800" title="{{ $detalle->descripcion_producto }}">{{ $detalle->descripcion_producto }}</div>
+                                    <div class="text-[10px] text-slate-500">{{ $detalle->codigo_producto }}</div>
                                 </td>
-                                <td class="p-4 text-center">
-                                    <span class="px-2 py-1 bg-slate-100 rounded text-xs font-medium text-slate-600">
+                                <td class="p-2 text-center">
+                                    <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-medium text-slate-600">
                                         {{ $detalle->codigo_almacen }}
                                     </span>
                                 </td>
-                                <td class="p-4 text-center font-semibold text-slate-700">
+                                <td class="p-2 text-center font-semibold text-slate-700">
                                     {{ number_format($detalle->cantidad, 2) }}
                                 </td>
-                                <td class="p-4 text-right text-slate-600">
+                                <td class="p-2 text-right text-slate-600">
                                     {{ number_format($detalle->precio_unitario, 2) }}
                                 </td>
-                                <td class="p-4 text-right font-bold text-slate-900">
+                                <td class="p-2 text-right font-semibold text-slate-900">
                                     S/ {{ number_format($detalle->total, 2) }}
                                 </td>
                             </tr>

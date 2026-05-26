@@ -77,51 +77,59 @@
                         </h2>
                     </div>
                     
-                    <div class="p-6">
-                        <div class="overflow-x-auto rounded-lg border border-slate-200 mb-4">
-                            <table class="w-full text-left border-collapse" id="tablaProductos">
+                    <div class="p-4">
+                        <div class="rounded-lg border border-slate-200 mb-3">
+                            <table class="w-full text-left border-collapse table-fixed" id="tablaProductos">
+                                <colgroup>
+                                    <col class="w-[34%]">
+                                    <col class="w-[18%]">
+                                    <col class="w-[12%]">
+                                    <col class="w-[14%]">
+                                    <col class="w-[14%]">
+                                    <col class="w-[8%]">
+                                </colgroup>
                                 <thead>
-                                    <tr class="bg-slate-100 text-xs uppercase text-slate-500 tracking-wider">
-                                        <th class="p-3 font-semibold">Producto / Insumo</th>
-                                        <th class="p-3 font-semibold">Almacén Destino</th>
-                                        <th class="p-3 font-semibold w-24 text-center">Cant.</th>
-                                        <th class="p-3 font-semibold w-32 text-right">P. Unit.</th>
-                                        <th class="p-3 font-semibold w-32 text-right">Subtotal</th>
-                                        <th class="p-3 font-semibold w-10 text-center"><i class="fas fa-cog"></i></th>
+                                    <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
+                                        <th class="p-2 font-semibold">Producto / Insumo</th>
+                                        <th class="p-2 font-semibold">Almacén</th>
+                                        <th class="p-2 font-semibold text-center">Cant.</th>
+                                        <th class="p-2 font-semibold text-right">P. Unit.</th>
+                                        <th class="p-2 font-semibold text-right">Subtotal</th>
+                                        <th class="p-2 font-semibold text-center"><i class="fas fa-cog"></i></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100 text-sm">
+                                <tbody class="divide-y divide-slate-100">
                                     <tr class="fila-producto">
-                                        <td class="p-2">
-                                            <select name="productos[0][codigo]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-prod" required>
+                                        <td class="p-1">
+                                            <select name="productos[0][codigo]" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-prod" required style="height:28px">
                                                 <option value="">Seleccionar...</option>
                                             </select>
                                         </td>
-                                        <td class="p-2">
-                                            <select name="productos[0][codigo_almacen]" class="w-full border-transparent bg-slate-50 rounded-lg text-sm select-alm" required>
+                                        <td class="p-1">
+                                            <select name="productos[0][codigo_almacen]" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" required style="height:28px">
                                                 <option value="">Seleccionar...</option>
                                                 @foreach($almacenes as $a)
                                                     <option value="{{ $a->codigo_almacen }}">{{ $a->descripcion }}</option>
                                                 @endforeach
                                             </select>
                                         </td>
-                                        <td class="p-2">
-                                            <input type="number" name="productos[0][cantidad]" step="0.01" min="0.01" class="w-full border-transparent bg-slate-50 text-center rounded-lg text-sm input-cant" required>
+                                        <td class="p-1">
+                                            <input type="number" name="productos[0][cantidad]" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-50 text-center rounded-md text-xs input-cant" required style="height:28px">
                                         </td>
-                                        <td class="p-2">
-                                            <input type="number" name="productos[0][precio]" step="0.01" min="0" class="w-full border-transparent bg-slate-50 text-right rounded-lg text-sm text-blue-700 font-bold input-prec" required>
+                                        <td class="p-1">
+                                            <input type="number" name="productos[0][precio]" step="0.01" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-blue-700 font-semibold input-prec" required style="height:28px">
                                         </td>
-                                        <td class="p-2">
-                                            <input type="text" class="w-full bg-transparent border-none text-right font-bold out-sub" value="0.00" readonly tabindex="-1">
+                                        <td class="p-1">
+                                            <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="0.00" readonly tabindex="-1" style="height:28px">
                                         </td>
-                                        <td class="p-2 text-center">
-                                            <button type="button" class="text-slate-300 hover:text-red-500 btn-del"><i class="fas fa-trash-alt"></i></button>
+                                        <td class="p-1 text-center">
+                                            <button type="button" class="text-slate-400 hover:text-red-500 btn-del text-xs" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <button type="button" id="btnAgregarFila" class="w-full py-3 border-2 border-dashed border-slate-300 rounded-xl text-slate-500 font-semibold hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex justify-center items-center gap-2">
+                        <button type="button" id="btnAgregarFila" class="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-xs text-slate-500 font-semibold hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex justify-center items-center gap-1">
                             <i class="fas fa-plus-circle"></i> Agregar nueva línea de producto
                         </button>
                     </div>
