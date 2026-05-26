@@ -2,7 +2,7 @@
 @section('title', 'Registrar Nueva Compra')
 
 @section('content')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="/vendor/select2/select2.min.css" rel="stylesheet" />
 <div class="container mx-auto px-4 py-6 max-w-7xl">
     
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -195,45 +195,39 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/select2/select2.min.js"></script>
 <script>
     let filaIdx = 1;
     let tabla = document.querySelector('#tablaProductos tbody');
 
     const searchUrl = '{{ route("api.productos.search") }}';
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
 
-    async function cargarProductos(select) {
+    function initSelect2() {
         try {
-            const res = await fetch(searchUrl + '?q=');
-            const productos = await res.json();
-            select.innerHTML = '<option value="">Seleccionar...</option>';
-            productos.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = p.text;
-                select.appendChild(opt);
+            $('.select-prod').select2({
+                ajax: {
+                    url: searchUrl, dataType: 'json', delay: 300,
+                    data: function(p) { return {q: p.term}; },
+                    processResults: function(d) { return {results: d}; },
+                    cache: true
+                },
+                minimumInputLength: 0,
+                placeholder: 'Buscar por código o nombre...',
+                width: '100%'
             });
-        } catch(e) {
-            select.innerHTML = '<option value="">Error al cargar</option>';
-        }
+        } catch(e) {}
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.select-prod').forEach(cargarProductos);
-        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
-            try {
-                $('.select-prod').select2({ajax: {url: searchUrl, dataType: 'json', delay: 300, data: function(p) { return {q: p.term}; }, processResults: function(d) { return {results: d}; }, cache: true}, minimumInputLength: 0, placeholder: 'Buscar por código o nombre...', width: '100%'});
-            } catch(e) {}
-        }
-    });
+    document.addEventListener('DOMContentLoaded', initSelect2);
 
-    document.getElementById('btnAgregarFila').addEventListener('click', async () => {
+    document.getElementById('btnAgregarFila').addEventListener('click', () => {
+        try { $('.select-prod').select2('destroy'); } catch(e) {}
         const tr = document.querySelector('.fila-producto').cloneNode(true);
         tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
         tr.querySelector('.out-sub').value = '0.00';
-        tr.querySelectorAll('select').forEach(s => s.innerHTML = '<option value="">Cargando...</option>');
+        tr.querySelector('.select-prod').value = '';
+        tr.querySelector('.select-alm').value = '';
         
         tr.querySelector('.select-prod').name = `productos[${filaIdx}][codigo]`;
         tr.querySelector('.select-alm').name = `productos[${filaIdx}][codigo_almacen]`;
@@ -241,11 +235,8 @@
         tr.querySelector('.input-prec').name = `productos[${filaIdx}][precio]`;
         
         tabla.appendChild(tr);
-        await cargarProductos(tr.querySelector('.select-prod'));
         filaIdx++;
-        if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined') {
-            try { $('.select-prod').select2('destroy'); $('.select-prod').select2({ajax: {url: searchUrl, dataType: 'json', delay: 300, data: function(p) { return {q: p.term}; }, processResults: function(d) { return {results: d}; }, cache: true}, minimumInputLength: 0, placeholder: 'Buscar por código o nombre...', width: '100%'}); } catch(e) {}
-        }
+        initSelect2();
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {
