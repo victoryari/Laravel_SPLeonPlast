@@ -76,16 +76,16 @@
                         <div class="rounded-lg border border-slate-200 mb-3">
                             <table class="w-full text-left border-collapse table-fixed" id="tablaProductos">
                                 <colgroup>
-                                    <col class="w-[34%]">
-                                    <col class="w-[18%]">
-                                    <col class="w-[12%]">
-                                    <col class="w-[14%]">
-                                    <col class="w-[14%]">
+                                    <col class="w-[28%]">
+                                    <col class="w-[15%]">
+                                    <col class="w-[13%]">
+                                    <col class="w-[15%]">
+                                    <col class="w-[15%]">
                                     <col class="w-[8%]">
                                 </colgroup>
                                 <thead>
                                     <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
-                                        <th class="p-2 font-semibold">Producto / Insumo</th>
+                                        <th class="p-2 font-semibold">Producto</th>
                                         <th class="p-2 font-semibold">Almacén</th>
                                         <th class="p-2 font-semibold text-center">Cant.</th>
                                         <th class="p-2 font-semibold text-right">P. Unit.</th>
@@ -93,26 +93,25 @@
                                         <th class="p-2 font-semibold text-center"><i class="fas fa-cog"></i></th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100">
+                                <tbody class="divide-y divide-slate-100" id="tbodyProductos">
                                     @foreach($compra->detalles as $index => $det)
                                     <tr class="fila-producto">
                                         <td class="p-1">
-                                            <select name="productos[{{ $index }}][codigo]" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-prod" data-selected="{{ $det->codigo_producto }}" required style="height:28px">
-                                                <option value="">Seleccionar...</option>
-                                            </select>
+                                            <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="{{ $det->descripcion_producto }}">{{ $det->descripcion_producto }}</span>
+                                            <input type="hidden" name="productos[{{ $index }}][codigo]" class="input-cod" value="{{ $det->codigo_producto }}">
                                         </td>
                                         <td class="p-1">
-                                            <select name="productos[{{ $index }}][codigo_almacen]" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" required style="height:28px">
+                                            <select name="productos[{{ $index }}][codigo_almacen]" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" style="height:28px">
                                                 @foreach($almacenes as $a)
                                                     <option value="{{ $a->codigo_almacen }}" {{ $det->codigo_almacen == $a->codigo_almacen ? 'selected' : '' }}>{{ $a->descripcion }}</option>
                                                 @endforeach
                                             </select>
                                         </td>
                                         <td class="p-1">
-                                            <input type="number" name="productos[{{ $index }}][cantidad]" value="{{ $det->cantidad }}" step="0.01" class="w-full border border-slate-200 bg-slate-50 text-center rounded-md text-xs input-cant" required style="height:28px">
+                                            <input type="number" name="productos[{{ $index }}][cantidad]" value="{{ $det->cantidad }}" step="0.01" class="w-full border border-slate-200 bg-slate-50 text-center rounded-md text-xs input-cant" style="height:28px">
                                         </td>
                                         <td class="p-1">
-                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $det->precio_unitario }}" step="0.01" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-blue-700 font-semibold input-prec" required style="height:28px">
+                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $det->precio_unitario }}" step="0.01" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-blue-700 font-semibold input-prec" style="height:28px">
                                         </td>
                                         <td class="p-1">
                                             <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="{{ number_format($det->subtotal, 2, '.', '') }}" readonly tabindex="-1" style="height:28px">
@@ -126,7 +125,7 @@
                             </table>
                         </div>
                         <button type="button" id="btnAgregarFila" class="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-xs text-slate-500 font-semibold hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all flex justify-center items-center gap-1">
-                            <i class="fas fa-plus-circle"></i> Agregar nueva línea
+                            <i class="fas fa-plus-circle"></i> Buscar y agregar producto
                         </button>
                     </div>
                 </div>
@@ -163,52 +162,141 @@
     </form>
 </div>
 
+<div id="modalProducto" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+        <div class="bg-slate-50/50 border-b border-slate-100 px-6 py-4 flex justify-between items-center">
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i class="fas fa-box text-blue-500"></i> Buscar Producto
+            </h3>
+            <button type="button" onclick="cerrarModalProducto()" class="text-slate-400 hover:text-red-500 transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+                <select id="selectProductoModal" class="w-full" style="width:100%"></select>
+            </div>
+            <div id="infoProductoSeleccionado" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1">
+                <p class="text-xs text-blue-800"><strong>Código:</strong> <span id="prodCodigo" class="font-mono"></span></p>
+                <p class="text-xs text-blue-800"><strong>Nombre:</strong> <span id="prodNombre"></span></p>
+            </div>
+            <button type="button" id="btnAgregarProducto" class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-bold transition-all flex justify-center items-center gap-2" disabled>
+                <i class="fas fa-plus-circle"></i> Agregar a la tabla
+            </button>
+        </div>
+    </div>
+</div>
+
 <script src="/vendor/jquery/jquery.min.js"></script>
 <script src="/vendor/select2/select2.min.js"></script>
 <script>
     let filaIdx = {{ count($compra->detalles) }};
-    let tabla = document.querySelector('#tablaProductos tbody');
-
+    let tablaBody = document.getElementById('tbodyProductos');
     const searchUrl = '{{ route("api.productos.search") }}';
 
-    function initSelect2() {
-        try {
-            $('.select-prod').select2({
+    function getProductName(text) {
+        const m = text.match(/\]\s*(.*)/);
+        return m ? m[1] : text;
+    }
+
+    const templateHTML = `
+        <tr class="fila-producto">
+            <td class="p-1">
+                <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title=""></span>
+                <input type="hidden" class="input-cod">
+            </td>
+            <td class="p-1">
+                <select class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" style="height:28px">
+                    @foreach($almacenes as $a)
+                        <option value="{{ $a->codigo_almacen }}">{{ $a->descripcion }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td class="p-1">
+                <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-50 text-center rounded-md text-xs input-cant" style="height:28px">
+            </td>
+            <td class="p-1">
+                <input type="number" step="0.01" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-blue-700 font-semibold input-prec" style="height:28px">
+            </td>
+            <td class="p-1">
+                <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="0.00" readonly tabindex="-1" style="height:28px">
+            </td>
+            <td class="p-1 text-center">
+                <button type="button" class="text-slate-400 hover:text-red-500 btn-del text-xs" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        </tr>
+    `;
+
+    function agregarFila(producto) {
+        const div = document.createElement('div');
+        div.innerHTML = templateHTML;
+        const tr = div.firstElementChild;
+
+        const idx = filaIdx++;
+        tr.querySelector('.input-cod').name = `productos[${idx}][codigo]`;
+        tr.querySelector('.select-alm').name = `productos[${idx}][codigo_almacen]`;
+        tr.querySelector('.input-cant').name = `productos[${idx}][cantidad]`;
+        tr.querySelector('.input-prec').name = `productos[${idx}][precio]`;
+
+        tr.querySelector('.input-cod').value = producto.id;
+        const nombre = getProductName(producto.text);
+        const span = tr.querySelector('.texto-prod');
+        span.textContent = nombre;
+        span.title = nombre;
+
+        tablaBody.appendChild(tr);
+    }
+
+    function cerrarModalProducto() {
+        document.getElementById('modalProducto').classList.add('hidden');
+    }
+
+    document.getElementById('btnAgregarFila').addEventListener('click', () => {
+        document.getElementById('infoProductoSeleccionado').classList.add('hidden');
+        document.getElementById('btnAgregarProducto').disabled = true;
+        $('#selectProductoModal').val(null).trigger('change');
+        document.getElementById('modalProducto').classList.remove('hidden');
+        setTimeout(() => $('#selectProductoModal').select2('open'), 250);
+    });
+
+    $(document).ready(function() {
+        if (typeof $().select2 !== 'undefined') {
+            $('#selectProductoModal').select2({
                 ajax: {
-                    url: searchUrl, dataType: 'json', delay: 300,
+                    url: searchUrl,
+                    dataType: 'json',
+                    delay: 300,
                     data: function(p) { return {q: p.term}; },
                     processResults: function(d) { return {results: d}; },
                     cache: true
                 },
                 minimumInputLength: 0,
                 placeholder: 'Buscar por código o nombre...',
-                width: '100%'
+                width: '100%',
+                dropdownParent: $('#modalProducto')
             });
-        } catch(e) {}
-    }
 
-    document.addEventListener('DOMContentLoaded', initSelect2);
+            $('#selectProductoModal').on('select2:select', function(e) {
+                const data = e.params.data;
+                document.getElementById('prodCodigo').textContent = data.id;
+                document.getElementById('prodNombre').textContent = getProductName(data.text);
+                document.getElementById('infoProductoSeleccionado').classList.remove('hidden');
+                document.getElementById('btnAgregarProducto').disabled = false;
+            });
+        }
+    });
 
-    document.getElementById('btnAgregarFila').addEventListener('click', () => {
-        try { $('.select-prod').select2('destroy'); } catch(e) {}
-        const tr = document.querySelector('.fila-producto').cloneNode(true);
-        
-        tr.querySelectorAll('input:not(.out-sub)').forEach(i => i.value = '');
-        tr.querySelector('.out-sub').value = '0.00';
-        tr.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
-        
-        tr.querySelector('.select-prod').name = `productos[${filaIdx}][codigo]`;
-        tr.querySelector('.select-alm').name = `productos[${filaIdx}][codigo_almacen]`;
-        tr.querySelector('.input-cant').name = `productos[${filaIdx}][cantidad]`;
-        tr.querySelector('.input-prec').name = `productos[${filaIdx}][precio]`;
-        
-        tabla.appendChild(tr);
-        filaIdx++;
-        initSelect2();
+    document.getElementById('btnAgregarProducto').addEventListener('click', () => {
+        const select = document.getElementById('selectProductoModal');
+        const data = $(select).select2('data')[0];
+        if (data) {
+            agregarFila(data);
+            cerrarModalProducto();
+        }
     });
 
     document.getElementById('tablaProductos').addEventListener('input', e => {
-        if(e.target.classList.contains('input-cant') || e.target.classList.contains('input-prec')) {
+        if (e.target.classList.contains('input-cant') || e.target.classList.contains('input-prec')) {
             const fila = e.target.closest('tr');
             const cant = parseFloat(fila.querySelector('.input-cant').value) || 0;
             const prec = parseFloat(fila.querySelector('.input-prec').value) || 0;
@@ -218,8 +306,9 @@
     });
 
     document.getElementById('tablaProductos').addEventListener('click', e => {
-        if(e.target.closest('.btn-del')) {
-            if(document.querySelectorAll('.fila-producto').length > 1) {
+        if (e.target.closest('.btn-del')) {
+            const tbody = document.getElementById('tbodyProductos');
+            if (tbody.querySelectorAll('.fila-producto').length > 1) {
                 e.target.closest('tr').remove();
                 recalcularTotales();
             } else {
@@ -242,4 +331,5 @@
         document.getElementById('h_igv').value = igv.toFixed(2);
         document.getElementById('h_total').value = total.toFixed(2);
     }
+</script>
 @endsection
