@@ -203,6 +203,7 @@
     let filaIdx = 0;
     let tablaBody = document.getElementById('tbodyProductos');
     const searchUrl = '{{ route("api.productos.search") }}';
+    let productoSeleccionado = null;
 
     function getProductName(text) {
         const m = text.match(/\]\s*(.*)/);
@@ -262,8 +263,9 @@
     }
 
     document.getElementById('btnAgregarFila').addEventListener('click', () => {
+        productoSeleccionado = null;
         document.getElementById('infoProductoSeleccionado').classList.add('hidden');
-        document.getElementById('btnAgregarProducto').disabled = true;
+        document.getElementById('btnAgregarProducto').setAttribute('disabled', 'disabled');
         $('#selectProductoModal').val(null).trigger('change');
         document.getElementById('modalProducto').classList.remove('hidden');
         setTimeout(() => $('#selectProductoModal').select2('open'), 250);
@@ -287,20 +289,19 @@
             });
 
             $('#selectProductoModal').on('select2:select', function(e) {
-                const data = e.params.data;
-                document.getElementById('prodCodigo').textContent = data.id;
-                document.getElementById('prodNombre').textContent = getProductName(data.text);
+                productoSeleccionado = e.params.data;
+                document.getElementById('prodCodigo').textContent = productoSeleccionado.id;
+                document.getElementById('prodNombre').textContent = getProductName(productoSeleccionado.text);
                 document.getElementById('infoProductoSeleccionado').classList.remove('hidden');
-                document.getElementById('btnAgregarProducto').disabled = false;
+                document.getElementById('btnAgregarProducto').removeAttribute('disabled');
             });
         }
     });
 
     document.getElementById('btnAgregarProducto').addEventListener('click', () => {
-        const select = document.getElementById('selectProductoModal');
-        const data = $(select).select2('data')[0];
-        if (data) {
-            agregarFila(data);
+        if (productoSeleccionado) {
+            agregarFila(productoSeleccionado);
+            productoSeleccionado = null;
             cerrarModalProducto();
         }
     });
