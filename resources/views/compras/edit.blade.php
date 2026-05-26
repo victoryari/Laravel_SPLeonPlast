@@ -171,7 +171,7 @@
             processResults: function(data) { return { results: data }; },
             cache: true
         },
-        minimumInputLength: 1,
+        minimumInputLength: 0,
         placeholder: 'Buscar por c\u00f3digo o nombre...',
         width: '100%',
         language: { inputTooShort: function() { return 'Escriba al menos 1 car\u00e1cter'; } }
