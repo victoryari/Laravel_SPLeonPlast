@@ -9,18 +9,6 @@
         <p class="text-xs sm:text-sm text-gray-600">Reversión de movimientos de almacén. Uso exclusivo de Administrador.</p>
     </div>
 
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base flex items-center gap-2">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-        </div>
-    @endif
-    
-    @if (session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base flex items-center gap-2">
-            <i class="fas fa-shield-alt text-lg"></i> {{ session('error') }}
-        </div>
-    @endif
-
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 border border-red-100">
         <div class="flex items-center gap-3 w-full sm:w-auto">
             <div class="bg-red-100 text-red-600 p-2.5 rounded-lg"><i class="fas fa-undo-alt text-lg"></i></div>

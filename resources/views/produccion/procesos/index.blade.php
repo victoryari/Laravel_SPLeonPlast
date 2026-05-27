@@ -28,19 +28,6 @@
         </a>
     </div>
 
-    {{-- Alertas --}}
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
-            <p>{{ session('success') }}</p>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
-            <p>{{ session('error') }}</p>
-        </div>
-    @endif
-
     {{-- Tarjeta Principal --}}
     {{-- <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex justify-between items-center bg-linear-to-r from-blue-500 to-purple-500">
         <h2 class="text-lg font-medium text-white">Procesos Activos</h2>

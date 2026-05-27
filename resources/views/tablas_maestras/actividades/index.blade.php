@@ -12,12 +12,6 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

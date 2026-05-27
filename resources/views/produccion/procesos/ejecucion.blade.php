@@ -23,19 +23,6 @@
         </div>
     </div>
 
-    <!-- Mensajes -->
-    @if(session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
-            <p>{!! session('success') !!}</p>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
-            <p>{!! session('error') !!}</p>
-        </div>
-    @endif
-
     <!-- Cargador de Fórmulas -->
     @if(($es_mezclado || $es_inyectado) && $estado_proceso_actual !== 'COMPLETADO')
     <div class="bg-white rounded-xl shadow-md border-t-4 border-orange-500 mb-6 overflow-hidden">
@@ -389,10 +376,10 @@
         if (esInyectado) {
             centro = document.getElementById('centro_global').value;
             molde = document.getElementById('molde_global').value;
-            if (!centro || !molde) return alert('Seleccione Inyectora y Molde.');
+            if (!centro || !molde) return window.toast('Seleccione Inyectora y Molde.', 'warning');
             url += `&codigo_molde=${encodeURIComponent(molde)}`;
         }
-        if(!f || c <= 0) return alert('Seleccione Fórmula y especifique una cantidad mayor a 0.');
+        if(!f || c <= 0) return window.toast('Seleccione Fórmula y especifique una cantidad mayor a 0.', 'warning');
         
         const trabajador = document.getElementById('trabajador_global').value;
         const horaIni    = document.getElementById('hora_ini_global').value;
@@ -406,10 +393,10 @@
                                  codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin });
                 });
             } else {
-                alert(data.message);
+                window.toast(data.message, 'error');
             }
         }).catch(err => {
-            alert('Error al comunicarse con el servidor.');
+            window.toast('Error al comunicarse con el servidor.', 'error');
             console.error(err);
         });
     }
@@ -469,7 +456,7 @@
 
     function enviarGuardado() {
         const filas = document.querySelectorAll('.nueva-fila');
-        if (filas.length === 0) return alert("No hay datos nuevos para guardar.");
+        if (filas.length === 0) return window.toast("No hay datos nuevos para guardar.", 'warning');
         
         let data = [];
         let error = false;
@@ -496,7 +483,7 @@
             });
         });
         
-        if (error) return alert("Por favor seleccione un producto y especifique una cantidad en todas las filas.");
+        if (error) return window.toast("Por favor seleccione un producto y especifique una cantidad en todas las filas.", 'warning');
         
         document.getElementById('componentes_json').value = JSON.stringify(data);
         document.getElementById('form_masivo').submit();

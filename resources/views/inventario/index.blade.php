@@ -7,13 +7,6 @@
 
         <x-page-header title="Control de Almacenes" subtitle="Consulta de saldos físicos y movimientos del inventario" />
 
-        <!-- Mensaje -->
-        @if (session('success'))
-            <div class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-green-700 shadow-sm">
-                {{ session('success') }}
-            </div>
-        @endif
-
         <!-- Buscador -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 mb-6">
             <div class="relative max-w-md">

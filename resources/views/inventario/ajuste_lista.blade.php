@@ -5,18 +5,6 @@
 <div class="min-h-screen bg-slate-50 py-10 px-4">
     <div class="max-w-7xl mx-auto">
 
-        @if (session('success'))
-            <div class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-green-700 shadow-sm">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if (session('error'))
-            <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 shadow-sm">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <div class="rounded-3xl bg-white shadow-xl border border-slate-200 overflow-hidden">
             <div class="h-2 bg-linear-to-r from-blue-600 to-indigo-600"></div>
 

@@ -184,7 +184,65 @@
         </div>
     </div>
 
+    <div id="toast-container" class="toast-container"></div>
+
+    @if(session('success'))
+        <x-toast type="success" :message="session('success')" />
+    @endif
+    @if(session('error'))
+        <x-toast type="error" :message="session('error')" />
+    @endif
+    @if(session('warning'))
+        <x-toast type="warning" :message="session('warning')" />
+    @endif
+
+    @stack('scripts')
+
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.toast').forEach(function (el) {
+                var autohide = parseInt(el.dataset.autohide) || 4000;
+                var timer = setTimeout(function () {
+                    el.classList.add('toast-hiding');
+                    setTimeout(function () { el.remove(); }, 300);
+                }, autohide);
+                el.querySelector('.toast-close')?.addEventListener('click', function () {
+                    clearTimeout(timer);
+                    el.classList.add('toast-hiding');
+                    setTimeout(function () { el.remove(); }, 300);
+                });
+            });
+        });
+
+        window.toast = function (message, type) {
+            type = type || 'success';
+            var icons = {
+                success: 'fa-check-circle', error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle', info: 'fa-info-circle'
+            };
+            var colors = {
+                success: '#059669', error: '#dc2626',
+                warning: '#d97706', info: '#0284c7'
+            };
+            var icon = icons[type] || icons.success;
+            var bg = colors[type] || colors.success;
+            var toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.backgroundColor = bg;
+            toast.setAttribute('data-autohide', '4000');
+            toast.innerHTML = '<i class="fas ' + icon + '"></i><span>' + message + '</span><button class="toast-close">&times;</button>';
+            document.getElementById('toast-container')?.appendChild(toast);
+            var timer = setTimeout(function () {
+                toast.classList.add('toast-hiding');
+                setTimeout(function () { toast.remove(); }, 300);
+            }, 4000);
+            toast.querySelector('.toast-close').addEventListener('click', function () {
+                clearTimeout(timer);
+                toast.classList.add('toast-hiding');
+                setTimeout(function () { toast.remove(); }, 300);
+            });
+        };
+
         const menuBtn = document.getElementById('menuBtn');
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');

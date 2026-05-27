@@ -5,12 +5,6 @@
 <div class="min-h-screen bg-slate-50 py-10 px-4">
     <div class="max-w-3xl mx-auto">
 
-        @if (session('error'))
-            <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 shadow-sm">
-                {{ session('error') }}
-            </div>
-        @endif
-
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-slate-800">

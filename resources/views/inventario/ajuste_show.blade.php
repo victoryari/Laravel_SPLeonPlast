@@ -41,12 +41,6 @@
                     </div>
                 </div>
 
-                @if(session('error'))
-                    <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-red-700 shadow-sm">
-                        {{ session('error') }}
-                    </div>
-                @endif
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200">
                         <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Información del Ajuste</h3>

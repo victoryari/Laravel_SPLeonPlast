@@ -38,13 +38,6 @@
         
     </div>
 
-    @if(session('error'))
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 md:p-4 mb-4 md:mb-6 rounded-lg shadow-sm flex items-center text-sm md:text-base">
-            <i class="fas fa-exclamation-triangle mr-3 text-lg"></i>
-            {{ session('error') }}
-        </div>
-    @endif
-
     <form action="{{ route('formulas.storeComposicion', $formula->codigo) }}" method="POST" id="formComposicion">
         @csrf
         
@@ -266,10 +259,10 @@
     function aplicarMoldeGlobal() {
         const moldeCodigo = $('#moldeGlobal').val();
         const moldeTexto = $('#moldeGlobal option:selected').text();
-        if (!moldeCodigo) { alert('Seleccione un molde global primero.'); return; }
+        if (!moldeCodigo) { window.toast('Seleccione un molde global primero.', 'warning'); return; }
 
         const filas = tbComposicion.querySelectorAll('tr');
-        if (filas.length === 0) { alert('La grilla está vacía.'); return; }
+        if (filas.length === 0) { window.toast('La grilla está vacía.', 'warning'); return; }
 
         if (confirm(`¿Asignar "${moldeTexto}" a todos los items?`)) {
             filas.forEach(f => {

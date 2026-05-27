@@ -12,12 +12,6 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('success'))
-        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
-            {{ session('success') }}
-        </div>
-    @endif
-
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
         <form action="{{ route('compras.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">

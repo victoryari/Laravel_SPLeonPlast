@@ -318,7 +318,7 @@
                     $(e.target).closest('tr').remove();
                     recalcularTotales();
                 } else {
-                    alert('La compra debe tener al menos un ítem.');
+                    window.toast('La compra debe tener al menos un ítem.', 'warning');
                 }
             }
         });

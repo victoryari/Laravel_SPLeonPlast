@@ -310,7 +310,7 @@
                     $(e.target).closest('tr').remove();
                     recalcularTotales();
                 } else {
-                    alert('Debe haber al menos un producto.');
+                    window.toast('Debe haber al menos un producto.', 'warning');
                 }
             }
         });
@@ -333,10 +333,10 @@
                     select.add(new Option(data.proveedor.ruc + ' - ' + data.proveedor.razon_social, data.proveedor.ruc, true, true));
                     cerrarModal('modalProveedor');
                 } else {
-                    alert('Error: ' + data.message);
+                    window.toast('Error: ' + data.message, 'error');
                 }
             } catch (error) {
-                alert('Ocurrió un error en la conexión.');
+                window.toast('Ocurrió un error en la conexión.', 'error');
             }
         });
     });
