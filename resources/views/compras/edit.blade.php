@@ -285,20 +285,19 @@
                 dropdownParent: $('#modalProducto')
             });
 
-            $('#selectProductoModal').on('select2:select', function(e) {
-                agregarFila(e.params.data);
-                $('#selectProductoModal').val(null).trigger('change');
-                setTimeout(() => $('#selectProductoModal').select2('open'), 100);
-            });
-        }
-
-        $('#btnAgregarFila').on('click', function () {
+            $('#btnAgregarFila').on('click', function () {
             $('#selectProductoModal').val(null).trigger('change');
             $('#modalProducto').removeClass('hidden');
             setTimeout(() => $('#selectProductoModal').select2('open'), 250);
         });
 
-        $('#btnCerrarProducto').on('click', cerrarModalProducto);
+        $('#btnCerrarProducto').on('click', function () {
+            const data = $('#selectProductoModal').select2('data');
+            if (data.length && data[0].id) {
+                agregarFila(data[0]);
+            }
+            cerrarModalProducto();
+        });
 
         $('#tablaProductos').on('input', function (e) {
             if ($(e.target).hasClass('input-cant') || $(e.target).hasClass('input-prec')) {
