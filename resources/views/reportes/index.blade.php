@@ -9,8 +9,8 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a href="{{ route('reportes.produccion') }}" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md hover:border-blue-200 transition-all group">
-            <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 text-3xl mb-4 group-hover:bg-blue-100 transition">
+        <a href="{{ route('reportes.produccion') }}" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 hover:shadow-md hover:border-primary/20 transition-all group">
+            <div class="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center text-primary text-3xl mb-4 group-hover:bg-primary-100 transition">
                 <i class="fas fa-industry"></i>
             </div>
             <h3 class="text-lg font-bold text-gray-800 mb-2">Reporte de Producción</h3>

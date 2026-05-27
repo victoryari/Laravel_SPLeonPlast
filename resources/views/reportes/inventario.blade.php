@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
             <nav class="flex text-sm text-gray-500 mb-2">
-                <a href="{{ route('reportes.index') }}" class="hover:text-blue-600 transition-colors">Reportes</a>
+                <a href="{{ route('reportes.index') }}" class="hover:text-primary transition-colors">Reportes</a>
                 <span class="mx-2">/</span>
                 <span class="text-gray-700">Inventario</span>
             </nav>

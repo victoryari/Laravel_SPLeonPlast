@@ -25,7 +25,7 @@
         </div>
     @endif
 
-    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500">
+    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-primary">
         <form action="{{ route('produccion.ordenes.store') }}" method="POST">
                 @csrf
                 

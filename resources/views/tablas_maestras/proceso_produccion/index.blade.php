@@ -4,16 +4,14 @@
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Procesos de Producción</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Gestión de la tabla maestra de procesos productivos</p>
-        </div>
-        <a href="{{ route('procesos_produccion.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Nuevo</span>
-        </a>
-    </div>
+    <x-page-header title="Procesos de Producción" subtitle="Gestión de la tabla maestra de procesos productivos">
+        <x-slot:actions>
+            <a href="{{ route('procesos_produccion.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nuevo</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -69,11 +67,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-6 py-10 md:py-16 text-center text-gray-500">
-                                    <div class="flex flex-col items-center">
-                                        <i class="fas fa-cogs text-3xl md:text-4xl mb-3 text-gray-200"></i>
-                                        <p class="text-sm md:text-base">No se encontraron procesos de producción con los criterios ingresados.</p>
-                                    </div>
+                                <td colspan="3">
+                                    <x-empty-state icon="fa-cogs" message="No se encontraron procesos de producción con los criterios ingresados." />
                                 </td>
                             </tr>
                         @endforelse

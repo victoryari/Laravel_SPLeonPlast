@@ -16,7 +16,7 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo Documento</label>
                 <select name="documento" id="inputDocumento"
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                     <option value="">Todos</option>
                     @foreach($tiposDocumento as $td)
                         <option value="{{ $td }}" {{ request('documento') == $td ? 'selected' : '' }}>{{ $td }}</option>
@@ -27,17 +27,17 @@
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Producto</label>
                 <input type="text" name="codigo_producto" id="inputProducto" value="{{ request('codigo_producto') }}"
                     placeholder="Código o descripción..."
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Desde</label>
                 <input type="date" name="fecha_desde" id="inputFechaDesde" value="{{ request('fecha_desde') }}"
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Hasta</label>
                 <input type="date" name="fecha_hasta" id="inputFechaHasta" value="{{ request('fecha_hasta') }}"
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit"
@@ -67,7 +67,7 @@
                         <th class="p-4 border-r border-slate-700">Documento Ref.</th>
                         <th class="p-4 border-r border-slate-700 text-right bg-slate-700/50">Entrada</th>
                         <th class="p-4 border-r border-slate-700 text-right bg-slate-700/50">Salida</th>
-                        <th class="p-4 text-right bg-blue-900/30 text-blue-100">Saldo Final</th>
+                        <th class="p-4 text-right bg-primary-900/30 text-primary-100">Saldo Final</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -82,15 +82,13 @@
                         </td>
                         <td class="p-4 text-center">
                             @php
-                                $color = [
-                                    'INGRESO' => 'bg-green-100 text-green-700 border-green-200',
-                                    'SALIDA'  => 'bg-red-100 text-red-700 border-red-200',
-                                    'AJUSTE'  => 'bg-amber-100 text-amber-700 border-amber-200',
-                                ][$mov->tipo_movimiento] ?? 'bg-slate-100 text-slate-600';
+                                $badgeColor = [
+                                    'INGRESO' => 'green',
+                                    'SALIDA'  => 'red',
+                                    'AJUSTE'  => 'amber',
+                                ][$mov->tipo_movimiento] ?? 'slate';
                             @endphp
-                            <span class="px-2 py-1 rounded text-[10px] font-black border {{ $color }}">
-                                {{ $mov->tipo_movimiento }}
-                            </span>
+                            <x-badge color="{{ $badgeColor }}">{{ $mov->tipo_movimiento }}</x-badge>
                         </td>
                         <td class="p-4">
                             <span class="text-slate-600 font-medium">{{ $mov->documento }}</span>
@@ -102,7 +100,7 @@
                         <td class="p-4 text-right font-bold text-red-600 bg-red-50/30">
                             {{ $mov->cantidad_salida > 0 ? number_format($mov->cantidad_salida, 2) : '-' }}
                         </td>
-                        <td class="p-4 text-right font-black text-blue-700 bg-blue-50/50">
+                        <td class="p-4 text-right font-black text-primary bg-primary-50/50">
                             {{ number_format($mov->cantidad_saldo, 2) }}
                         </td>
                     </tr>

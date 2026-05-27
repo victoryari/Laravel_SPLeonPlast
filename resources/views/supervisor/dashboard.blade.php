@@ -5,7 +5,7 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <div class="mb-8">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Panel de Control - Supervisor</h1>
-        <p class="text-sm text-gray-600 mt-1">Bienvenido al sistema, <span class="font-bold text-blue-600">{{ Auth::user()->nombre_usuario }}</span>.</p>
+        <p class="text-sm text-gray-600 mt-1">Bienvenido al sistema, <span class="font-bold text-primary">{{ Auth::user()->nombre_usuario }}</span>.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -15,7 +15,7 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Órdenes Activas</p>
                     <p class="text-3xl font-black text-gray-800 mt-2">{{ $ordenesActivas }}</p>
                 </div>
-                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-primary text-2xl shadow-inner">
+                <div class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center text-primary text-2xl shadow-inner">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
             </div>
@@ -66,9 +66,9 @@
                             <td class="px-4 py-2 font-medium">{{ $orden->codigo_op }}</td>
                             <td class="px-4 py-2">{{ $orden->descripcion_producto_proceso }}</td>
                             <td class="px-4 py-2">
-                                <span class="px-2 py-1 text-xs rounded-full {{ $orden->estado == 'COMPLETADO' ? 'bg-green-100 text-green-700' : ($orden->estado == 'EN_PROCESO' ? 'bg-primary-50 text-blue-700' : 'bg-yellow-100 text-yellow-700') }}">
+                                <x-badge color="{{ $orden->estado == 'COMPLETADO' ? 'green' : ($orden->estado == 'EN_PROCESO' ? 'blue' : 'yellow') }}">
                                     {{ $orden->estado }}
-                                </span>
+                                </x-badge>
                             </td>
                         </tr>
                         @empty

@@ -113,7 +113,7 @@
                                     <input type="hidden" name="moldes[]" value="{{ $comp->codigo_molde }}" class="input-molde">
                                     <input type="hidden" class="input-tipo-desc" value="{{ $comp->producto && $comp->producto->tipo ? $comp->producto->tipo->descripcion : '' }}">
                                     
-                                    <button type="button" class="text-blue-500 hover:text-blue-700 transition p-1" onclick="abrirModal('row-{{ $idx }}')">
+                                    <button type="button" class="text-primary hover:text-primary transition p-1" onclick="abrirModal('row-{{ $idx }}')">
                                         <i class="fas fa-edit text-base md:text-lg"></i>
                                     </button>
                                     <button type="button" class="text-red-500 hover:text-red-700 transition btn-eliminar p-1">
@@ -222,7 +222,7 @@
             <input type="hidden" name="moldes[]" class="input-molde">
             <input type="hidden" class="input-tipo-desc">
             
-            <button type="button" class="text-blue-500 hover:text-blue-700 transition btn-editar p-1"><i class="fas fa-edit text-base md:text-lg"></i></button>
+            <button type="button" class="text-primary hover:text-primary transition btn-editar p-1"><i class="fas fa-edit text-base md:text-lg"></i></button>
             <button type="button" class="text-red-500 hover:text-red-700 transition btn-eliminar p-1"><i class="fas fa-trash-alt text-base md:text-lg"></i></button>
         </td>
     </tr>

@@ -3,16 +3,14 @@
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Maestro de Productos</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Catálogo general de artículos y productos</p>
-        </div>
-        <a href="{{ route('productos.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Nuevo</span>
-        </a>
-    </div>
+    <x-page-header title="Maestro de Productos" subtitle="Catálogo general de artículos y productos">
+        <x-slot:actions>
+            <a href="{{ route('productos.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nuevo</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -64,9 +62,7 @@
                                 <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $pro->codigo }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $pro->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-semibold bg-slate-100 text-slate-600">
-                                        {{ $pro->tipo ? $pro->tipo->descripcion : 'Sin Tipo' }}
-                                    </span>
+                                    <x-badge color="slate">{{ $pro->tipo ? $pro->tipo->descripcion : 'Sin Tipo' }}</x-badge>
                                 </td>
                                 
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
@@ -86,11 +82,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-10 md:py-16 text-center text-gray-500">
-                                    <div class="flex flex-col items-center">
-                                        <i class="fas fa-box-open text-3xl md:text-4xl mb-3 text-gray-200"></i>
-                                        <p class="text-sm md:text-base">No se encontraron productos con los criterios ingresados.</p>
-                                    </div>
+                                <td colspan="4">
+                                    <x-empty-state icon="fa-box-open" message="No se encontraron productos con los criterios ingresados." />
                                 </td>
                             </tr>
                         @endforelse

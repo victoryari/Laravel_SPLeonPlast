@@ -3,16 +3,14 @@
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Registro de Compras</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Gestión administrativa de adquisiciones</p>
-        </div>
-        <a href="{{ route('compras.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Nueva Compra</span>
-        </a>
-    </div>
+    <x-page-header title="Registro de Compras" subtitle="Gestión administrativa de adquisiciones">
+        <x-slot:actions>
+            <a href="{{ route('compras.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nueva Compra</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -26,9 +24,9 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-400"></i>
                 </div>
-                <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm md:text-base outline-none" placeholder="Buscar por documento o proveedor...">
+                <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base outline-none" placeholder="Buscar por documento o proveedor...">
             </div>
-            <select name="estado" onchange="this.form.submit()" class="py-2 md:py-2.5 px-4 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+            <select name="estado" onchange="this.form.submit()" class="py-2 md:py-2.5 px-4 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white">
                 <option value="">Todos los estados</option>
                 <option value="PENDIENTE" {{ request('estado') === 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
                 <option value="RECIBIDA" {{ request('estado') === 'RECIBIDA' ? 'selected' : '' }}>Recibida</option>
@@ -67,7 +65,7 @@
                                 </div>
                                 <div class="text-xs text-gray-500">RUC: {{ $compra->ruc_proveedor ?? '-' }}</div>
                             </td>
-                            <td class="px-4 md:px-6 py-3 md:py-4 text-right font-bold text-blue-600">
+                            <td class="px-4 md:px-6 py-3 md:py-4 text-right font-bold text-primary">
                                 S/ {{ number_format($compra->total, 2) }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
@@ -76,23 +74,23 @@
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                 @switch($compra->estado)
                                     @case('PENDIENTE')
-                                        <span class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-[10px] font-bold border border-yellow-200">PENDIENTE</span>
+                                        <x-badge color="yellow">PENDIENTE</x-badge>
                                         @break
                                     @case('RECIBIDA')
-                                        <span class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold border border-green-200">RECIBIDA</span>
+                                        <x-badge color="green">RECIBIDA</x-badge>
                                         @break
                                     @case('CANCELADA')
-                                        <span class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-bold border border-red-200">ANULADA</span>
+                                        <x-badge color="red">ANULADA</x-badge>
                                         @break
                                     @default
-                                        <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-[10px] font-bold border border-gray-200">{{ $compra->estado }}</span>
+                                        <x-badge color="slate">{{ $compra->estado }}</x-badge>
                                 @endswitch
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                 <div class="flex items-center justify-center gap-3">
                                     
                                     {{-- Botón VER: Siempre visible --}}
-                                    <a href="{{ route('compras.show', $compra->id_compra) }}" class="text-slate-400 hover:text-blue-600 transition-colors" title="Ver Detalle">
+                                    <a href="{{ route('compras.show', $compra->id_compra) }}" class="text-slate-400 hover:text-primary transition-colors" title="Ver Detalle">
                                         <i class="fas fa-eye text-lg"></i>
                                     </a>
 

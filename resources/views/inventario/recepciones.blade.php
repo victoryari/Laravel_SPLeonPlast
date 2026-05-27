@@ -28,8 +28,8 @@
                 <h2 class="text-lg font-bold text-slate-800">Mercadería en Tránsito (Compras)</h2>
                 <p class="text-sm text-slate-500">Confirme el almacén destino y cantidades de proveedores.</p>
             </div>
-            <div class="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-semibold">
-                <i class="fas fa-truck text-blue-600"></i>
+            <div class="inline-flex items-center gap-2 bg-primary-100 text-primary px-3 py-1 rounded-lg text-sm font-semibold">
+                <i class="fas fa-truck text-primary"></i>
                 {{ $comprasPendientes->count() }} pendientes
             </div>
         </div>
@@ -53,9 +53,7 @@
                                         {{ $compra->tipo_documento }} {{ $compra->serie_documento }}-{{ $compra->numero_documento }}
                                     </h3>
 
-                                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold">
-                                        Pendiente
-                                    </span>
+                                    <x-badge color="amber">Pendiente</x-badge>
                                 </div>
 
                                 <p class="text-sm text-slate-500 mt-1">
@@ -103,7 +101,7 @@
                                                 </div>
 
                                                 <select name="items[{{ $detalle->id_detalle_compra }}][codigo_almacen]"
-                                                        class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-blue-500"
+                                                        class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
                                                         required>
                                                     <option value="">Seleccione...</option>
                                                     @foreach($almacenes as $almacen)
@@ -128,12 +126,12 @@
                                         </div>
 
                                         <div class="lg:col-span-3">
-                                            <label class="block text-xs font-semibold text-blue-600 mb-1">Recibido físico</label>
+                                            <label class="block text-xs font-semibold text-primary mb-1">Recibido físico</label>
                                             <input type="number"
                                                    name="items[{{ $detalle->id_detalle_compra }}][cantidad]"
                                                    value="{{ $detalle->cantidad }}"
                                                    step="0.01"
-                                                   class="w-full rounded-xl border-2 border-blue-200 bg-blue-50 text-center text-lg font-bold text-blue-700 py-2 focus:ring-4 focus:ring-blue-100"
+                                                   class="w-full rounded-xl border-2 border-primary/20 bg-primary-50 text-center text-lg font-bold text-primary py-2 focus:ring-4 focus:ring-primary/20"
                                                    required>
 
                                             <input type="hidden" name="items[{{ $detalle->id_detalle_compra }}][codigo_producto]" value="{{ $detalle->codigo_producto }}">

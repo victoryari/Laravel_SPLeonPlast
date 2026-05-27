@@ -3,16 +3,14 @@
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Roles y Permisos</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Gestión de accesos y configuración de módulos</p>
-        </div>
-        <a href="{{ route('roles.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Nuevo Rol</span>
-        </a>
-    </div>
+    <x-page-header title="Roles y Permisos" subtitle="Gestión de accesos y configuración de módulos">
+        <x-slot:actions>
+            <a href="{{ route('roles.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nuevo Rol</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -41,13 +39,13 @@
                     @forelse ($roles as $rol)
                         <tr class="hover:bg-slate-50/50 transition duration-150">
                             <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">
-                                <i class="fas fa-user-shield text-blue-500 mr-2"></i> {{ $rol->nombre }}
+                                <i class="fas fa-user-shield text-primary mr-2"></i> {{ $rol->nombre }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
                                 {{ $rol->descripcion ?? 'Sin descripción' }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
-                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary font-bold text-xs">
                                     {{ $rol->usuarios_count }}
                                 </span>
                             </td>

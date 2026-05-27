@@ -13,7 +13,7 @@
             </p>
         </div>
         <div class="mt-4 md:mt-0 flex flex-wrap items-center gap-3">
-            <span class="px-3 py-1 text-xs font-semibold uppercase rounded-full text-white {{ $estado_proceso_actual == 'COMPLETADO' ? 'bg-green-600' : ($estado_proceso_actual == 'EN_PROCESO' ? 'bg-blue-600' : 'bg-slate-500') }}">
+            <span class="px-3 py-1 text-xs font-semibold uppercase rounded-full text-white {{ $estado_proceso_actual == 'COMPLETADO' ? 'bg-green-600' : ($estado_proceso_actual == 'EN_PROCESO' ? 'bg-primary' : 'bg-slate-500') }}">
                 ESTADO: {{ $estado_proceso_actual }}
             </span>
             <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
@@ -120,10 +120,10 @@
     @endif
 
     <!-- Detalle de Componentes -->
-    <div class="bg-white rounded-xl shadow-md border-t-4 border-blue-500 overflow-hidden mb-6">
+    <div class="bg-white rounded-xl shadow-md border-t-4 border-primary overflow-hidden mb-6">
         <div class="bg-slate-50 border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 class="text-lg font-bold text-slate-800">
-                <i class="fas fa-list-alt mr-2 text-blue-500"></i>Detalle de Materiales / Actividades
+                <i class="fas fa-list-alt mr-2 text-primary"></i>Detalle de Materiales / Actividades
             </h2>
             <button type="button" onclick="agregarFilaManual()" class="shrink-0 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition {{ $estado_proceso_actual === 'COMPLETADO' ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $estado_proceso_actual === 'COMPLETADO' ? 'disabled' : '' }}>
                 <i class="fas fa-plus"></i><span class="ml-2">Fila Manual</span>
@@ -170,14 +170,14 @@
                                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio }} - {{ $r->hora_fin }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
                                     @if($estado_proceso_actual !== 'COMPLETADO')
-                                    <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-blue-500 hover:text-blue-700 mr-2" title="Editar">
+                                    <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-primary hover:text-primary mr-2" title="Editar">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button type="button" onclick="eliminarRegistrado({{ $r->id_op_componentes }})" class="text-red-500 hover:text-red-700" title="Desactivar">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                     @endif
-                                    <span class="ml-2 px-2 py-0.5 inline-flex text-[10px] leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800">OK</span>
+                                    <x-badge color="emerald">OK</x-badge>
                                 </td>
                             </tr>
                             @endforeach
@@ -203,7 +203,7 @@
                             </label>
                             <input type="number" name="merma_kg" id="merma_kg" class="w-24 text-center font-bold text-gray-900 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500" value="0.00" step="0.01">
                         </div>
-                        <button type="button" onclick="enviarGuardado()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-primary-dark transition shadow-sm transform hover:-translate-y-0.5">
+                        <button type="button" onclick="enviarGuardado()" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition shadow-sm transform hover:-translate-y-0.5">
                             💾 Guardar Componentes
                         </button>
                         @endif
@@ -213,7 +213,7 @@
 
             @foreach($registrados as $r)
             <div id="row_edit_{{ $r->id_op_componentes }}" class="hidden mb-2">
-                <form action="{{ route('ordenes.procesos.componentes.update', [$orden->idop, $proceso->id, $r->id_op_componentes]) }}" method="POST" class="flex flex-wrap items-end gap-3 p-4 bg-blue-50 border border-primary-50 rounded-lg">
+                <form action="{{ route('ordenes.procesos.componentes.update', [$orden->idop, $proceso->id, $r->id_op_componentes]) }}" method="POST" class="flex flex-wrap items-end gap-3 p-4 bg-primary-50 border border-primary-50 rounded-lg">
                     @csrf
                     @method('PUT')
 
@@ -352,7 +352,7 @@
                     }
                     data.forEach(p => {
                         const div = document.createElement('div');
-                        div.className = 'p-2 cursor-pointer border-b border-gray-100 text-xs hover:bg-blue-50 text-gray-700';
+                        div.className = 'p-2 cursor-pointer border-b border-gray-100 text-xs hover:bg-primary-50 text-gray-700';
                         div.textContent = `${p.id} - ${getProdName(p.text)}`;
                         div.onclick = () => {
                             searchInput.value = div.textContent;

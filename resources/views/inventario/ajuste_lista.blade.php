@@ -34,12 +34,12 @@
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Buscar</label>
                         <input type="text" name="search" id="inputSearch" value="{{ request('search') }}"
                             placeholder="Producto, documento, motivo..."
-                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Almacén</label>
                         <select name="codigo_almacen" id="inputAlmacen"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                             <option value="">Todos</option>
                             @foreach($almacenes as $a)
                                 <option value="{{ $a->codigo_almacen }}" {{ request('codigo_almacen') == $a->codigo_almacen ? 'selected' : '' }}>
@@ -51,12 +51,12 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Desde</label>
                         <input type="date" name="fecha_desde" id="inputFechaDesde" value="{{ request('fecha_desde') }}"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Hasta</label>
                         <input type="date" name="fecha_hasta" id="inputFechaHasta" value="{{ request('fecha_hasta') }}"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
+                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                     </div>
                     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
                         <button type="submit"
@@ -98,9 +98,9 @@
                                 <td class="py-3 px-4 text-slate-600">{{ $a->almacen }}</td>
                                 <td class="py-3 px-4 text-center">
                                     @if($a->cantidad_entrada > 0)
-                                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">INGRESO</span>
+                                        <x-badge color="green">INGRESO</x-badge>
                                     @else
-                                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">SALIDA</span>
+                                        <x-badge color="red">SALIDA</x-badge>
                                     @endif
                                 </td>
                                 <td class="py-3 px-4 text-right font-mono font-semibold {{ $a->cantidad_entrada > 0 ? 'text-green-600' : 'text-red-600' }}">
@@ -110,7 +110,7 @@
                                 <td class="py-3 px-4 text-center">
                                     <div class="flex justify-center gap-1">
                                         <a href="{{ route('inventario.ajuste.show', $a->id_kardex) }}"
-                                            class="p-2 rounded-lg text-blue-600 hover:bg-blue-50 transition" title="Ver">
+                                            class="p-2 rounded-lg text-primary hover:bg-primary-50 transition" title="Ver">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <a href="{{ route('inventario.ajuste.edit', $a->id_kardex) }}"

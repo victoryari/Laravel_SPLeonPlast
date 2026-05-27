@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
             <nav class="flex text-sm text-gray-500 mb-2">
-                <a href="{{ route('reportes.index') }}" class="hover:text-blue-600 transition-colors">Reportes</a>
+                <a href="{{ route('reportes.index') }}" class="hover:text-primary transition-colors">Reportes</a>
                 <span class="mx-2">/</span>
                 <span class="text-gray-700">Producción</span>
             </nav>
@@ -59,9 +59,9 @@
                         <td class="p-4">{{ $o->descripcion_producto_proceso }}</td>
                         <td class="p-4">{{ \Carbon\Carbon::parse($o->fecha)->format('d/m/Y') }}</td>
                         <td class="p-4 text-center">
-                            <span class="px-2 py-1 text-xs rounded-full {{ $o->estado == 'COMPLETADO' ? 'bg-green-100 text-green-700' : ($o->estado == 'EN_PROCESO' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700') }}">
+                            <x-badge color="{{ $o->estado == 'COMPLETADO' ? 'green' : ($o->estado == 'EN_PROCESO' ? 'blue' : 'yellow') }}">
                                 {{ $o->estado }}
-                            </span>
+                            </x-badge>
                         </td>
                     </tr>
                     @empty

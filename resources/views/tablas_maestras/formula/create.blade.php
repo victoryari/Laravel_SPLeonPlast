@@ -3,26 +3,25 @@
 
 @section('content')
 <div class="container mx-auto max-w-2xl">
-    <div class="mb-6 flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-800">Registrar Fórmula Base</h1>
-    </div>
+    <x-page-header title="Registrar Fórmula Base" subtitle="Cree una nueva fórmula de producción." />
 
-    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500">
-        <form action="{{ route('formulas.store') }}" method="POST">
+    <x-card class="p-6">
+        <form action="{{ route('formulas.store') }}" method="POST" class="space-y-6">
             @csrf
-            <div class="mb-5">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Código de Fórmula <span class="text-red-500">*</span></label>
-                <input type="text" name="codigo" value="{{ old('codigo') }}" class="w-full px-4 py-2 border rounded-lg uppercase focus:ring-blue-500" required>
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Descripción <span class="text-red-500">*</span></label>
-                <input type="text" name="descripcion" value="{{ old('descripcion') }}" class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500" required>
-            </div>
+            
+            <x-form-group label="Código de Fórmula" required :error="$errors->first('codigo')">
+                <input type="text" name="codigo" value="{{ old('codigo') }}" class="input-field uppercase" required>
+            </x-form-group>
+
+            <x-form-group label="Descripción" required :error="$errors->first('descripcion')">
+                <input type="text" name="descripcion" value="{{ old('descripcion') }}" class="input-field" required>
+            </x-form-group>
+
             <div class="flex justify-end space-x-3 pt-4">
-                <a href="{{ route('formulas.index') }}" class="px-6 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">Cancelar</a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-primary-dark shadow-md transition font-semibold">Crear Formula</button>
+                <a href="{{ route('formulas.index') }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary">Crear Fórmula</button>
             </div>
         </form>
-    </div>
+    </x-card>
 </div>
 @endsection

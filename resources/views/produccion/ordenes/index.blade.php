@@ -50,21 +50,13 @@
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
                                 @if($o->estado == 'COMPLETADO')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        {{ $o->estado }}
-                                    </span>
+                                    <x-badge color="green">{{ $o->estado }}</x-badge>
                                 @elseif($o->estado == 'EN_PROCESO')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {{ str_replace('_', ' ', $o->estado) }}
-                                    </span>
+                                    <x-badge color="blue">{{ str_replace('_', ' ', $o->estado) }}</x-badge>
                                 @elseif($o->estado == 'CANCELADO')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        {{ $o->estado }}
-                                    </span>
+                                    <x-badge color="red">{{ $o->estado }}</x-badge>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        {{ $o->estado ?? 'PENDIENTE' }}
-                                    </span>
+                                    <x-badge color="yellow">{{ $o->estado ?? 'PENDIENTE' }}</x-badge>
                                 @endif
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">

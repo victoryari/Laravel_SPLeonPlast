@@ -3,22 +3,20 @@
 
 @section('content')
 <div class="container mx-auto pb-8">
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-800">Maestro de Proveedores</h1>
-            <p class="text-sm text-gray-600">Gestión de proveedores y contactos comerciales</p>
-        </div>
-        <a href="{{ route('proveedores.create') }}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center">
-            <i class="fas fa-plus mr-2"></i> Nuevo Proveedor
-        </a>
-    </div>
+    <x-page-header title="Maestro de Proveedores" subtitle="Gestión de proveedores y contactos comerciales">
+        <x-slot:actions>
+            <a href="{{ route('proveedores.create') }}" class="btn-primary">
+                <i class="fas fa-plus mr-2"></i> Nuevo Proveedor
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
         <form action="{{ route('proveedores.index') }}" method="GET" class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" name="search" id="searchInput" value="{{ $search }}" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Buscar por RUC, Razón Social o Contacto...">
+            <input type="text" name="search" id="searchInput" value="{{ $search }}" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Buscar por RUC, Razón Social o Contacto...">
         </form>
     </div>
 
@@ -42,7 +40,7 @@
                             {{-- <td class="px-6 py-4 text-gray-600">{{ $prov->contacto ?? '-' }}</td> --}}
                             <td class="px-6 py-4">
                                 <div class="text-xs text-gray-500"><i class="fas fa-phone mr-1"></i> {{ $prov->telefono ?? 'S/T' }}</div>
-                                <div class="text-xs text-blue-500"><i class="fas fa-envelope mr-1"></i> {{ $prov->email ?? '-' }}</div>
+                                <div class="text-xs text-primary"><i class="fas fa-envelope mr-1"></i> {{ $prov->email ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 text-center space-x-2">
                                 <a href="{{ route('proveedores.edit', $prov->id_proveedor) }}" class="inline-flex items-center justify-center w-9 h-9 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition">
@@ -58,7 +56,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron proveedores.</td>
+                            <td colspan="4">
+                                <x-empty-state icon="fa-truck" message="No se encontraron proveedores." />
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

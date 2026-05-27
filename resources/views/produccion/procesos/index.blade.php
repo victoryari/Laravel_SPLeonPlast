@@ -7,7 +7,7 @@
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
             <nav class="flex text-sm text-gray-500 mb-2">
-                <a href="{{ route('produccion.ordenes.index') }}" class="hover:text-blue-600 font-medium transition-colors">📋 Volver a Órdenes</a>
+                <a href="{{ route('produccion.ordenes.index') }}" class="hover:text-primary font-medium transition-colors">📋 Volver a Órdenes</a>
                 <span class="mx-2">›</span>
                 <span class="text-gray-700">Orden #{{ $orden->codigo_op }}</span>
             </nav>
@@ -67,9 +67,7 @@
                     @foreach($procesos as $p)
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    Sec. #{{ $p->secuencia }}
-                                </span>
+                                <x-badge color="slate">Prioridad: {{ $p->prioridad ?? 'Normal' }}</x-badge>
                             </td>
                             <td class="px-6 py-4">
                                 <strong class="text-gray-900 font-medium">{{ $p->proceso_desc }}</strong>
@@ -79,19 +77,17 @@
                                     $estado = $p->estado_avance ?? 'PENDIENTE';
                                 @endphp
                                 @if($estado == 'COMPLETADO')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">✅ Completado</span>
+                                    <x-badge color="green">✅ Completado</x-badge>
                                 @elseif($estado == 'EN_PROCESO')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">🔄 En Proceso</span>
+                                    <x-badge color="blue">🔄 En Proceso</x-badge>
                                 @elseif($estado == 'CANCELADO')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">❌ Cancelado</span>
+                                    <x-badge color="red">❌ Cancelado</x-badge>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⏳ Pendiente</span>
+                                    <x-badge color="yellow">⏳ Pendiente</x-badge>
                                 @endif
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                    📦 {{ $p->total_componentes }} items
-                                </span>
+                                <x-badge color="indigo">📦 {{ $p->total_componentes }} items</x-badge>
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
                                 <div class="flex justify-center gap-2">

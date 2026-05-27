@@ -7,14 +7,14 @@
     <!-- Breadcrumbs / Header -->
     <div class="mb-6">
         <nav class="flex text-sm text-gray-500 mb-2">
-            <a href="{{ route('produccion.ordenes.index') }}" class="hover:text-blue-600 transition-colors">Órdenes</a>
+            <a href="{{ route('produccion.ordenes.index') }}" class="hover:text-primary transition-colors">Órdenes</a>
             <span class="mx-2">›</span>
-            <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="hover:text-blue-600 transition-colors">Orden #{{ $orden->codigo_op }}</a>
+            <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="hover:text-primary transition-colors">Orden #{{ $orden->codigo_op }}</a>
             <span class="mx-2">›</span>
             <span class="text-gray-700">Agregar Proceso</span>
         </nav>
         <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-            <i class="fas fa-plus-circle mr-3 text-blue-600"></i> Agregar Nuevo Proceso
+            <i class="fas fa-plus-circle mr-3 text-primary"></i> Agregar Nuevo Proceso
         </h1>
         <p class="text-sm text-gray-600 mt-1">
             Orden de Producción: <span class="font-semibold text-gray-800">{{ $orden->codigo_op }}</span>
@@ -33,7 +33,7 @@
     @endif
 
     <!-- Formulario Principal -->
-    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-blue-500">
+    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 border-primary">
         <form action="{{ route('ordenes.procesos.store', $orden->idop) }}" method="POST">
             @csrf
             
@@ -56,11 +56,11 @@
                 </div>
 
                 <!-- Detalles Informativos -->
-                <div class="bg-blue-50 border border-primary-50 rounded-lg p-4">
-                    <h4 class="text-blue-800 font-semibold text-sm mb-2 flex items-center">
+                <div class="bg-primary-50 border border-primary-50 rounded-lg p-4">
+                    <h4 class="text-primary font-semibold text-sm mb-2 flex items-center">
                         <i class="fas fa-info-circle mr-2"></i> Información del Producto
                     </h4>
-                    <p class="text-xs text-blue-700 leading-relaxed">
+                    <p class="text-xs text-primary leading-relaxed">
                         El proceso seleccionado se vinculará a la orden de fabricación del producto: 
                         <span class="font-bold uppercase">{{ $orden->descripcion_producto_proceso ?? 'N/A' }}</span>.
                     </p>
@@ -72,7 +72,7 @@
                 <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="flex items-center justify-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium">
                     Cancelar
                 </a>
-                <button type="submit" class="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-primary-dark shadow-md transition font-bold">
+                <button type="submit" class="flex items-center justify-center px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark shadow-md transition font-bold">
                     <i class="fas fa-save mr-2"></i> Guardar y Continuar
                 </button>
             </div>

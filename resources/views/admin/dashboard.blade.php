@@ -63,7 +63,7 @@
         <div class="bg-white rounded-xl shadow-md overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide">Últimos Procesos de Mezclado</h3>
-                <a href="#" class="text-xs text-blue-600 hover:underline">Ver todo</a>
+                <a href="#" class="text-xs text-primary hover:underline">Ver todo</a>
             </div>
             <div class="p-0 overflow-x-auto">
                 <table class="w-full text-left text-sm">
@@ -79,14 +79,14 @@
                             <td class="px-6 py-4">Carlos Mendoza</td>
                             <td class="px-6 py-4 font-medium text-gray-700">Inyectora #04</td>
                             <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">Operando</span>
+                                <x-badge color="green">Operando</x-badge>
                             </td>
                         </tr>
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4">Luis Montero</td>
                             <td class="px-6 py-4 font-medium text-gray-700">Mezcladora #01</td>
                             <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded-full">Mantenimiento</span>
+                                <x-badge color="yellow">Mantenimiento</x-badge>
                             </td>
                         </tr>
                     </tbody>
@@ -97,7 +97,7 @@
         <div class="bg-white rounded-xl shadow-md p-6">
             <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4">Acceso Rápido</h3>
             <div class="grid grid-cols-2 gap-4">
-                <button class="flex flex-col items-center justify-center p-4 bg-blue-50 border border-primary-50 rounded-lg text-blue-700 hover:bg-primary-50 transition">
+                <button class="flex flex-col items-center justify-center p-4 bg-primary-50 border border-primary-50 rounded-lg text-primary hover:bg-primary-50 transition">
                     <i class="fas fa-plus-circle text-2xl mb-2"></i>
                     <span class="text-xs font-semibold">Nueva Orden</span>
                 </button>

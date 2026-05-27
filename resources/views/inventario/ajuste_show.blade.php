@@ -7,7 +7,7 @@
 
         <div class="mb-6">
             <a href="{{ route('inventario.ajuste.lista') }}"
-                class="text-sm text-blue-600 hover:text-blue-800 transition">
+                class="text-sm text-primary hover:text-primary-dark transition">
                 <i class="fas fa-arrow-left mr-1"></i> Volver a la Bandeja de Ajustes
             </a>
         </div>
@@ -67,9 +67,9 @@
                                 <dt class="text-sm text-slate-500">Tipo</dt>
                                 <dd>
                                     @if($ajuste->cantidad_entrada > 0)
-                                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">INGRESO</span>
+                                        <x-badge color="green">INGRESO</x-badge>
                                     @else
-                                        <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">SALIDA</span>
+                                        <x-badge color="red">SALIDA</x-badge>
                                     @endif
                                 </dd>
                             </div>
@@ -137,10 +137,9 @@
                                         <tr class="border-b border-amber-100 text-amber-900">
                                             <td class="py-2 px-2">{{ \Carbon\Carbon::parse($m->fecha_movimiento)->format('d/m/Y H:i') }}</td>
                                             <td class="py-2 px-2">
-                                                <span class="inline-block px-1.5 py-0.5 rounded text-xs font-bold
-                                                    {{ $m->tipo_movimiento == 'INGRESO' ? 'bg-green-100 text-green-700' : ($m->tipo_movimiento == 'SALIDA' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600') }}">
+                                                <x-badge color="{{ $m->tipo_movimiento == 'INGRESO' ? 'green' : ($m->tipo_movimiento == 'SALIDA' ? 'red' : 'slate') }}">
                                                     {{ $m->tipo_movimiento }}
-                                                </span>
+                                                </x-badge>
                                             </td>
                                             <td class="py-2 px-2 font-mono">{{ $m->numero_documento }}</td>
                                             <td class="py-2 px-2 text-right font-mono text-green-600">{{ $m->cantidad_entrada > 0 ? number_format($m->cantidad_entrada, 2) : '—' }}</td>

@@ -3,16 +3,14 @@
 
 @section('content')
 <div class="container mx-auto">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl md:text-2xl font-bold text-gray-800">Maestro de Fórmulas</h1>
-            <p class="text-xs md:text-sm text-gray-600">Gestión de fórmulas y composiciones</p>
-        </div>
-        <a href="{{ route('formulas.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus mr-2"></i> 
-            <span class="hidden sm:inline ml-2">Nuevo</span>
-        </a>
-    </div>
+    <x-page-header title="Maestro de Fórmulas" subtitle="Gestión de fórmulas y composiciones">
+        <x-slot:actions>
+            <a href="{{ route('formulas.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nuevo</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -47,9 +45,7 @@
                                 <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $formu->codigo }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $formu->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold {{ $formu->composiciones_count > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
-                                        {{ $formu->composiciones_count }} comp.
-                                    </span>
+                                    <x-badge color="{{ $formu->composiciones_count > 0 ? 'green' : 'red' }}">{{ $formu->composiciones_count }} comp.</x-badge>
                                 </td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <div class="flex items-center justify-center gap-2 md:gap-3">
@@ -70,11 +66,8 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-10 md:py-16 text-center text-gray-500">
-                                    <div class="flex flex-col items-center">
-                                        <i class="fas fa-flask text-3xl md:text-4xl mb-3 text-gray-200"></i>
-                                        <p class="text-sm md:text-base">No se encontraron fórmulas registradas.</p>
-                                    </div>
+                                <td colspan="4">
+                                    <x-empty-state icon="fa-flask" message="No se encontraron fórmulas registradas." />
                                 </td>
                             </tr>
                         @endforelse

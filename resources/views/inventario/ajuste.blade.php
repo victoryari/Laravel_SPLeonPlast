@@ -36,7 +36,7 @@
                         Producto
                     </label>
                     <select name="codigo_producto"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                         required>
                         <option value="">-- Buscar producto --</option>
                         @foreach($productos as $p)
@@ -53,7 +53,7 @@
                         Almacén afectado
                     </label>
                     <select name="codigo_almacen"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                         required>
                         <option value="">-- Seleccione --</option>
                         @foreach($almacenes as $a)
@@ -70,7 +70,7 @@
                         Tipo de operación
                     </label>
                     <select name="tipo"
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                         required>
                         <option value="INGRESO">INGRESO (+)</option>
                         <option value="SALIDA">SALIDA (-)</option>
@@ -85,7 +85,7 @@
                         </label>
                         <input type="number" name="cantidad" step="0.01" min="0.01"
                             placeholder="0.00"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                             required>
                     </div>
                     <div>
@@ -93,7 +93,7 @@
                             Unidad de Medida
                         </label>
                         <select name="codigo_unidad_medida"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                             required>
                             <option value="">-- Seleccione --</option>
                             @foreach($unidadesMedida as $u)
@@ -112,7 +112,7 @@
                     </label>
                     <textarea name="observaciones" rows="3"
                         placeholder="Escriba el motivo del ajuste..."
-                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                        class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                         required></textarea>
                 </div>
 

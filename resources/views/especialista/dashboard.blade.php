@@ -5,7 +5,7 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <div class="mb-8">
         <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Panel de Control - Especialista</h1>
-        <p class="text-sm text-gray-600 mt-1">Bienvenido al sistema, <span class="font-bold text-blue-600">{{ Auth::user()->nombre_usuario }}</span>.</p>
+        <p class="text-sm text-gray-600 mt-1">Bienvenido al sistema, <span class="font-bold text-primary">{{ Auth::user()->nombre_usuario }}</span>.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -39,7 +39,7 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Productos</p>
                     <p class="text-3xl font-black text-gray-800 mt-2">{{ $totalProductos }}</p>
                 </div>
-                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-primary text-2xl shadow-inner">
+                <div class="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center text-primary text-2xl shadow-inner">
                     <i class="fas fa-box"></i>
                 </div>
             </div>
@@ -79,7 +79,7 @@
                             <td class="px-4 py-2 font-medium">{{ $fm->codigo }}</td>
                             <td class="px-4 py-2">{{ $fm->descripcion }}</td>
                             <td class="px-4 py-2">
-                                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">{{ $count }} items</span>
+                                <x-badge color="slate">{{ $count }} items</x-badge>
                             </td>
                         </tr>
                         @empty
@@ -99,7 +99,7 @@
                     <i class="fas fa-flask text-2xl mb-2"></i>
                     <span class="text-xs font-semibold">Fórmulas</span>
                 </a>
-                <a href="{{ route('productos.index') }}" class="flex flex-col items-center justify-center p-4 bg-blue-50 border border-primary-50 rounded-lg text-blue-700 hover:bg-primary-50 transition">
+                <a href="{{ route('productos.index') }}" class="flex flex-col items-center justify-center p-4 bg-primary-50 border border-primary-50 rounded-lg text-primary hover:bg-primary-50 transition">
                     <i class="fas fa-box text-2xl mb-2"></i>
                     <span class="text-xs font-semibold">Productos</span>
                 </a>

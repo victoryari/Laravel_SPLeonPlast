@@ -3,16 +3,14 @@
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Usuarios del Sistema</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Administración de accesos y roles</p>
-        </div>
-        <a href="{{ route('usuarios.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Nuevo Usuario</span>
-        </a>
-    </div>
+    <x-page-header title="Usuarios del Sistema" subtitle="Administración de accesos y roles">
+        <x-slot:actions>
+            <a href="{{ route('usuarios.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nuevo Usuario</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -80,7 +78,7 @@
                                     @php
                                         $rolBadge = match($user->rol) {
                                             'Administrador' => 'bg-purple-50 text-purple-700 border-purple-200',
-                                            'Supervisor'    => 'bg-blue-50 text-blue-700 border-blue-200',
+                                            'Supervisor'    => 'bg-primary-50 text-primary border-primary/20',
                                             default         => 'bg-slate-100 text-slate-600 border-slate-200',
                                         };
                                     @endphp

@@ -5,22 +5,7 @@
 <div class="min-h-screen bg-slate-50 py-8 px-4">
     <div class="max-w-7xl mx-auto">
 
-        <!-- Encabezado -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">
-                    Control de Almacenes
-                </h1>
-                <p class="text-sm text-slate-500 mt-1">
-                    Consulta de saldos físicos y movimientos del inventario.
-                </p>
-            </div>
-
-            <div class="text-sm text-slate-500 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200">
-                Total registros:
-                <span class="font-bold text-slate-700">{{ $stocks->total() }}</span>
-            </div>
-        </div>
+        <x-page-header title="Control de Almacenes" subtitle="Consulta de saldos físicos y movimientos del inventario" />
 
         <!-- Mensaje -->
         @if (session('success'))
@@ -38,7 +23,7 @@
                     name="search"
                     value="{{ request('search') }}"
                     placeholder="Buscar por código o descripción..."
-                    class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition"
+                    class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
                 >
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
             </div>
@@ -73,7 +58,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex px-3 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold border border-primary-50">
+                                    <span class="inline-flex px-3 py-1 rounded-xl bg-primary-50 text-primary text-xs font-semibold border border-primary-50">
                                         {{ $stock->almacen }}
                                     </span>
                                 </td>

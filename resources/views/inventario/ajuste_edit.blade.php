@@ -7,7 +7,7 @@
 
         <div class="mb-6">
             <a href="{{ route('inventario.ajuste.lista') }}"
-                class="text-sm text-blue-600 hover:text-blue-800 transition">
+                class="text-sm text-primary hover:text-primary-dark transition">
                 <i class="fas fa-arrow-left mr-1"></i> Volver a la Bandeja de Ajustes
             </a>
         </div>
@@ -49,14 +49,14 @@
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad</label>
                             <input type="number" name="cantidad" step="0.01" min="0.01"
                                 value="{{ $ajuste->cantidad_entrada > 0 ? $ajuste->cantidad_entrada : $ajuste->cantidad_salida }}"
-                                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                                 required>
                         </div>
 
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Unidad de Medida</label>
                             <select name="codigo_unidad_medida"
-                                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                                 required>
                                 <option value="">-- Seleccione --</option>
                                 @foreach($unidadesMedida as $u)
@@ -91,7 +91,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-2">Motivo / Observaciones</label>
                         <textarea name="observaciones" rows="3"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">{{ $ajuste->observaciones }}</textarea>
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">{{ $ajuste->observaciones }}</textarea>
                     </div>
 
                     <div class="flex justify-end gap-4 pt-4 border-t border-slate-100">

@@ -3,16 +3,14 @@
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <div class="flex justify-between items-center mb-6 gap-4">
-        <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Trabajadores</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Gestión de personal de planta y contratistas</p>
-        </div>
-        <a href="{{ route('trabajadores.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Nuevo</span>
-        </a>
-    </div>
+    <x-page-header title="Trabajadores" subtitle="Gestión de personal de planta y contratistas">
+        <x-slot:actions>
+            <a href="{{ route('trabajadores.create') }}" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline ml-2">Nuevo</span>
+            </a>
+        </x-slot:actions>
+    </x-page-header>
 
     @if (session('success'))
         <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 md:p-4 mb-6 rounded shadow-sm text-sm md:text-base">
@@ -25,7 +23,7 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm md:text-base" placeholder="Buscar por código, nombre o empresa...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base" placeholder="Buscar por código, nombre o empresa...">
         </div>
     </div>
 
@@ -67,11 +65,10 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">
-                                    No se encontraron trabajadores registrados.
+                                <td colspan="5">
+                                    <x-empty-state icon="fa-users" message="No se encontraron trabajadores registrados." />
                                 </td>
                             </tr>
-                        @endforelse
                         </tbody>
                 </table>
             </div>

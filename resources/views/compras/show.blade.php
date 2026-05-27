@@ -10,14 +10,11 @@
                 <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">
                     {{ $compra->tipo_documento }}: {{ $compra->serie_documento }}-{{ $compra->numero_documento }}
                 </h1>
-                <span class="px-3 py-1 rounded-full text-xs font-bold 
-                    @switch($compra->estado)
-                        @case('PENDIENTE') bg-amber-100 text-amber-700 @break
-                        @case('CANCELADA') bg-red-100 text-red-700 @break
-                        @default bg-green-100 text-green-700
-                    @endswitch">
-                    {{ $compra->estado }}
-                </span>
+                @switch($compra->estado)
+                    @case('PENDIENTE') <x-badge color="amber">{{ $compra->estado }}</x-badge> @break
+                    @case('CANCELADA') <x-badge color="red">{{ $compra->estado }}</x-badge> @break
+                    @default <x-badge color="green">{{ $compra->estado }}</x-badge>
+                @endswitch
             </div>
             <p class="text-sm text-slate-500 mt-1">Registrado el {{ \Carbon\Carbon::parse($compra->fecha_creacion)->format('d/m/Y H:i') }}</p>
         </div>
@@ -37,7 +34,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-50/50 border-b border-slate-100 px-6 py-4">
                     <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fas fa-file-invoice text-blue-500"></i> Información del Documento
+                        <i class="fas fa-file-invoice text-primary"></i> Información del Documento
                     </h2>
                 </div>
                 <div class="p-6">
@@ -66,7 +63,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="bg-slate-50/50 border-b border-slate-100 px-6 py-4">
                     <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fas fa-boxes text-blue-500"></i> Detalle de Items
+                        <i class="fas fa-boxes text-primary"></i> Detalle de Items
                     </h2>
                 </div>
                 <div class="overflow-x-auto">
@@ -120,7 +117,7 @@
             <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden">
                 <div class="p-6">
                     <h2 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
-                        <i class="fas fa-calculator text-blue-400"></i> Resumen de Pago
+                        <i class="fas fa-calculator text-primary"></i> Resumen de Pago
                     </h2>
                     <div class="space-y-4">
                         <div class="flex justify-between text-slate-300 text-sm">
@@ -133,7 +130,7 @@
                         </div>
                         <div class="pt-4 mt-4 border-t border-slate-600 flex justify-between items-center">
                             <span class="text-slate-200 font-bold">TOTAL:</span> 
-                            <span class="text-2xl font-black text-blue-400">S/ {{ number_format($compra->total, 2) }}</span>
+                            <span class="text-2xl font-black text-primary">S/ {{ number_format($compra->total, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -142,7 +139,7 @@
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Auditoría</h3>
                 <div class="flex items-center gap-3">
-                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
+                    <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary font-bold uppercase">
                         {{ substr($compra->creador->nombre_usuario ?? 'U', 0, 1) }}
                     </div>
                     <div>
@@ -174,7 +171,7 @@
             background-color: white !important;
             color: black !important;
         }
-        .text-blue-400, .text-white, .text-slate-300 {
+        .text-primary, .text-white, .text-slate-300 {
             color: black !important;
         }
     }
