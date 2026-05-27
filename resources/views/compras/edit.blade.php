@@ -191,12 +191,10 @@
 <script src="/vendor/select2/select2.min.js"></script>
 <script>
     let filaIdx = {{ count($compra->detalles) }};
-    let tablaBody = document.getElementById('tbodyProductos');
-    const searchUrl = '{{ route("api.productos.search") }}';
+    let tablaBody;
+    let searchUrl;
     let productoSeleccionado = null;
-    
-    // Datos de almacenes como JSON para usarlos en el template dinámico
-    const almacenesData = {!! json_encode($almacenes->map(fn($a) => ['codigo' => $a->codigo_almacen, 'descripcion' => $a->descripcion])->all()) !!};
+    let almacenesData;
 
     function getProductName(text) {
         const m = text.match(/\]\s*(.*)/);
@@ -256,16 +254,26 @@
         document.getElementById('modalProducto').classList.add('hidden');
     }
 
-    document.getElementById('btnAgregarFila').addEventListener('click', () => {
-        productoSeleccionado = null;
-        document.getElementById('infoProductoSeleccionado').classList.add('hidden');
-        document.getElementById('btnAgregarProducto').setAttribute('disabled', 'disabled');
-        $('#selectProductoModal').val(null).trigger('change');
-        document.getElementById('modalProducto').classList.remove('hidden');
-        setTimeout(() => $('#selectProductoModal').select2('open'), 250);
-    });
+    function recalcularTotales() {
+        let st = 0;
+        document.querySelectorAll('.out-sub').forEach(el => st += parseFloat(el.value) || 0);
+        const igv = st * 0.18;
+        const total = st + igv;
 
-    $(document).ready(function() {
+        document.getElementById('txt_sub').innerText = 'S/ ' + st.toFixed(2);
+        document.getElementById('txt_igv').innerText = 'S/ ' + igv.toFixed(2);
+        document.getElementById('txt_total').innerText = 'S/ ' + total.toFixed(2);
+        
+        document.getElementById('h_sub').value = st.toFixed(2);
+        document.getElementById('h_igv').value = igv.toFixed(2);
+        document.getElementById('h_total').value = total.toFixed(2);
+    }
+
+    $(document).ready(function () {
+        tablaBody = document.getElementById('tbodyProductos');
+        searchUrl = '{{ route("api.productos.search") }}';
+        almacenesData = {!! json_encode($almacenes->map(fn($a) => ['codigo' => $a->codigo_almacen, 'descripcion' => $a->descripcion])->all()) !!};
+
         if (typeof $().select2 !== 'undefined') {
             $('#selectProductoModal').select2({
                 ajax: {
@@ -290,51 +298,45 @@
                 document.getElementById('btnAgregarProducto').removeAttribute('disabled');
             });
         }
-    });
 
-    document.getElementById('btnAgregarProducto').addEventListener('click', () => {
-        if (productoSeleccionado) {
-            agregarFila(productoSeleccionado);
+        $('#btnAgregarFila').on('click', function () {
             productoSeleccionado = null;
-            cerrarModalProducto();
-        }
-    });
+            $('#infoProductoSeleccionado').addClass('hidden');
+            $('#btnAgregarProducto').prop('disabled', true);
+            $('#selectProductoModal').val(null).trigger('change');
+            $('#modalProducto').removeClass('hidden');
+            setTimeout(() => $('#selectProductoModal').select2('open'), 250);
+        });
 
-    document.getElementById('tablaProductos').addEventListener('input', e => {
-        if (e.target.classList.contains('input-cant') || e.target.classList.contains('input-prec')) {
-            const fila = e.target.closest('tr');
-            const cant = parseFloat(fila.querySelector('.input-cant').value) || 0;
-            const prec = parseFloat(fila.querySelector('.input-prec').value) || 0;
-            fila.querySelector('.out-sub').value = (cant * prec).toFixed(2);
-            recalcularTotales();
-        }
-    });
-
-    document.getElementById('tablaProductos').addEventListener('click', e => {
-        if (e.target.closest('.btn-del')) {
-            const tbody = document.getElementById('tbodyProductos');
-            if (tbody.querySelectorAll('.fila-producto').length > 1) {
-                e.target.closest('tr').remove();
-                recalcularTotales();
-            } else {
-                alert('La compra debe tener al menos un ítem.');
+        $('#btnAgregarProducto').on('click', function () {
+            if (productoSeleccionado) {
+                agregarFila(productoSeleccionado);
+                productoSeleccionado = null;
+                cerrarModalProducto();
             }
-        }
+        });
+
+        $('#tablaProductos').on('input', function (e) {
+            if ($(e.target).hasClass('input-cant') || $(e.target).hasClass('input-prec')) {
+                const fila = e.target.closest('tr');
+                const cant = parseFloat(fila.querySelector('.input-cant').value) || 0;
+                const prec = parseFloat(fila.querySelector('.input-prec').value) || 0;
+                fila.querySelector('.out-sub').value = (cant * prec).toFixed(2);
+                recalcularTotales();
+            }
+        });
+
+        $('#tablaProductos').on('click', function (e) {
+            if ($(e.target).closest('.btn-del').length) {
+                const tbody = document.getElementById('tbodyProductos');
+                if (tbody.querySelectorAll('.fila-producto').length > 1) {
+                    $(e.target).closest('tr').remove();
+                    recalcularTotales();
+                } else {
+                    alert('La compra debe tener al menos un ítem.');
+                }
+            }
+        });
     });
-
-    function recalcularTotales() {
-        let st = 0;
-        document.querySelectorAll('.out-sub').forEach(el => st += parseFloat(el.value) || 0);
-        const igv = st * 0.18;
-        const total = st + igv;
-
-        document.getElementById('txt_sub').innerText = 'S/ ' + st.toFixed(2);
-        document.getElementById('txt_igv').innerText = 'S/ ' + igv.toFixed(2);
-        document.getElementById('txt_total').innerText = 'S/ ' + total.toFixed(2);
-        
-        document.getElementById('h_sub').value = st.toFixed(2);
-        document.getElementById('h_igv').value = igv.toFixed(2);
-        document.getElementById('h_total').value = total.toFixed(2);
-    }
 </script>
 @endsection
