@@ -443,6 +443,9 @@ class InventarioController extends Controller
                 throw new \Exception("Ajuste no encontrado.");
             }
 
+            $nuevaEntrada = $request->tipo === 'INGRESO' ? $request->cantidad : 0;
+            $nuevaSalida  = $request->tipo === 'SALIDA' ? $request->cantidad : 0;
+
             $movimientosPosteriores = DB::table('kardex')
                 ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                 ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
@@ -454,9 +457,6 @@ class InventarioController extends Controller
             if ($movimientosPosteriores->isNotEmpty()) {
                 $originalEntrada = $ajusteOriginal->cantidad_entrada;
                 $originalSalida  = $ajusteOriginal->cantidad_salida;
-
-                $nuevaEntrada = $request->tipo === 'INGRESO' ? $request->cantidad : 0;
-                $nuevaSalida  = $request->tipo === 'SALIDA' ? $request->cantidad : 0;
 
                 $diferencia = $request->tipo === 'INGRESO'
                     ? $nuevaEntrada - $originalEntrada
