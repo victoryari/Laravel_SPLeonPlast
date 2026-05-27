@@ -271,7 +271,7 @@
 
     $(document).ready(function () {
         tablaBody = document.getElementById('tbodyProductos');
-        searchUrl = '{{ route("api.productos.search") }}';
+        searchUrl = '/productos/search-ajax';
         almacenesData = {!! json_encode($almacenes->map(fn($a) => ['codigo' => $a->codigo_almacen, 'descripcion' => $a->descripcion])->all()) !!};
 
         if (typeof $().select2 !== 'undefined') {
