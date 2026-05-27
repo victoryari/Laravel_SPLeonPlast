@@ -305,15 +305,15 @@
                 document.getElementById('infoProductoSeleccionado').classList.remove('hidden');
                 document.getElementById('btnAgregarProducto').removeAttribute('disabled');
             });
-
-            $('#btnAgregarProducto').on('click', function () {
-                if (productoSeleccionado) {
-                    agregarFila(productoSeleccionado);
-                    productoSeleccionado = null;
-                    cerrarModalProducto();
-                }
-            });
         }
+
+        $('#btnAgregarProducto').on('click', function () {
+            if (productoSeleccionado) {
+                agregarFila(productoSeleccionado);
+                productoSeleccionado = null;
+                cerrarModalProducto();
+            }
+        });
 
         $('#btnAgregarFila').on('click', function () {
             productoSeleccionado = null;
