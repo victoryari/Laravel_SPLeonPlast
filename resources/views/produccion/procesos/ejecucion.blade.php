@@ -289,7 +289,7 @@
 </form>
 
 <script>
-    const urlApiFormula = "{{ route('api.formulas.composicion') }}";
+    const urlApiFormula = '/produccion/api/formulas/composicion';
     const urlDeleteBase = "{{ url("produccion/ordenes/{$orden->idop}/procesos/{$proceso->id}/componentes") }}";
     
     const centros = @json($centros_trabajo);

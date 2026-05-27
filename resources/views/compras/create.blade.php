@@ -356,7 +356,7 @@
             const formData = new FormData(form);
 
             try {
-                const response = await fetch("{{ route('proveedores.storeAjax') }}", {
+                const response = await fetch('/admin/proveedores/ajax', {
                     method: 'POST',
                     headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                     body: formData
