@@ -21,11 +21,19 @@
     @endif
 
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
-        <form action="{{ route('compras.index') }}" method="GET" class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+        <form action="{{ route('compras.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm md:text-base outline-none" placeholder="Buscar por documento o proveedor...">
             </div>
-            <input type="text" name="search" value="{{ request('search') }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm md:text-base outline-none" placeholder="Buscar por documento o proveedor...">
+            <select name="estado" onchange="this.form.submit()" class="py-2 md:py-2.5 px-4 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                <option value="">Todos los estados</option>
+                <option value="PENDIENTE" {{ request('estado') === 'PENDIENTE' ? 'selected' : '' }}>Pendiente</option>
+                <option value="RECIBIDA" {{ request('estado') === 'RECIBIDA' ? 'selected' : '' }}>Recibida</option>
+                <option value="CANCELADA" {{ request('estado') === 'CANCELADA' ? 'selected' : '' }}>Anulada</option>
+            </select>
         </form>
     </div>
 
@@ -94,7 +102,7 @@
                                             <i class="fas fa-edit text-lg"></i>
                                         </a>
                                         
-                                        <button onclick="confirmarAnulacion({{ $compra->id_compra }}, '{{ $compra->numero_documento }}')" class="text-slate-400 hover:text-red-600 transition-colors" title="Anular">
+                                        <button type="button" data-id="{{ $compra->id_compra }}" data-documento="{{ $compra->numero_documento }}" class="btn-anular text-slate-400 hover:text-red-600 transition-colors" title="Anular">
                                             <i class="fas fa-ban text-lg"></i>
                                         </button>
                                         
@@ -121,13 +129,19 @@
 </div>
 
 <script>
-    function confirmarAnulacion(id, numero) {
-        if (confirm(`¿Está seguro de anular el documento ${numero}? Escriba ANULAR para confirmar.`)) {
-            const palabra = prompt("Escriba ANULAR para desactivar el registro:");
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-anular');
+        if (!btn) return;
+
+        const id = btn.getAttribute('data-id');
+        const numero = btn.getAttribute('data-documento') || 'S/N';
+
+        if (confirm('¿Está seguro de anular el documento ' + numero + '? Escriba ANULAR para confirmar.')) {
+            const palabra = prompt('Escriba ANULAR para desactivar el registro:');
             if (palabra === 'ANULAR') {
                 document.getElementById('form-anular-' + id).submit();
             }
         }
-    }
+    });
 </script>
 @endsection

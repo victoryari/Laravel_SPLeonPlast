@@ -73,7 +73,7 @@
                             </div>
 
                             <div class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center">
-                                <i class="fas fa-chevron-down transition-transform duration-300" id="icon-{{ $compra->id_compra }}"></i>
+                                <i class="fas fa-chevron-down transition-transform duration-300" id="icon-compra-{{ $compra->id_compra }}"></i>
                             </div>
                         </div>
                     </div>
@@ -296,12 +296,12 @@
 <script>
 function toggleAccordion(id) {
     const content = document.getElementById(id);
-    const icon = document.getElementById('icon-' + id.split('-')[1]);
+    const icon = document.getElementById('icon-' + id);
 
-    document.querySelectorAll('[id^="compra-"]').forEach(el => {
+    document.querySelectorAll('[id^="compra-"], [id^="pep-"]').forEach(el => {
         if (el.id !== id && !el.classList.contains('hidden')) {
             el.classList.add('hidden');
-            const otherIcon = document.getElementById('icon-' + el.id.split('-')[1]);
+            const otherIcon = document.getElementById('icon-' + el.id);
             if (otherIcon) otherIcon.classList.remove('rotate-180');
         }
     });

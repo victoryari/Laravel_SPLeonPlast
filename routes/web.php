@@ -79,8 +79,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('usuarios', UsuarioController::class)->names('usuarios');
         Route::resource('roles', RolController::class)->names('roles');
 
-        // Proveedores (Con soporte AJAX)
-        Route::post('proveedores/ajax', [ProveedorController::class, 'storeAjax'])->name('proveedores.storeAjax');
+        // Proveedores
         Route::resource('proveedores', ProveedorController::class)->names('proveedores');
 
         // Almacenes
@@ -93,6 +92,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrador,Supervisor')->prefix('admin')->group(function () {
         Route::resource('compras', CompraController::class)->names('compras');
         Route::post('compras/{id}/anular', [CompraController::class, 'anular'])->name('compras.anular');
+        Route::post('proveedores/ajax', [ProveedorController::class, 'storeAjax'])->name('proveedores.storeAjax');
     });
 
     // =========================================================

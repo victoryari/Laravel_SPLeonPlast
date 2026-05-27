@@ -50,6 +50,10 @@ class InventarioController extends Controller
     public function procesarRecepcion(Request $request, $id) {
         $compra = Compra::with('detalles')->findOrFail($id);
 
+        if ($compra->estado !== 'PENDIENTE') {
+            return back()->with('error', 'La compra ya ha sido procesada o no está pendiente.');
+        }
+
         try {
             DB::beginTransaction();
 

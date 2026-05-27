@@ -52,7 +52,7 @@ class CompraController extends Controller
             'serie_documento' => 'required|string|max:20',
             'numero_documento' => 'required|string|max:50',
             'fecha_compra' => 'required|date',
-            'ruc_proveedor' => 'required|string|max:20',
+            'ruc_proveedor' => 'required|string|max:20|exists:proveedor,ruc',
             'productos' => 'required|array|min:1',
             'productos.*.codigo' => 'required|string|max:50',
             'productos.*.cantidad' => 'required|numeric|min:0.01',
@@ -62,13 +62,13 @@ class CompraController extends Controller
 
         try {
             DB::beginTransaction();
-            $prov = Proveedor::where('ruc', $request->ruc_proveedor)->first();
-            
+            $prov = Proveedor::where('ruc', $request->ruc_proveedor)->firstOrFail();
+
             $compra = Compra::create([
                 'tipo_documento'   => $request->tipo_documento,
                 'serie_documento'  => strtoupper($request->serie_documento),
                 'numero_documento' => $request->numero_documento,
-                'proveedor'        => $prov->razon_social ?? 'S/N',
+                'proveedor'        => $prov->razon_social,
                 'ruc_proveedor'    => $request->ruc_proveedor,
                 'fecha_compra'     => $request->fecha_compra,
                 'subtotal'         => $request->total_subtotal,
@@ -116,7 +116,7 @@ class CompraController extends Controller
             'serie_documento' => 'required|string|max:20',
             'numero_documento' => 'required|string|max:50',
             'fecha_compra' => 'required|date',
-            'ruc_proveedor' => 'required|string|max:20',
+            'ruc_proveedor' => 'required|string|max:20|exists:proveedor,ruc',
             'productos' => 'required|array|min:1',
             'productos.*.codigo' => 'required|string|max:50',
             'productos.*.cantidad' => 'required|numeric|min:0.01',
@@ -127,18 +127,24 @@ class CompraController extends Controller
         try {
             DB::beginTransaction();
             $compra = Compra::findOrFail($id);
-            $prov = Proveedor::where('ruc', $request->ruc_proveedor)->first();
-            
+
+            if ($compra->estado !== 'PENDIENTE') {
+                return back()->with('error', 'Solo se pueden editar compras en estado PENDIENTE.');
+            }
+
+            $prov = Proveedor::where('ruc', $request->ruc_proveedor)->firstOrFail();
+
             $compra->update([
                 'tipo_documento' => $request->tipo_documento,
                 'serie_documento' => strtoupper($request->serie_documento),
                 'numero_documento' => $request->numero_documento,
                 'fecha_compra' => $request->fecha_compra,
-                'proveedor' => $prov->razon_social ?? $compra->proveedor,
+                'proveedor' => $prov->razon_social,
                 'ruc_proveedor' => $request->ruc_proveedor,
                 'subtotal' => $request->total_subtotal,
                 'igv' => $request->total_impuestos,
                 'total' => $request->total_general,
+                'usuario_aprobacion' => Auth::id(),
             ]);
 
             DetalleCompra::where('id_compra', $id)->delete();
@@ -165,11 +171,20 @@ class CompraController extends Controller
         }
     }
 
-    public function anular($id) {
+    public function anular(Request $request, $id) {
         try {
             DB::beginTransaction();
             $compra = Compra::findOrFail($id);
-            $compra->update(['estado' => 'CANCELADA']);
+
+            if ($compra->estado !== 'PENDIENTE') {
+                return back()->with('error', 'Solo se pueden anular compras en estado PENDIENTE.');
+            }
+
+            $compra->update([
+                'estado' => 'CANCELADA',
+                'motivo_anulacion' => $request->confirmacion ?? 'Anulación solicitada',
+                'usuario_aprobacion' => Auth::id(),
+            ]);
             DB::commit();
             return redirect()->route('compras.index')->with('success', 'Compra anulada correctamente.');
         } catch (\Exception $e) {
