@@ -29,16 +29,16 @@
                     </a>
                 </div>
 
-                <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+                <form method="GET" id="search-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-200">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Buscar</label>
-                        <input type="text" name="search" value="{{ request('search') }}"
+                        <input type="text" name="search" id="inputSearch" value="{{ request('search') }}"
                             placeholder="Producto, documento, motivo..."
                             class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Almacén</label>
-                        <select name="codigo_almacen"
+                        <select name="codigo_almacen" id="inputAlmacen"
                             class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                             <option value="">Todos</option>
                             @foreach($almacenes as $a)
@@ -50,12 +50,12 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Desde</label>
-                        <input type="date" name="fecha_desde" value="{{ request('fecha_desde') }}"
+                        <input type="date" name="fecha_desde" id="inputFechaDesde" value="{{ request('fecha_desde') }}"
                             class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Hasta</label>
-                        <input type="date" name="fecha_hasta" value="{{ request('fecha_hasta') }}"
+                        <input type="date" name="fecha_hasta" id="inputFechaHasta" value="{{ request('fecha_hasta') }}"
                             class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                     </div>
                     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
@@ -70,6 +70,7 @@
                     </div>
                 </form>
 
+                <div id="table-container" class="transition-opacity duration-300">
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
@@ -148,4 +149,70 @@
         </div>
     </div>
 </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('search-form');
+    const inputSearch = document.getElementById('inputSearch');
+    const tableContainer = document.getElementById('table-container');
+    let timeout = null;
+
+    function fetchResults(url = null) {
+        if (!url) {
+            url = new URL(window.location.href);
+            const formData = new FormData(form);
+            for (const [key, val] of formData) {
+                if (val) {
+                    url.searchParams.set(key, val);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            }
+            url.searchParams.delete('page');
+        }
+        window.history.pushState({}, '', url);
+        tableContainer.classList.add('opacity-50', 'pointer-events-none');
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContainer = doc.getElementById('table-container');
+                if (newContainer) {
+                    tableContainer.innerHTML = newContainer.innerHTML;
+                }
+            })
+            .catch(error => console.error('Error al filtrar:', error))
+            .finally(() => {
+                tableContainer.classList.remove('opacity-50', 'pointer-events-none');
+            });
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetchResults();
+    });
+
+    inputSearch.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fetchResults(), 400);
+    });
+
+    form.querySelectorAll('select, input[type="date"]').forEach(function(el) {
+        el.addEventListener('change', function() {
+            fetchResults();
+        });
+    });
+
+    tableContainer.addEventListener('click', function(e) {
+        const aTag = e.target.closest('nav[role="navigation"] a');
+        if (aTag) {
+            e.preventDefault();
+            fetchResults(new URL(aTag.href));
+        }
+    });
+});
+</script>
 @endsection

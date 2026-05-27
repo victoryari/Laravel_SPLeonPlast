@@ -157,14 +157,7 @@
                 <div class="col-span-1 sm:col-span-2 text-gray-800">
                     <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Materia Prima / Producto <span class="text-red-500">*</span></label>
                     <select id="modalProducto" class="w-full" required>
-                        <option value="" data-tipo="" data-tipo-desc="">Seleccione producto...</option>
-                        @foreach($productos as $prod)
-                            <option value="{{ $prod->codigo }}" 
-                                    data-tipo="{{ $prod->codigo_tipo_producto }}" 
-                                    data-tipo-desc="{{ $prod->tipo_desc ?? $prod->codigo_tipo_producto }}">
-                                {{ $prod->descripcion }} ({{ $prod->codigo }})
-                            </option>
-                        @endforeach
+                        <option value="">Seleccione producto...</option>
                     </select>
                 </div>
 
@@ -242,13 +235,25 @@
     $(document).ready(function() {
         // Inicializar Select2
         $('#moldeGlobal').select2({ width: '100%' });
-        $('#modalProducto').select2({ width: '100%', dropdownParent: $('#modalComponente') });
+        $('#modalProducto').select2({
+            width: '100%',
+            dropdownParent: $('#modalComponente'),
+            ajax: {
+                url: '/productos/search-ajax',
+                dataType: 'json',
+                delay: 300,
+                data: function(p) { return { q: p.term }; },
+                processResults: function(d) { return { results: d }; },
+                cache: true
+            },
+            minimumInputLength: 0,
+            placeholder: 'Seleccione producto...'
+        });
 
-        // Evento: Al cambiar producto en el modal, autocompletar el tipo
-        $('#modalProducto').on('change', function() {
-            const selected = $(this).find(':selected');
-            $('#modalTipo').val(selected.data('tipo') || '');
-            $('#modalTipoDesc').val(selected.data('tipo-desc') || '');
+        $('#modalProducto').on('select2:select', function(e) {
+            const d = e.params.data;
+            $('#modalTipo').val(d.codigo_tipo_producto || '');
+            $('#modalTipoDesc').val(d.descripcion_tipo_producto || d.codigo_tipo_producto || '');
         });
     });
 

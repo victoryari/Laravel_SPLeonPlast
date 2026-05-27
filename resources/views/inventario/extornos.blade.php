@@ -30,15 +30,16 @@
             </div>
         </div>
         
-        <form action="{{ route('inventario.extornos') }}" method="GET" class="relative w-full sm:w-80">
+        <div class="relative w-full sm:w-80">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar recibo, ticket o producto..." 
+            <input type="text" id="searchInput" name="search" value="{{ request('search') }}" placeholder="Buscar recibo, ticket o producto..." 
                 class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm outline-none">
-        </form>
+        </div>
     </div>
 
+    <div id="table-container" class="transition-opacity duration-300">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
@@ -94,8 +95,9 @@
                 {{ $movimientos->links() }}
             </div>
         @endif
+        </div>
     </div>
-</div>
+    </div>
 
 <div id="modalExtorno" class="fixed inset-0 z-50 hidden bg-gray-900/80 backdrop-blur-sm overflow-y-auto items-center justify-center">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border-t-8 border-red-600">
@@ -121,15 +123,15 @@
                     <button type="submit" class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-bold text-sm hover:bg-red-700 shadow-md shadow-red-200 transition">Procesar Reversión</button>
                 </div>
             </form>
-        </div>
     </div>
+</div>
+</div>
 </div>
 
 <script>
     function abrirModalExtorno(id, doc, producto) {
         document.getElementById('lblDoc').innerText = doc;
         document.getElementById('lblProducto').innerText = producto;
-        // Asignamos el ID dinámicamente a la ruta del formulario
         document.getElementById('formExtorno').action = `/admin/inventario/extornos/procesar/${id}`;
         document.getElementById('modalExtorno').classList.remove('hidden');
         document.getElementById('modalExtorno').classList.add('flex');
@@ -139,5 +141,53 @@
         document.getElementById('modalExtorno').classList.remove('flex');
         document.getElementById('formExtorno').reset();
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const tableContainer = document.getElementById('table-container');
+        let timeout = null;
+
+        function fetchResults(url = null) {
+            if (!url) {
+                url = new URL(window.location.href);
+                if (searchInput.value) {
+                    url.searchParams.set('search', searchInput.value);
+                } else {
+                    url.searchParams.delete('search');
+                }
+                url.searchParams.delete('page');
+            }
+            window.history.pushState({}, '', url);
+            tableContainer.classList.add('opacity-50', 'pointer-events-none');
+
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContainer = doc.getElementById('table-container');
+                    if (newContainer) {
+                        tableContainer.innerHTML = newContainer.innerHTML;
+                    }
+                })
+                .catch(error => console.error('Error al filtrar:', error))
+                .finally(() => {
+                    tableContainer.classList.remove('opacity-50', 'pointer-events-none');
+                });
+        }
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => fetchResults(), 400);
+        });
+
+        tableContainer.addEventListener('click', function(e) {
+            const aTag = e.target.closest('nav[role="navigation"] a');
+            if (aTag) {
+                e.preventDefault();
+                fetchResults(new URL(aTag.href));
+            }
+        });
+    });
 </script>
 @endsection

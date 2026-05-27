@@ -31,19 +31,21 @@
 
         <!-- Buscador -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 mb-6">
-            <form action="{{ route('inventario.index') }}" method="GET" class="relative max-w-md">
+            <div class="relative max-w-md">
                 <input 
                     type="text"
+                    id="searchInput"
                     name="search"
                     value="{{ request('search') }}"
                     placeholder="Buscar por código o descripción..."
                     class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none transition"
                 >
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-            </form>
+            </div>
         </div>
 
         <!-- Tabla -->
+        <div id="table-container" class="transition-opacity duration-300">
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -117,4 +119,56 @@
         </div>
     </div>
 </div>
+</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const tableContainer = document.getElementById('table-container');
+    let timeout = null;
+
+    function fetchResults(url = null) {
+        if (!url) {
+            url = new URL(window.location.href);
+            if (searchInput.value) {
+                url.searchParams.set('search', searchInput.value);
+            } else {
+                url.searchParams.delete('search');
+            }
+            url.searchParams.delete('page');
+        }
+        window.history.pushState({}, '', url);
+        tableContainer.classList.add('opacity-50', 'pointer-events-none');
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContainer = doc.getElementById('table-container');
+                if (newContainer) {
+                    tableContainer.innerHTML = newContainer.innerHTML;
+                }
+            })
+            .catch(error => console.error('Error al filtrar:', error))
+            .finally(() => {
+                tableContainer.classList.remove('opacity-50', 'pointer-events-none');
+            });
+    }
+
+    searchInput.addEventListener('input', function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fetchResults(), 400);
+    });
+
+    tableContainer.addEventListener('click', function(e) {
+        const aTag = e.target.closest('nav[role="navigation"] a');
+        if (aTag) {
+            e.preventDefault();
+            fetchResults(new URL(aTag.href));
+        }
+    });
+});
+</script>
 @endsection

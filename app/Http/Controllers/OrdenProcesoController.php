@@ -317,14 +317,6 @@ class OrdenProcesoController extends Controller
 
         $tipos_producto = DB::table('tipo_producto')->select('codigo', 'descripcion')->where('estado', 1)->get();
         
-        $productos_raw = DB::table('producto')
-            ->select('codigo', 'descripcion', 'codigo_tipo_producto')
-            ->where(function ($query) {
-                $query->where('estado', 1)->orWhereNull('estado');
-            })
-            ->whereIn('codigo_tipo_producto', ['MTP', 'SUM', 'AUX', 'EMB', 'ENV', 'PEP'])
-            ->get();
-            
         $colores = DB::table('color')->select('codigo', 'descripcion')->where('activo', 1)->get();
         $unidades = DB::table('unidad_medida')->select('codigo', 'descripcion')->where('estado', 1)->get();
         $trabajadores = DB::table('trabajador')->select('codigo', 'nombre')->where('estado', 1)->get();
@@ -361,7 +353,7 @@ class OrdenProcesoController extends Controller
 
         return view('produccion.procesos.ejecucion', compact(
             'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado',
-            'formulas_disponibles', 'registrados', 'tiene_componentes', 'tipos_producto', 'productos_raw',
+            'formulas_disponibles', 'registrados', 'tiene_componentes', 'tipos_producto',
             'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo'
         ));
     }

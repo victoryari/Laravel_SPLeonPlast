@@ -176,12 +176,9 @@
             <div>
                 <select id="selectProductoModal" class="w-full" style="width:100%"></select>
             </div>
-            <div id="infoProductoSeleccionado" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-1">
-                <p class="text-xs text-blue-800"><strong>Código:</strong> <span id="prodCodigo" class="font-mono"></span></p>
-                <p class="text-xs text-blue-800"><strong>Nombre:</strong> <span id="prodNombre"></span></p>
-            </div>
-            <button type="button" id="btnAgregarProducto" class="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-2.5 rounded-xl font-bold transition-all flex justify-center items-center gap-2" disabled>
-                <i class="fas fa-plus-circle"></i> Agregar a la tabla
+            <p class="text-xs text-slate-500 text-center">Seleccione un producto para agregarlo automáticamente a la tabla.</p>
+            <button type="button" id="btnCerrarProducto" class="w-full bg-slate-600 hover:bg-slate-500 text-white py-2.5 rounded-xl font-bold transition-all flex justify-center items-center gap-2">
+                <i class="fas fa-check"></i> Finalizar
             </button>
         </div>
     </div>
@@ -194,8 +191,6 @@
     let tablaBody;
     let searchUrl;
     let almacenesData;
-    let productoSeleccionado = null;
-
     function getProductName(text) {
         const m = text.match(/\]\s*(.*)/);
         return m ? m[1] : text;
@@ -291,12 +286,22 @@
             });
 
             $('#selectProductoModal').on('select2:select', function(e) {
-                productoSeleccionado = e.params.data;
-                document.getElementById('prodCodigo').textContent = productoSeleccionado.id;
-                document.getElementById('prodNombre').textContent = getProductName(productoSeleccionado.text);
-                document.getElementById('infoProductoSeleccionado').classList.remove('hidden');
-                document.getElementById('btnAgregarProducto').removeAttribute('disabled');
+                agregarFila(e.params.data);
+                $('#selectProductoModal').val(null).trigger('change');
             });
+        }
+
+        $('#btnCerrarProducto').on('click', cerrarModalProducto);
+
+        $('#btnAgregarFila').on('click', function () {
+            $('#selectProductoModal').val(null).trigger('change');
+            $('#modalProducto').removeClass('hidden');
+            setTimeout(() => {
+                if (typeof $('#selectProductoModal').select2 === 'function') {
+                    $('#selectProductoModal').select2('open');
+                }
+            }, 250);
+        });
         }
 
         $('#btnAgregarProducto').on('click', function () {

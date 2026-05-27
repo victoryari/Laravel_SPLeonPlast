@@ -305,7 +305,12 @@ class InventarioController extends Controller
 
             DB::table('inventario')->updateOrInsert(
                 ['codigo_producto' => $request->codigo_producto, 'codigo_almacen' => $request->codigo_almacen],
-                ['stock_actual' => $nuevo_saldo, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]
+                [
+                    'stock_actual' => $nuevo_saldo,
+                    'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                    'fecha_ultimo_movimiento' => now(),
+                    'usuario_ultimo_movimiento' => Auth::id()
+                ]
             );
 
             DB::table('kardex')->insert([
@@ -480,7 +485,12 @@ class InventarioController extends Controller
                 DB::table('inventario')
                     ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                     ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                    ->update(['stock_actual' => $saldoActual, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]);
+                    ->update([
+                        'stock_actual' => $saldoActual,
+                        'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]);
             } else {
                 $saldoAnterior = DB::table('kardex')
                     ->where('codigo_producto', $ajusteOriginal->codigo_producto)
@@ -494,7 +504,12 @@ class InventarioController extends Controller
                 DB::table('inventario')
                     ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                     ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                    ->update(['stock_actual' => $nuevo_saldo, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]);
+                    ->update([
+                        'stock_actual' => $nuevo_saldo,
+                        'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]);
             }
 
             DB::table('kardex')->where('id_kardex', $id)->update([

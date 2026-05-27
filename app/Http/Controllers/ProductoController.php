@@ -138,24 +138,35 @@ class ProductoController extends Controller
     }
 
     /**
-     * Búsqueda AJAX para Select2 (código + descripción).
+     * Búsqueda AJAX para Select2 (código + descripción + tipo + unidad).
      */
     public function searchAjax(Request $request)
     {
         $search = $request->input('q', '');
-        $productos = Producto::where('estado', 1)
+        $tipo = $request->input('tipo', '');
+
+        $query = Producto::with(['tipo', 'unidad'])
+            ->where('estado', 1)
             ->where(function ($q) use ($search) {
                 $q->where('codigo', 'LIKE', "%{$search}%")
                   ->orWhere('descripcion', 'LIKE', "%{$search}%");
-            })
-            ->orderBy('descripcion', 'asc')
-            ->limit(15)
-            ->get(['codigo', 'descripcion']);
+            });
+
+        if ($tipo) {
+            $query->where('codigo_tipo_producto', $tipo);
+        }
+
+        $productos = $query->orderBy('descripcion', 'asc')
+            ->limit(30)
+            ->get();
 
         return response()->json(
             $productos->map(fn($p) => [
-                'id'   => $p->codigo,
-                'text' => "[{$p->codigo}] {$p->descripcion}",
+                'id'                     => $p->codigo,
+                'text'                   => "[{$p->codigo}] {$p->descripcion}",
+                'codigo_tipo_producto'   => $p->codigo_tipo_producto,
+                'descripcion_tipo_producto' => $p->tipo?->descripcion ?? $p->codigo_tipo_producto,
+                'codigo_unidad_medida'   => $p->codigo_unidad_medida,
             ])
         );
     }

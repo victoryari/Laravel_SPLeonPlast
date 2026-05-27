@@ -12,10 +12,10 @@
 
 
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6">
-        <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <form method="GET" id="search-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Tipo Documento</label>
-                <select name="documento"
+                <select name="documento" id="inputDocumento"
                     class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
                     <option value="">Todos</option>
                     @foreach($tiposDocumento as $td)
@@ -25,18 +25,18 @@
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Producto</label>
-                <input type="text" name="codigo_producto" value="{{ request('codigo_producto') }}"
+                <input type="text" name="codigo_producto" id="inputProducto" value="{{ request('codigo_producto') }}"
                     placeholder="Código o descripción..."
                     class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Desde</label>
-                <input type="date" name="fecha_desde" value="{{ request('fecha_desde') }}"
+                <input type="date" name="fecha_desde" id="inputFechaDesde" value="{{ request('fecha_desde') }}"
                     class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Hasta</label>
-                <input type="date" name="fecha_hasta" value="{{ request('fecha_hasta') }}"
+                <input type="date" name="fecha_hasta" id="inputFechaHasta" value="{{ request('fecha_hasta') }}"
                     class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition">
             </div>
             <div class="flex items-end gap-2">
@@ -48,13 +48,14 @@
                     class="px-4 py-2 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 text-sm font-semibold transition">
                     Limpiar
                 </a>
-                <button type="button" onclick="window.print()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition ml-auto">
+                <button type="button" onclick="window.print()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition ml-auto no-print">
                     <i class="fas fa-print mr-1"></i> Imprimir
                 </button>
             </div>
         </form>
     </div>
 
+    <div id="table-container" class="transition-opacity duration-300">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
@@ -124,6 +125,72 @@
         @endif
     </div>
 </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('search-form');
+    const inputProducto = document.getElementById('inputProducto');
+    const tableContainer = document.getElementById('table-container');
+    let timeout = null;
+
+    function fetchResults(url = null) {
+        if (!url) {
+            url = new URL(window.location.href);
+            const formData = new FormData(form);
+            for (const [key, val] of formData) {
+                if (val) {
+                    url.searchParams.set(key, val);
+                } else {
+                    url.searchParams.delete(key);
+                }
+            }
+            url.searchParams.delete('page');
+        }
+        window.history.pushState({}, '', url);
+        tableContainer.classList.add('opacity-50', 'pointer-events-none');
+
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const newContainer = doc.getElementById('table-container');
+                if (newContainer) {
+                    tableContainer.innerHTML = newContainer.innerHTML;
+                }
+            })
+            .catch(error => console.error('Error al filtrar:', error))
+            .finally(() => {
+                tableContainer.classList.remove('opacity-50', 'pointer-events-none');
+            });
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetchResults();
+    });
+
+    inputProducto.addEventListener('input', function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fetchResults(), 400);
+    });
+
+    form.querySelectorAll('select, input[type="date"]').forEach(function(el) {
+        el.addEventListener('change', function() {
+            fetchResults();
+        });
+    });
+
+    tableContainer.addEventListener('click', function(e) {
+        const aTag = e.target.closest('nav[role="navigation"] a');
+        if (aTag) {
+            e.preventDefault();
+            fetchResults(new URL(aTag.href));
+        }
+    });
+});
+</script>
 
 <style>
     @media print {

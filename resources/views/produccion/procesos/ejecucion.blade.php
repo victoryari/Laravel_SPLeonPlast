@@ -294,7 +294,6 @@
     
     const centros = @json($centros_trabajo);
     const trabajadores = @json($trabajadores);
-    const productosData = @json($productos_raw);
     const tiposData = @json($tipos_producto);
     const unidadesData = @json($unidades);
     const moldesData = @json($moldes);
@@ -316,43 +315,62 @@
         const optionsContainer = row.querySelector('.custom-options');
         const tipoSelect = row.querySelector('.c-tipo');
 
+        let searchTimeout;
+
         tipoSelect.onchange = () => {
             searchInput.value = '';
             hiddenInput.value = '';
-            renderOptions(searchInput.value);
+            optionsContainer.style.display = 'none';
         };
 
-        searchInput.onfocus = () => { renderOptions(searchInput.value); optionsContainer.style.display = 'block'; };
-        searchInput.oninput = () => { renderOptions(searchInput.value); hiddenInput.value = ''; optionsContainer.style.display = 'block'; };
-        
-        function renderOptions(filter = '') {
-            optionsContainer.innerHTML = '';
-            const lower = filter.toLowerCase();
-            const tipoSeleccionado = tipoSelect.value;
+        searchInput.onfocus = () => {
+            buscarProductos(searchInput.value);
+            optionsContainer.style.display = 'block';
+        };
 
-            const fData = productosData.filter(p => {
-                const matchTipo = (p.codigo_tipo_producto === tipoSeleccionado);
-                const matchText = p.codigo.toLowerCase().includes(lower) || p.descripcion.toLowerCase().includes(lower);
-                return matchTipo && matchText;
-            });
+        searchInput.oninput = () => {
+            hiddenInput.value = '';
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => buscarProductos(searchInput.value), 300);
+            optionsContainer.style.display = 'block';
+        };
 
-            if (fData.length === 0) { 
-                optionsContainer.innerHTML = '<div class="p-2 text-sm text-gray-500">Sin resultados</div>'; 
-                return; 
-            }
-            
-            fData.slice(0, 30).forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'p-2 cursor-pointer border-b border-gray-100 text-xs hover:bg-blue-50 text-gray-700';
-                div.textContent = `${p.codigo} - ${p.descripcion}`;
-                div.onclick = () => {
-                    searchInput.value = div.textContent;
-                    hiddenInput.value = p.codigo;
-                    if(tipoSelect && p.codigo_tipo_producto) tipoSelect.value = p.codigo_tipo_producto;
-                    optionsContainer.style.display = 'none';
-                };
-                optionsContainer.appendChild(div);
-            });
+        function buscarProductos(filter) {
+            const tipo = tipoSelect.value;
+            let url = `/productos/search-ajax?q=${encodeURIComponent(filter)}`;
+            if (tipo) url += `&tipo=${encodeURIComponent(tipo)}`;
+
+            optionsContainer.innerHTML = '<div class="p-2 text-sm text-gray-400">Buscando...</div>';
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    optionsContainer.innerHTML = '';
+                    if (data.length === 0) {
+                        optionsContainer.innerHTML = '<div class="p-2 text-sm text-gray-500">Sin resultados</div>';
+                        return;
+                    }
+                    data.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'p-2 cursor-pointer border-b border-gray-100 text-xs hover:bg-blue-50 text-gray-700';
+                        div.textContent = `${p.id} - ${getProdName(p.text)}`;
+                        div.onclick = () => {
+                            searchInput.value = div.textContent;
+                            hiddenInput.value = p.id;
+                            if (p.codigo_tipo_producto) tipoSelect.value = p.codigo_tipo_producto;
+                            optionsContainer.style.display = 'none';
+                        };
+                        optionsContainer.appendChild(div);
+                    });
+                })
+                .catch(() => {
+                    optionsContainer.innerHTML = '<div class="p-2 text-sm text-red-500">Error al buscar</div>';
+                });
+        }
+
+        function getProdName(text) {
+            const m = text.match(/\]\s*(.*)/);
+            return m ? m[1] : text;
         }
 
         document.addEventListener('click', (e) => {
