@@ -15,7 +15,7 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Órdenes Activas</p>
                     <p class="text-3xl font-black text-gray-800 mt-2">{{ $ordenesActivas }}</p>
                 </div>
-                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 text-2xl shadow-inner">
+                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-primary text-2xl shadow-inner">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
             </div>
@@ -49,7 +49,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 flex items-center">
-                <i class="fas fa-clipboard-list text-blue-500 mr-2"></i> Órdenes Recientes
+                <i class="fas fa-clipboard-list text-primary mr-2"></i> Órdenes Recientes
             </h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
@@ -66,7 +66,7 @@
                             <td class="px-4 py-2 font-medium">{{ $orden->codigo_op }}</td>
                             <td class="px-4 py-2">{{ $orden->descripcion_producto_proceso }}</td>
                             <td class="px-4 py-2">
-                                <span class="px-2 py-1 text-xs rounded-full {{ $orden->estado == 'COMPLETADO' ? 'bg-green-100 text-green-700' : ($orden->estado == 'EN_PROCESO' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700') }}">
+                                <span class="px-2 py-1 text-xs rounded-full {{ $orden->estado == 'COMPLETADO' ? 'bg-green-100 text-green-700' : ($orden->estado == 'EN_PROCESO' ? 'bg-primary-50 text-blue-700' : 'bg-yellow-100 text-yellow-700') }}">
                                     {{ $orden->estado }}
                                 </span>
                             </td>

@@ -33,7 +33,7 @@
 
             <div class="mt-8 pt-6 border-t border-gray-50 flex justify-end gap-3">
                 <a href="{{ route('actividades.index') }}" class="px-6 py-3 text-gray-600 font-bold hover:bg-gray-50 rounded-xl transition">Cancelar</a>
-                <button type="submit" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition">
+                <button type="submit" class="px-8 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-lg transition">
                     <i class="fas fa-save mr-2"></i> Guardar
                 </button>
             </div>

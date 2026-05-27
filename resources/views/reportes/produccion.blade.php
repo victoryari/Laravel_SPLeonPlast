@@ -24,7 +24,7 @@
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Fin</label>
                 <input type="date" name="fecha_fin" value="{{ $fechaFin }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
             </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition text-sm">
+            <button type="submit" class="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg shadow transition text-sm">
                 <i class="fas fa-search mr-1"></i> Filtrar
             </button>
         </div>

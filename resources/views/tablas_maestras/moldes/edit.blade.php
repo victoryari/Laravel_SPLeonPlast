@@ -28,7 +28,7 @@
                 <div>
                     <label for="descripcion" class="block text-sm font-bold text-gray-700 mb-2">Descripción <span class="text-red-500">*</span></label>
                     <input type="text" name="descripcion" id="descripcion" value="{{ old('descripcion', $molde->descripcion) }}" 
-                           class="w-full px-4 py-3 rounded-xl border @error('descripcion') border-red-500 @else border-gray-300 @enderror focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition" required>
+                           class="w-full px-4 py-3 rounded-xl border @error('descripcion') border-red-500 @else border-gray-300 @enderror focus:ring-2 focus:ring-primary focus:border-primary outline-none transition" required>
                     @error('descripcion')
                         <p class="text-red-500 text-xs mt-2 font-medium">{{ $message }}</p>
                     @enderror

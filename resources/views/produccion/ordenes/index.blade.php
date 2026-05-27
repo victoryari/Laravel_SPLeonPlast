@@ -9,7 +9,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Órdenes de Producción</h1>
             <p class="text-xs sm:text-sm text-gray-600">Administración de las órdenes activas en el sistema</p>
         </div>
-        <a href="{{ route('produccion.ordenes.create') }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('produccion.ordenes.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
             <span class="hidden sm:inline ml-2">Nueva Orden</span>
         </a>
@@ -68,7 +68,7 @@
                                 @endif
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
-                                <a href="{{ route('ordenes.procesos.index', $o->idop) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors">
+                                <a href="{{ route('ordenes.procesos.index', $o->idop) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-primary hover:bg-primary-dark shadow-sm transition-colors">
                                     <i class="fas fa-cogs mr-1"></i> Procesos
                                 </a>
                             </td>

@@ -50,7 +50,7 @@
                 @if($es_inyectado)
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Inyectora (Centro)</label>
-                    <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                    <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
                             <option value="{{ $ct->codigo }}">{{ $ct->codigo }}</option>
@@ -59,7 +59,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Molde a usar</label>
-                    <select id="molde_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3" onchange="vincularFormula()">
+                    <select id="molde_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3" onchange="vincularFormula()">
                         <option value="">-- Seleccione --</option>
                         @foreach($moldes as $m)
                             <option value="{{ $m->codigo }}" data-formula="{{ $m->codigo_formula ?? '' }}">
@@ -72,7 +72,7 @@
                 
                 <div class="flex-1 min-w-50">
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Seleccione Fórmula</label>
-                    <select id="formula_selector" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                    <select id="formula_selector" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($formulas_disponibles as $fm)
                             <option value="{{ $fm->codigo }}">{{ $fm->codigo }} - {{ $fm->descripcion }}</option>
@@ -82,14 +82,14 @@
                 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Cant. (KG)</label>
-                    <input type="number" id="cantidad_global" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3" step="0.01">
+                    <input type="number" id="cantidad_global" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3" step="0.01">
                 </div>
             </div>
 
             <div class="flex flex-wrap items-end gap-4 mt-2">
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Trabajador</label>
-                    <select id="trabajador_global" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                    <select id="trabajador_global" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($trabajadores as $t)
                             <option value="{{ $t->codigo }}">{{ $t->nombre }}</option>
@@ -100,18 +100,18 @@
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Inicio</label>
                     <input type="time" id="hora_ini_global" value="08:00"
-                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Fin</label>
                     <input type="time" id="hora_fin_global" value="17:00"
-                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm py-2 px-3">
+                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                 </div>
 
                 <div class="flex-1"></div>
 
-                <button type="button" onclick="cargarComponentes()" class="px-5 py-2 {{ $es_inyectado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-blue-600 hover:bg-blue-700' }} text-white font-medium rounded-md shadow-sm transition">
+                <button type="button" onclick="cargarComponentes()" class="px-5 py-2 {{ $es_inyectado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition">
                     <i class="fas fa-box-open mr-2"></i>Cargar
                 </button>
             </div>
@@ -203,7 +203,7 @@
                             </label>
                             <input type="number" name="merma_kg" id="merma_kg" class="w-24 text-center font-bold text-gray-900 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500" value="0.00" step="0.01">
                         </div>
-                        <button type="button" onclick="enviarGuardado()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition shadow-sm transform hover:-translate-y-0.5">
+                        <button type="button" onclick="enviarGuardado()" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-primary-dark transition shadow-sm transform hover:-translate-y-0.5">
                             💾 Guardar Componentes
                         </button>
                         @endif
@@ -213,7 +213,7 @@
 
             @foreach($registrados as $r)
             <div id="row_edit_{{ $r->id_op_componentes }}" class="hidden mb-2">
-                <form action="{{ route('ordenes.procesos.componentes.update', [$orden->idop, $proceso->id, $r->id_op_componentes]) }}" method="POST" class="flex flex-wrap items-end gap-3 p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                <form action="{{ route('ordenes.procesos.componentes.update', [$orden->idop, $proceso->id, $r->id_op_componentes]) }}" method="POST" class="flex flex-wrap items-end gap-3 p-4 bg-blue-50 border border-primary-50 rounded-lg">
                     @csrf
                     @method('PUT')
 
@@ -221,14 +221,14 @@
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Cantidad</label>
                         <input type="number" name="cantidad" step="0.01" min="0.01"
                             value="{{ $r->cantidad }}"
-                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500"
+                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary"
                             {{ $r->codigo_tipo_producto === 'ACT' ? 'readonly' : '' }}>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Trabajador</label>
                         <select name="codigo_trabajador"
-                            class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                             <option value="">--</option>
                             @foreach($trabajadores as $t)
                                 <option value="{{ $t->codigo }}" {{ $r->codigo_trabajador == $t->codigo ? 'selected' : '' }}>
@@ -241,30 +241,30 @@
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Inicio</label>
                         <input type="date" name="fecha_inicio" value="{{ $r->fecha_inicio ?? '' }}"
-                            class="w-36 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-36 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Fin</label>
                         <input type="date" name="fecha_fin" value="{{ $r->fecha_fin ?? '' }}"
-                            class="w-36 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-36 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Hora Inicio</label>
                         <input type="time" name="hora_inicio" value="{{ $r->hora_inicio ?? '' }}"
-                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-gray-600 mb-1">Hora Fin</label>
                         <input type="time" name="hora_fin" value="{{ $r->hora_fin ?? '' }}"
-                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                     </div>
 
                     <div class="flex gap-2 items-center">
                         <button type="submit"
-                            class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow transition">
+                            class="px-4 py-1.5 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg shadow transition">
                             <i class="fas fa-save mr-1"></i> Actualizar
                         </button>
                         <button type="button" onclick="cancelarEdicion({{ $r->id_op_componentes }})"
@@ -423,30 +423,30 @@
         
         let tiposHtml = tiposData.map(t=>`<option value="${t.codigo}" ${item.codigo_tipo_producto==t.codigo?'selected':''}>${t.codigo}</option>`).join('');
         let centrosHtml = '<option value="">--</option>' + centros.map(c=>`<option value="${c.codigo}" ${item.centro==c.codigo?'selected':''}>${c.codigo}</option>`).join('');
-        let moldesHtml = esInyectado ? `<td><select class="form-control text-xs py-1 border-gray-300 rounded c-molde">${moldesData.map(m=>`<option value="${m.codigo}" ${item.molde==m.codigo?'selected':''}>${m.codigo}</option>`).join('')}</select></td>` : '';
+        let moldesHtml = esInyectado ? `<td><select class="text-xs py-1 border border-gray-300 rounded c-molde">${moldesData.map(m=>`<option value="${m.codigo}" ${item.molde==m.codigo?'selected':''}>${m.codigo}</option>`).join('')}</select></td>` : '';
         let unitsHtml = unidadesData.map(u=>`<option value="${u.codigo}" ${u.codigo=='KG'?'selected':''}>${u.codigo}</option>`).join('');
         let trabsHtml = '<option value="">--</option>' + trabajadores.map(t=>
             `<option value="${t.codigo}" ${item.codigo_trabajador==t.codigo?'selected':''}>${t.nombre}</option>`
         ).join('');
 
         let html = `<tr id="${rowId}" class="nueva-fila bg-white">
-            <td class="px-2 py-2"><select class="form-control text-xs py-1 border-gray-300 rounded c-tipo" style="width: 70px;">${tiposHtml}</select></td>
+            <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-tipo" style="width: 70px;">${tiposHtml}</select></td>
             
             <td class="px-2 py-2 relative">
-                <input type="text" class="form-control text-xs py-1 border-gray-300 rounded c-prod-search w-full min-w-50" placeholder="Buscar..." value="${item.codigo_producto||''}">
+                <input type="text" class="text-xs py-1 border border-gray-300 rounded c-prod-search w-full min-w-50" placeholder="Buscar..." value="${item.codigo_producto||''}">
                 <input type="hidden" class="c-prod" value="${item.codigo_producto||''}">
                 <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-[300px] z-50 shadow-lg rounded mt-1"></div>
             </td>
             
-            <td class="px-2 py-2"><select class="form-control text-xs py-1 border-gray-300 rounded c-centro" style="width: 80px;">${centrosHtml}</select></td>
+            <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-centro" style="width: 80px;">${centrosHtml}</select></td>
             
             ${moldesHtml}
             
-            <td class="px-2 py-2"><input type="number" class="form-control text-xs py-1 border-gray-300 rounded c-cant" style="width: 70px;" value="${item.cantidad||''}" step="0.01"></td>
+            <td class="px-2 py-2"><input type="number" class="text-xs py-1 border border-gray-300 rounded c-cant" style="width: 70px;" value="${item.cantidad||''}" step="0.01"></td>
             
-            <td class="px-2 py-2"><select class="form-control text-xs py-1 border-gray-300 rounded c-um" style="width: 60px;">${unitsHtml}</select></td>
+            <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-um" style="width: 60px;">${unitsHtml}</select></td>
             
-            <td class="px-2 py-2"><select class="form-control text-xs py-1 border-gray-300 rounded c-trab" style="width: 100px;">${trabsHtml}</select></td>
+            <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-trab" style="width: 100px;">${trabsHtml}</select></td>
             
             <td style="display:none;">
                 <input type="hidden" class="c-formula" value="${item.formula||document.getElementById('formula_selector')?.value||''}">
@@ -454,8 +454,8 @@
             </td>
             
             <td class="px-2 py-2 flex space-x-1">
-                <input type="time" class="form-control text-xs py-1 border-gray-300 rounded c-hora_ini w-20" value="${item.hora_ini||'08:00'}">
-                <input type="time" class="form-control text-xs py-1 border-gray-300 rounded c-hora_fin w-20" value="${item.hora_fin||'17:00'}">
+                <input type="time" class="text-xs py-1 border border-gray-300 rounded c-hora_ini w-20" value="${item.hora_ini||'08:00'}">
+                <input type="time" class="text-xs py-1 border border-gray-300 rounded c-hora_fin w-20" value="${item.hora_fin||'17:00'}">
             </td>
             
             <td class="px-2 py-2 text-center">

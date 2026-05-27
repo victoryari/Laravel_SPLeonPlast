@@ -39,7 +39,7 @@
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Productos</p>
                     <p class="text-3xl font-black text-gray-800 mt-2">{{ $totalProductos }}</p>
                 </div>
-                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 text-2xl shadow-inner">
+                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center text-primary text-2xl shadow-inner">
                     <i class="fas fa-box"></i>
                 </div>
             </div>
@@ -92,14 +92,14 @@
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 flex items-center">
-                <i class="fas fa-box text-blue-500 mr-2"></i> Acceso Rápido
+                <i class="fas fa-box text-primary mr-2"></i> Acceso Rápido
             </h3>
             <div class="grid grid-cols-2 gap-4">
                 <a href="{{ route('formulas.index') }}" class="flex flex-col items-center justify-center p-4 bg-purple-50 border border-purple-100 rounded-lg text-purple-700 hover:bg-purple-100 transition">
                     <i class="fas fa-flask text-2xl mb-2"></i>
                     <span class="text-xs font-semibold">Fórmulas</span>
                 </a>
-                <a href="{{ route('productos.index') }}" class="flex flex-col items-center justify-center p-4 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 hover:bg-blue-100 transition">
+                <a href="{{ route('productos.index') }}" class="flex flex-col items-center justify-center p-4 bg-blue-50 border border-primary-50 rounded-lg text-blue-700 hover:bg-primary-50 transition">
                     <i class="fas fa-box text-2xl mb-2"></i>
                     <span class="text-xs font-semibold">Productos</span>
                 </a>

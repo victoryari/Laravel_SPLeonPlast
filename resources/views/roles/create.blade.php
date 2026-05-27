@@ -29,7 +29,7 @@
                                 Nombre del Rol <span class="text-red-500">*</span>
                             </label>
                             <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" 
-                                   class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 {{ $errors->has('nombre') ? 'border-red-500' : 'border-gray-300' }}" 
+                                   class="w-full px-4 py-2 border rounded-lg focus:ring-primary focus:border-primary {{ $errors->has('nombre') ? 'border-red-500' : 'border-gray-300' }}" 
                                    placeholder="Ej: Auditor" required>
                             @error('nombre') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
@@ -39,14 +39,14 @@
                                 Descripción <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
                             </label>
                             <textarea name="descripcion" id="descripcion" rows="3" 
-                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                                      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" 
                                       placeholder="Breve descripción de las responsabilidades...">{{ old('descripcion') }}</textarea>
                             @error('descripcion') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-slate-100 flex flex-col gap-3">
-                        <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition font-bold flex items-center justify-center gap-2">
+                        <button type="submit" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-primary-dark shadow-md transition font-bold flex items-center justify-center gap-2">
                             <i class="fas fa-save"></i> Guardar Rol y Permisos
                         </button>
                     </div>

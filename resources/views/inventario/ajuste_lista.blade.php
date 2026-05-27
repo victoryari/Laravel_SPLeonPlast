@@ -24,7 +24,7 @@
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-bold text-slate-800">Bandeja de Ajustes</h2>
                     <a href="{{ route('inventario.ajuste') }}"
-                        class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow transition">
+                        class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow transition">
                         <i class="fas fa-plus mr-1"></i> Nuevo Ajuste
                     </a>
                 </div>
@@ -60,7 +60,7 @@
                     </div>
                     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
                         <button type="submit"
-                            class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow transition">
+                            class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow transition">
                             <i class="fas fa-search mr-1"></i> Filtrar
                         </button>
                         <a href="{{ route('inventario.ajuste.lista') }}"

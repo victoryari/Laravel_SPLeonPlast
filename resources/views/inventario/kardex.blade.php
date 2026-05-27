@@ -41,7 +41,7 @@
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit"
-                    class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow transition">
+                    class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow transition">
                     <i class="fas fa-search mr-1"></i> Filtrar
                 </button>
                 <a href="{{ route('inventario.kardex') }}"

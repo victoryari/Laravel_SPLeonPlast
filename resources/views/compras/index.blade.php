@@ -8,7 +8,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Registro de Compras</h1>
             <p class="text-xs sm:text-sm text-gray-600">Gestión administrativa de adquisiciones</p>
         </div>
-        <a href="{{ route('compras.create') }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('compras.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
             <span class="hidden sm:inline ml-2">Nueva Compra</span>
         </a>

@@ -10,14 +10,14 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500 uppercase">Producción Hoy</p>
                     <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['produccion_hoy']) }} Unid.</p>
                 </div>
-                <div class="bg-blue-100 p-3 rounded-lg">
-                    <i class="fas fa-industry text-blue-500 text-xl"></i>
+                <div class="bg-primary-50 p-3 rounded-lg">
+                    <i class="fas fa-industry text-primary text-xl"></i>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@
         <div class="bg-white rounded-xl shadow-md p-6">
             <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4">Acceso Rápido</h3>
             <div class="grid grid-cols-2 gap-4">
-                <button class="flex flex-col items-center justify-center p-4 bg-blue-50 border border-blue-100 rounded-lg text-blue-700 hover:bg-blue-100 transition">
+                <button class="flex flex-col items-center justify-center p-4 bg-blue-50 border border-primary-50 rounded-lg text-blue-700 hover:bg-primary-50 transition">
                     <i class="fas fa-plus-circle text-2xl mb-2"></i>
                     <span class="text-xs font-semibold">Nueva Orden</span>
                 </button>

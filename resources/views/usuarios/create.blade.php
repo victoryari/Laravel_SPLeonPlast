@@ -18,7 +18,7 @@
                         Nombre de Usuario <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="nombre_usuario" id="nombre_usuario" value="{{ old('nombre_usuario') }}" 
-                           class="w-full px-4 py-2 border rounded-lg lowercase focus:ring-blue-500 focus:border-blue-500 {{ $errors->has('nombre_usuario') ? 'border-red-500' : 'border-gray-300' }}" 
+                           class="w-full px-4 py-2 border rounded-lg lowercase focus:ring-primary focus:border-primary {{ $errors->has('nombre_usuario') ? 'border-red-500' : 'border-gray-300' }}" 
                            placeholder="Ej: jsmith" required>
                     @error('nombre_usuario')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -31,7 +31,7 @@
                         Contraseña <span class="text-red-500">*</span>
                     </label>
                     <input type="password" name="password" id="password" 
-                           class="w-full px-4 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 {{ $errors->has('password') ? 'border-red-500' : 'border-gray-300' }}" 
+                           class="w-full px-4 py-2 border rounded-lg focus:ring-primary focus:border-primary {{ $errors->has('password') ? 'border-red-500' : 'border-gray-300' }}" 
                            placeholder="Mínimo 6 caracteres" required>
                     @error('password')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -43,7 +43,7 @@
                     <label for="rol" class="block text-sm font-medium text-gray-700 mb-1">
                         Rol de Sistema <span class="text-red-500">*</span>
                     </label>
-                    <select name="rol" id="rol" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                    <select name="rol" id="rol" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" required>
                         <option value="">Seleccione...</option>
                         @foreach($roles as $rol)
                             <option value="{{ $rol }}" {{ old('rol') == $rol ? 'selected' : '' }}>{{ $rol }}</option>
@@ -57,7 +57,7 @@
                         Correo Electrónico <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
                     </label>
                     <input type="email" name="email" id="email" value="{{ old('email') }}" 
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" 
                            placeholder="usuario@empresa.com">
                 </div>
 
@@ -66,7 +66,7 @@
                     <label for="codigo_trabajador" class="block text-sm font-medium text-gray-700 mb-1">
                         Vincular a Trabajador <span class="text-red-500">*</span>
                     </label>
-                    <select name="codigo_trabajador" id="codigo_trabajador" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" required>
+                    <select name="codigo_trabajador" id="codigo_trabajador" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" required>
                         <option value="">Seleccione un trabajador...</option>
                         @foreach($trabajadores as $trabajador)
                             <option value="{{ $trabajador->codigo }}" {{ old('codigo_trabajador') == $trabajador->codigo ? 'selected' : '' }}>
@@ -79,7 +79,7 @@
 
             <div class="flex justify-end space-x-3 pt-6">
                 <a href="{{ route('usuarios.index') }}" class="px-6 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">Cancelar</a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition font-semibold">Guardar Usuario</button>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-primary-dark shadow-md transition font-semibold">Guardar Usuario</button>
             </div>
         </form>
     </div>

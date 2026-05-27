@@ -29,7 +29,7 @@
             <div class="mb-6">
                 <label for="empresa" class="block text-sm font-bold text-gray-700 mb-2">Empresa <span class="text-xs font-normal text-gray-400">(Opcional)</span></label>
                 <input type="text" name="empresa" id="empresa" value="{{ old('empresa', $trabajador->empresa) }}" 
-                       class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                       class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition">
             </div>
 
             <div class="mb-6">
@@ -39,7 +39,7 @@
                         <span class="text-gray-500 font-medium">S/</span>
                     </div>
                     <input type="number" step="0.01" min="0" name="sueldo" id="sueldo" value="{{ old('sueldo', $trabajador->sueldo) }}" 
-                           class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition">
+                           class="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition">
                 </div>
             </div>
 

@@ -8,7 +8,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Centros de Trabajo</h1>
             <p class="text-xs sm:text-sm text-gray-600">Gestión de áreas y recursos de producción</p>
         </div>
-        <a href="{{ route('centros_trabajo.create') }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('centros_trabajo.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
             <span class="hidden sm:inline ml-2">Nuevo</span>
         </a>
@@ -47,7 +47,7 @@
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $ct->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <div class="flex items-center justify-center gap-2 md:gap-3">
-                                        <a href="{{ route('centros_trabajo.edit', $ct->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg transition" title="Editar">
+                                        <a href="{{ route('centros_trabajo.edit', $ct->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition" title="Editar">
                                             <i class="fas fa-edit text-sm md:text-lg"></i>
                                         </a>
                                         <form action="{{ route('centros_trabajo.destroy', $ct->codigo) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Anular este centro de trabajo?');">

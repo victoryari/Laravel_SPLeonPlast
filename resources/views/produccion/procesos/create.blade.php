@@ -42,7 +42,7 @@
                     <label for="codigo_proceso" class="block text-sm font-medium text-gray-700 mb-2">
                         Seleccionar Tipo de Proceso <span class="text-red-500">*</span>
                     </label>
-                    <select name="codigo_proceso" id="codigo_proceso" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+                    <select name="codigo_proceso" id="codigo_proceso" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                         <option value="">-- Seleccione un proceso --</option>
                         @foreach($cat_procesos as $c)
                             <option value="{{ $c->codigo }}" {{ old('codigo_proceso') == $c->codigo ? 'selected' : '' }}>
@@ -56,7 +56,7 @@
                 </div>
 
                 <!-- Detalles Informativos -->
-                <div class="bg-blue-50 border border-blue-100 rounded-lg p-4">
+                <div class="bg-blue-50 border border-primary-50 rounded-lg p-4">
                     <h4 class="text-blue-800 font-semibold text-sm mb-2 flex items-center">
                         <i class="fas fa-info-circle mr-2"></i> Información del Producto
                     </h4>
@@ -72,7 +72,7 @@
                 <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="flex items-center justify-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium">
                     Cancelar
                 </a>
-                <button type="submit" class="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition font-bold">
+                <button type="submit" class="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-primary-dark shadow-md transition font-bold">
                     <i class="fas fa-save mr-2"></i> Guardar y Continuar
                 </button>
             </div>

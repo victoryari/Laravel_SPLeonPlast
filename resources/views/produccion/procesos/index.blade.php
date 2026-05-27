@@ -22,7 +22,7 @@
                 Fecha: <span class="font-medium text-gray-700">{{ \Carbon\Carbon::parse($orden->fecha)->format('d/m/Y') }}</span>
             </p>
         </div>
-        <a href="{{ route('ordenes.procesos.create', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('ordenes.procesos.create', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
             <span class="hidden sm:inline ml-2">Agregar Proceso</span>
         </a>
@@ -95,7 +95,7 @@
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
                                 <div class="flex justify-center gap-2">
-                                    <a href="{{ route('ordenes.procesos.ejecutar', [$orden->idop, $p->id]) }}" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition-colors" title="Ejecutar proceso">
+                                    <a href="{{ route('ordenes.procesos.ejecutar', [$orden->idop, $p->id]) }}" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-primary hover:bg-primary-dark shadow-sm transition-colors" title="Ejecutar proceso">
                                         <i class="fas fa-play mr-1"></i> Ejecutar
                                     </a>
                                     <button onclick="delProc({{ $p->id }}, '{{ addslashes($p->proceso_desc) }}')" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-red-500 hover:bg-red-600 shadow-sm" title="Anular proceso">

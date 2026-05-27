@@ -8,7 +8,7 @@
             <h1 class="text-2xl font-bold text-gray-800">Maestro de Proveedores</h1>
             <p class="text-sm text-gray-600">Gestión de proveedores y contactos comerciales</p>
         </div>
-        <a href="{{ route('proveedores.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center">
+        <a href="{{ route('proveedores.create') }}" class="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-4 rounded-lg shadow transition flex items-center">
             <i class="fas fa-plus mr-2"></i> Nuevo Proveedor
         </a>
     </div>
@@ -45,7 +45,7 @@
                                 <div class="text-xs text-blue-500"><i class="fas fa-envelope mr-1"></i> {{ $prov->email ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 text-center space-x-2">
-                                <a href="{{ route('proveedores.edit', $prov->id_proveedor) }}" class="inline-flex items-center justify-center w-9 h-9 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg transition">
+                                <a href="{{ route('proveedores.edit', $prov->id_proveedor) }}" class="inline-flex items-center justify-center w-9 h-9 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <form action="{{ route('proveedores.destroy', $prov->id_proveedor) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Está seguro de desactivar este proveedor?');">

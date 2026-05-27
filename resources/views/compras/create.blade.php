@@ -31,7 +31,7 @@
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
                             <div class="md:col-span-4">
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Tipo Doc. <span class="text-red-500">*</span></label>
-                                <select name="tipo_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required>
+                                <select name="tipo_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5" required>
                                     <option value="FACTURA">FACTURA</option>
                                     <option value="BOLETA">BOLETA</option>
                                     <option value="GUIA_REMISION">GUÍA DE REMISIÓN</option>
@@ -40,22 +40,22 @@
                             </div>
                             <div class="md:col-span-3">
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Serie <span class="text-red-500">*</span></label>
-                                <input type="text" name="serie_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 uppercase" placeholder="F001" required>
+                                <input type="text" name="serie_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 uppercase" placeholder="F001" required>
                             </div>
                             <div class="md:col-span-5">
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">N° Documento <span class="text-red-500">*</span></label>
-                                <input type="text" name="numero_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" placeholder="0004512" required>
+                                <input type="text" name="numero_documento" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5" placeholder="0004512" required>
                             </div>
 
                             <div class="md:col-span-4">
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Fecha de Emisión <span class="text-red-500">*</span></label>
-                                <input type="date" name="fecha_compra" value="{{ date('Y-m-d') }}" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required>
+                                <input type="date" name="fecha_compra" value="{{ date('Y-m-d') }}" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5" required>
                             </div>
                             
                             <div class="md:col-span-8">
                                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Proveedor <span class="text-red-500">*</span></label>
                                 <div class="flex gap-2">
-                                    <select name="ruc_proveedor" id="selectProveedor" class="flex-1 bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required>
+                                    <select name="ruc_proveedor" id="selectProveedor" class="flex-1 bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5" required>
                                         <option value="">Seleccione Proveedor...</option>
                                         @foreach($proveedores as $p)
                                             <option value="{{ $p->ruc }}">{{ $p->ruc }} - {{ $p->razon_social }}</option>
@@ -157,12 +157,12 @@
         <form id="formNuevoProveedor" class="p-6 space-y-5">
             <div>
                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">RUC <span class="text-red-500">*</span></label>
-                <input type="text" name="ruc" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required maxlength="11" placeholder="Ej. 20123456789">
+                <input type="text" name="ruc" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5" required maxlength="11" placeholder="Ej. 20123456789">
             </div>
             
             <div>
                 <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Razón Social <span class="text-red-500">*</span></label>
-                <input type="text" name="razon_social" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5" required placeholder="Nombre de la empresa">
+                <input type="text" name="razon_social" class="w-full bg-slate-50 border border-slate-300 text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5" required placeholder="Nombre de la empresa">
             </div>
             
             <button type="submit" class="w-full mt-4 bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl font-bold transition-all flex justify-center items-center gap-2">

@@ -36,7 +36,7 @@
                             📌 Número de OP <span class="text-red-500">*</span>
                         </label>
                         <input type="text" name="codigo_op" id="codigo_op" required placeholder="Ej: OP-2024-001" value="{{ old('codigo_op') }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                         <p class="mt-1 text-xs text-gray-500">Identificador único de la orden</p>
                     </div>
 
@@ -46,7 +46,7 @@
                             📅 Fecha <span class="text-red-500">*</span>
                         </label>
                         <input type="date" name="fecha" id="fecha" required value="{{ old('fecha', date('Y-m-d')) }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                     </div>
 
                     {{-- Hora Inicio --}}
@@ -55,7 +55,7 @@
                             ⏰ Hora de OP
                         </label>
                         <input type="time" name="hora_inicio" id="hora_inicio" value="{{ old('hora_inicio', date('H:i')) }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                         <p class="mt-1 text-xs text-gray-500">Hora estimada de inicio</p>
                     </div>
 
@@ -64,7 +64,7 @@
                         <label for="codigo_producto_proceso" class="block text-sm font-medium text-gray-700 mb-1">
                             🏭 Producto <span class="text-red-500">*</span>
                         </label>
-                        <select name="codigo_producto_proceso" id="codigo_producto_proceso" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <select name="codigo_producto_proceso" id="codigo_producto_proceso" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                             <option value="">Seleccionar producto...</option>
                             @foreach($productos_proceso as $producto)
                                 <option value="{{ $producto->codigo }}" {{ old('codigo_producto_proceso') == $producto->codigo ? 'selected' : '' }}>
@@ -80,7 +80,7 @@
                             📝 Observaciones
                         </label>
                         <textarea name="texto_obs" id="texto_obs" rows="3" placeholder="Información adicional relevante para esta orden..."
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">{{ old('texto_obs') }}</textarea>
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">{{ old('texto_obs') }}</textarea>
                     </div>
                 </div>
 
@@ -88,7 +88,7 @@
                     <a href="{{ route('produccion.ordenes.index') }}" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
                         Cancelar
                     </a>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition">
+                    <button type="submit" class="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg shadow transition">
                         <i class="fas fa-save mr-2"></i> Crear Orden
                     </button>
                 </div>

@@ -8,7 +8,7 @@
             <h1 class="text-xl md:text-2xl font-bold text-gray-800">Maestro de Fórmulas</h1>
             <p class="text-xs md:text-sm text-gray-600">Gestión de fórmulas y composiciones</p>
         </div>
-        <a href="{{ route('formulas.create') }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('formulas.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus mr-2"></i> 
             <span class="hidden sm:inline ml-2">Nuevo</span>
         </a>
@@ -25,7 +25,7 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
         </div>
     </div>
 
@@ -56,7 +56,7 @@
                                         <a href="{{ route('formulas.composicion', $formu->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-lg transition-all" title="Diseñar Composición">
                                             <i class="fas fa-list-ol text-sm md:text-lg"></i>
                                         </a>
-                                        <a href="{{ route('formulas.edit', $formu->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg transition-all" title="Editar Cabecera">
+                                        <a href="{{ route('formulas.edit', $formu->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition-all" title="Editar Cabecera">
                                             <i class="fas fa-edit text-sm md:text-lg"></i>
                                         </a>
                                         <form action="{{ route('formulas.destroy', $formu->codigo) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Anular esta fórmula y su composición?');">

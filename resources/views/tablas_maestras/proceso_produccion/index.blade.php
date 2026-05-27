@@ -9,7 +9,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Procesos de Producción</h1>
             <p class="text-xs sm:text-sm text-gray-600">Gestión de la tabla maestra de procesos productivos</p>
         </div>
-        <a href="{{ route('procesos_produccion.create') }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('procesos_produccion.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
             <span class="hidden sm:inline ml-2">Nuevo</span>
         </a>
@@ -32,7 +32,7 @@
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-search text-gray-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm md:text-base transition" placeholder="Buscar proceso por código o descripción...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar proceso por código o descripción...">
         </div>
     </div>
 
@@ -54,7 +54,7 @@
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $proc->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <div class="flex items-center justify-center gap-2 md:gap-3">
-                                        <a href="{{ route('procesos_produccion.edit', $proc->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg transition-all" title="Editar">
+                                        <a href="{{ route('procesos_produccion.edit', $proc->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition-all" title="Editar">
                                             <i class="fas fa-edit text-sm md:text-lg"></i>
                                         </a>
                                         <form action="{{ route('procesos_produccion.destroy', $proc->codigo) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Está seguro de anular este proceso?');">

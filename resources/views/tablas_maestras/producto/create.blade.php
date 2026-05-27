@@ -18,7 +18,7 @@
                     <label for="codigo" class="block text-sm font-medium text-gray-700 mb-1">
                         Código <span class="text-red-500">*</span>
                     </label>
-                    <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg uppercase focus:ring-blue-500 focus:border-blue-500 @error('codigo') border-red-500 @enderror" placeholder="Ej: PROD-001" maxlength="15" required>
+                    <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg uppercase focus:ring-primary focus:border-primary @error('codigo') border-red-500 @enderror" placeholder="Ej: PROD-001" maxlength="15" required>
                     @error('codigo')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -28,7 +28,7 @@
                     <label for="codigo_tipo_producto" class="block text-sm font-medium text-gray-700 mb-1">
                         Tipo de Producto <span class="text-red-500">*</span>
                     </label>
-                    <select name="codigo_tipo_producto" id="codigo_tipo_producto" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('codigo_tipo_producto') border-red-500 @enderror" required>
+                    <select name="codigo_tipo_producto" id="codigo_tipo_producto" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary @error('codigo_tipo_producto') border-red-500 @enderror" required>
                         <option value="">Seleccione...</option>
                         @foreach($tipos as $tipo)
                             <option value="{{ $tipo->codigo }}" {{ old('codigo_tipo_producto') == $tipo->codigo ? 'selected' : '' }}>
@@ -45,7 +45,7 @@
                     <label for="descripcion" class="block text-sm font-medium text-gray-700 mb-1">
                         Descripción <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
                     </label>
-                    <input type="text" name="descripcion" id="descripcion" value="{{ old('descripcion') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('descripcion') border-red-500 @enderror" placeholder="Nombre o detalle del artículo" maxlength="150">
+                    <input type="text" name="descripcion" id="descripcion" value="{{ old('descripcion') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary @error('descripcion') border-red-500 @enderror" placeholder="Nombre o detalle del artículo" maxlength="150">
                     @error('descripcion')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -55,7 +55,7 @@
                     <label for="codigo_unidad_medida" class="block text-sm font-medium text-gray-700 mb-1">
                         Unidad de Medida <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
                     </label>
-                    <select name="codigo_unidad_medida" id="codigo_unidad_medida" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('codigo_unidad_medida') border-red-500 @enderror">
+                    <select name="codigo_unidad_medida" id="codigo_unidad_medida" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary @error('codigo_unidad_medida') border-red-500 @enderror">
                         <option value="">Ninguna / No aplica</option>
                         @foreach($unidades as $um)
                             <option value="{{ $um->codigo }}" {{ old('codigo_unidad_medida') == $um->codigo ? 'selected' : '' }}>
@@ -72,7 +72,7 @@
                     <label for="codigo_color" class="block text-sm font-medium text-gray-700 mb-1">
                         Color <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
                     </label>
-                    <input type="text" name="codigo_color" id="codigo_color" value="{{ old('codigo_color') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('codigo_color') border-red-500 @enderror" placeholder="Ej: Rojo, Azul, Transparente..." maxlength="50">
+                    <input type="text" name="codigo_color" id="codigo_color" value="{{ old('codigo_color') }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary @error('codigo_color') border-red-500 @enderror" placeholder="Ej: Rojo, Azul, Transparente..." maxlength="50">
                     @error('codigo_color')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
@@ -90,7 +90,7 @@
 
             <div class="flex justify-end space-x-3 pt-4">
                 <a href="{{ route('productos.index') }}" class="px-6 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">Cancelar</a>
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition font-semibold">Guardar Unidad</button>
+                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-primary-dark shadow-md transition font-semibold">Guardar Unidad</button>
             </div>
         </form>
     </div>

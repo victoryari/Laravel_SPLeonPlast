@@ -9,7 +9,7 @@
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Unidades de Medida</h1>
             <p class="text-xs sm:text-sm text-gray-600">Gestión de unidades para los procesos de Leon Plast.</p>
         </div>
-        <a href="{{ route('unidades_medida.create') }}" class="shrink-0 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+        <a href="{{ route('unidades_medida.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
             <span class="hidden sm:inline ml-2">Nuevo</span>
         </a>
@@ -44,7 +44,7 @@
                             <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $unidad->descripcion }}</td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                 <div class="flex items-center justify-center gap-2 md:gap-3">
-                                    <a href="{{ route('unidades_medida.edit', $unidad->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-lg transition-all" title="Editar">
+                                    <a href="{{ route('unidades_medida.edit', $unidad->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition-all" title="Editar">
                                         <i class="fas fa-edit text-sm md:text-lg"></i>
                                     </a>
                                     <form action="{{ route('unidades_medida.destroy', $unidad->codigo) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Desea anular este registro?');">

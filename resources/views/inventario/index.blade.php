@@ -73,7 +73,7 @@
                                 </td>
 
                                 <td class="px-6 py-4 text-center">
-                                    <span class="inline-flex px-3 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-100">
+                                    <span class="inline-flex px-3 py-1 rounded-xl bg-blue-50 text-blue-700 text-xs font-semibold border border-primary-50">
                                         {{ $stock->almacen }}
                                     </span>
                                 </td>
