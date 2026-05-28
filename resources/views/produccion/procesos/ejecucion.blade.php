@@ -210,8 +210,21 @@
                         @endif
                     </div>
                     
-                    <div class="flex items-center space-x-4">
+                    <div class="flex flex-wrap items-center justify-end gap-4">
                         @if($estado_proceso_actual !== 'COMPLETADO')
+                        <div class="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 flex items-center shadow-sm">
+                            <label class="text-blue-700 font-bold text-sm mr-3">
+                                Almacén de Consumo:
+                            </label>
+                            <select name="codigo_almacen_consumo" id="codigo_almacen_consumo" class="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-48">
+                                <option value="">-- Seleccione Almacén --</option>
+                                @foreach($almacenes as $almacen)
+                                    <option value="{{ $almacen->codigo_almacen }}" {{ (old('codigo_almacen_consumo') ?? $proceso_produccion_almacen) == $almacen->codigo_almacen ? 'selected' : '' }}>
+                                        {{ $almacen->descripcion }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         <div class="bg-orange-50 px-4 py-2 rounded-lg border border-orange-200 flex items-center shadow-sm">
                             <label class="text-orange-700 font-bold text-sm mr-3">
                                 Merma (KG):
@@ -509,6 +522,11 @@
     }
 
     function enviarGuardado() {
+        const almacenConsumo = document.getElementById('codigo_almacen_consumo');
+        if (almacenConsumo && !almacenConsumo.value) {
+            return window.toast("Por favor seleccione el Almacén de Consumo antes de guardar.", 'warning');
+        }
+
         const filas = document.querySelectorAll('.nueva-fila');
         if (filas.length === 0) return window.toast("No hay datos nuevos para guardar.", 'warning');
         

@@ -351,10 +351,13 @@ class OrdenProcesoController extends Controller
             ->where('pct.codigo_proceso', $proceso->codigo_proceso)
             ->get();
 
+        $almacenes = DB::table('almacen')->where('activo', 1)->get();
+        $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
+
         return view('produccion.procesos.ejecucion', compact(
             'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado',
             'formulas_disponibles', 'registrados', 'tiene_componentes', 'tipos_producto',
-            'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo'
+            'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen'
         ));
     }
 
@@ -473,9 +476,10 @@ class OrdenProcesoController extends Controller
                 throw new \Exception("La merma ($merma_kg KG) no puede ser mayor a la cantidad de materiales ingresados ($total_insumos_ingresados KG).");
             }
 
-            $codigo_almacen_proceso = DB::table('proceso_produccion')
-                ->where('codigo', $proceso->codigo_proceso)
-                ->value('codigo_almacen');
+            $codigo_almacen_consumo = $request->input('codigo_almacen_consumo');
+            if (empty($codigo_almacen_consumo) && !$es_actividad) {
+                throw new \Exception("Debe seleccionar un Almacén de Consumo.");
+            }
 
             foreach ($cantidades_agrupadas as $codigo_prod => $cant_req) {
                 $query_disp = DB::table('inventario as i')
@@ -484,14 +488,14 @@ class OrdenProcesoController extends Controller
                     ->where('a.activo', 1)
                     ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); });
 
-                if ($codigo_almacen_proceso) {
-                    $query_disp->where('i.codigo_almacen', $codigo_almacen_proceso);
+                if ($codigo_almacen_consumo) {
+                    $query_disp->where('i.codigo_almacen', $codigo_almacen_consumo);
                 }
 
                 $stock_disp = $query_disp->lockForUpdate()->sum('i.stock_actual') ?? 0;
 
                 if ($stock_disp < $cant_req) {
-                    $alm_msg = $codigo_almacen_proceso ? " en el almacén asignado ($codigo_almacen_proceso)" : " en almacén";
+                    $alm_msg = $codigo_almacen_consumo ? " en el almacén seleccionado ($codigo_almacen_consumo)" : " en almacén";
                     $faltantes[] = "[$codigo_prod] Req: " . number_format($cant_req, 2) . " | Disp: " . number_format($stock_disp, 2) . $alm_msg;
                 }
             }
@@ -608,8 +612,8 @@ class OrdenProcesoController extends Controller
                     ->where('a.activo', 1)
                     ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); });
 
-                if ($codigo_almacen_proceso) {
-                    $query_lotes->where('i.codigo_almacen', $codigo_almacen_proceso);
+                if ($codigo_almacen_consumo) {
+                    $query_lotes->where('i.codigo_almacen', $codigo_almacen_consumo);
                 }
 
                 $lotes = $query_lotes->select('i.id_inventario', 'i.stock_actual', 'i.lote', 'i.costo_promedio', 'i.codigo_almacen')
@@ -909,8 +913,7 @@ class OrdenProcesoController extends Controller
             }
 
             if ($diferencia > 0) {
-                $proceso = OrdenProceso::find($id);
-                $codigo_almacen_proceso = $proceso ? DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen') : null;
+                $codigo_almacen_origen = $movimientosOrigen->first()->codigo_almacen ?? null;
 
                 $query_disp = DB::table('inventario as i')
                     ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
@@ -918,14 +921,14 @@ class OrdenProcesoController extends Controller
                     ->where('a.activo', 1)
                     ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); });
 
-                if ($codigo_almacen_proceso) {
-                    $query_disp->where('i.codigo_almacen', $codigo_almacen_proceso);
+                if ($codigo_almacen_origen) {
+                    $query_disp->where('i.codigo_almacen', $codigo_almacen_origen);
                 }
 
                 $stockDisp = $query_disp->lockForUpdate()->sum('i.stock_actual') ?? 0;
 
                 if ($stockDisp < $diferencia) {
-                    $alm_msg = $codigo_almacen_proceso ? " en el almacén asignado ($codigo_almacen_proceso)" : " en almacén";
+                    $alm_msg = $codigo_almacen_origen ? " en el almacén original ($codigo_almacen_origen)" : " en almacén";
                     throw new \Exception(
                         "Stock insuficiente para aumentar la cantidad. "
                         . "Disponible: " . number_format($stockDisp, 2)
@@ -942,8 +945,8 @@ class OrdenProcesoController extends Controller
                     ->where('i.stock_actual', '>', 0)
                     ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); });
 
-                if ($codigo_almacen_proceso) {
-                    $query_lotes->where('i.codigo_almacen', $codigo_almacen_proceso);
+                if ($codigo_almacen_origen) {
+                    $query_lotes->where('i.codigo_almacen', $codigo_almacen_origen);
                 }
 
                 $lotes = $query_lotes->select('i.id_inventario', 'i.stock_actual', 'i.lote', 'i.costo_promedio', 'i.codigo_almacen')
