@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Inventario, MovimientoInventario, Kardex, Compra, Almacen, Producto, ProduccionIngresoProceso, UnidadMedida};
+use App\Services\KardexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Auth};
 
@@ -79,11 +80,21 @@ class InventarioController extends Controller
                 $saldo_anterior = $registroInventario ? $registroInventario->stock_actual : 0;
                 $nuevo_saldo = $saldo_anterior + $cantidad_recibida;
 
+                // Calcular costos con promedio ponderado
+                $kardexService = app(KardexService::class);
+                $costos = $kardexService->calcularCostos(
+                    $codigo_producto, $codigo_almacen,
+                    $cantidad_recibida, $precio_unitario,
+                    0, $nuevo_saldo
+                );
+
                 // Actualizar inventario general
                 DB::table('inventario')->updateOrInsert(
                     ['codigo_producto' => $codigo_producto, 'codigo_almacen' => $codigo_almacen],
                     [
                         'stock_actual' => $nuevo_saldo,
+                        'costo_promedio' => $costos['costo_promedio'],
+                        'ultimo_costo' => $precio_unitario,
                         'fecha_ultimo_movimiento' => now(),
                         'usuario_ultimo_movimiento' => Auth::id()
                     ]
@@ -99,14 +110,14 @@ class InventarioController extends Controller
                         'documento'        => $compra->tipo_documento,
                         'numero_documento' => $compra->serie_documento . '-' . $compra->numero_documento,
                         'cantidad_entrada' => $cantidad_recibida,
-                        'costo_entrada'    => $precio_unitario,
-                        'total_entrada'    => $cantidad_recibida * $precio_unitario,
+                        'costo_entrada'    => $costos['costo_entrada'],
+                        'total_entrada'    => $costos['total_entrada'],
                         'cantidad_salida'  => 0,
-                        'costo_salida'     => 0,
-                        'total_salida'     => 0,
-                        'cantidad_saldo'   => $nuevo_saldo,
-                        'costo_promedio'   => $precio_unitario,
-                        'total_saldo'      => $nuevo_saldo * $precio_unitario,
+                        'costo_salida'     => $costos['costo_salida'],
+                        'total_salida'     => $costos['total_salida'],
+                        'cantidad_saldo'   => $costos['cantidad_saldo'],
+                        'costo_promedio'   => $costos['costo_promedio'],
+                        'total_saldo'      => $costos['total_saldo'],
                         'usuario_registro' => Auth::id()
                     ]);
                 }
@@ -164,6 +175,23 @@ class InventarioController extends Controller
                 $observacion_kardex .= ". [DIFERENCIA BÁSCULA] Reportado: {$cantidad_reportada} | Real: {$cantidad_real} | Dif: {$signo}{$diferencia}";
             }
 
+            // Obtener costo promedio actual del producto
+            $ultimoKardex = DB::table('kardex')
+                ->where('codigo_producto', $codigo_prod)
+                ->where('codigo_almacen', $almacen_destino)
+                ->orderBy('fecha_movimiento', 'desc')
+                ->orderBy('id_kardex', 'desc')
+                ->first();
+            $costoPromedioActual = $ultimoKardex?->costo_promedio ?? 0;
+
+            // Calcular costos con promedio ponderado
+            $kardexService = app(KardexService::class);
+            $costos = $kardexService->calcularCostos(
+                $codigo_prod, $almacen_destino,
+                $cantidad_real, $costoPromedioActual,
+                0, 0
+            );
+
             // Movimiento inventario
             $movId = DB::table('movimientos_inventario')->insertGetId([
                 'codigo_almacen' => $almacen_destino,
@@ -171,8 +199,8 @@ class InventarioController extends Controller
                 'lote' => $lote,
                 'tipo_movimiento' => 'INGRESO',
                 'cantidad' => $cantidad_real,
-                'costo_unitario' => 0,
-                'total' => 0,
+                'costo_unitario' => $costos['costo_promedio'],
+                'total' => $costos['total_entrada'],
                 'documento_referencia' => $doc_ref,
                 'numero_referencia' => $num_ref,
                 'idop' => $idop,
@@ -187,13 +215,14 @@ class InventarioController extends Controller
             $registroInventario = DB::table('inventario')
                 ->where('codigo_producto', $codigo_prod)
                 ->where('codigo_almacen', $almacen_destino)
-                ->where('lote', $lote)
                 ->lockForUpdate()
                 ->first();
 
             if ($registroInventario) {
                 DB::table('inventario')->where('id_inventario', $registroInventario->id_inventario)->update([
                     'stock_actual' => $registroInventario->stock_actual + $cantidad_real,
+                    'costo_promedio' => $costos['costo_promedio'],
+                    'ultimo_costo' => $costoPromedioActual,
                     'fecha_ultimo_movimiento' => now(),
                     'usuario_ultimo_movimiento' => $usuario_movimiento
                 ]);
@@ -202,12 +231,11 @@ class InventarioController extends Controller
                 DB::table('inventario')->insert([
                     'codigo_producto' => $codigo_prod,
                     'codigo_almacen' => $almacen_destino,
-                    'lote' => $lote,
                     'stock_actual' => $cantidad_real,
                     'stock_minimo' => 0,
                     'stock_maximo' => 0,
-                    'costo_promedio' => 0,
-                    'ultimo_costo' => 0,
+                    'costo_promedio' => $costos['costo_promedio'],
+                    'ultimo_costo' => $costoPromedioActual,
                     'estado' => 1,
                     'fecha_ultimo_movimiento' => now(),
                     'usuario_ultimo_movimiento' => $usuario_movimiento
@@ -223,9 +251,15 @@ class InventarioController extends Controller
                 'tipo_movimiento'      => 'INGRESO',
                 'documento'            => 'RECEPCION_PEP',
                 'numero_documento'     => $num_ref,
-                'cantidad_entrada'     => $cantidad_real,
+                'cantidad_entrada'     => $costos['cantidad_saldo'] - ($ultimoKardex?->cantidad_saldo ?? 0),
+                'costo_entrada'        => $costos['costo_entrada'],
+                'total_entrada'        => $costos['total_entrada'],
                 'cantidad_salida'      => 0,
-                'cantidad_saldo'       => $nuevoStockPEP,
+                'costo_salida'         => 0,
+                'total_salida'         => 0,
+                'cantidad_saldo'       => $costos['cantidad_saldo'],
+                'costo_promedio'       => $costos['costo_promedio'],
+                'total_saldo'          => $costos['total_saldo'],
                 'codigo_referencia_movimiento' => $movId,
                 'observaciones'        => $observacion_kardex,
                 'usuario_registro'     => $usuario_movimiento
@@ -247,18 +281,26 @@ class InventarioController extends Controller
         }
     }
 
-    // 3. KARDEX DETALLADO
+    // 3. KARDEX VALORIZADO
     public function kardex(Request $request) {
         $query = DB::table('kardex')
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
-            ->select('kardex.*', 'producto.descripcion as producto');
+            ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen');
 
         if ($request->filled('documento')) {
             $query->where('kardex.documento', $request->documento);
         }
 
         if ($request->filled('codigo_producto')) {
-            $query->where('kardex.codigo_producto', 'LIKE', "%{$request->codigo_producto}%");
+            $query->where(function ($q) use ($request) {
+                $q->where('kardex.codigo_producto', 'LIKE', "%{$request->codigo_producto}%")
+                  ->orWhere('producto.descripcion', 'LIKE', "%{$request->codigo_producto}%");
+            });
+        }
+
+        if ($request->filled('codigo_almacen')) {
+            $query->where('kardex.codigo_almacen', $request->codigo_almacen);
         }
 
         if ($request->filled('fecha_desde')) {
@@ -269,10 +311,117 @@ class InventarioController extends Controller
             $query->where('kardex.fecha_movimiento', '<=', $request->fecha_hasta . ' 23:59:59');
         }
 
-        $movimientos = $query->orderBy('kardex.fecha_movimiento', 'desc')->paginate(15);
-        $tiposDocumento = DB::table('kardex')->select('documento')->distinct()->orderBy('documento')->pluck('documento');
+        // Obtener query sin paginación para totales
+        $queryClone = clone $query;
+        $resumen = (object) [
+            'total_entradas'     => $queryClone->sum('kardex.cantidad_entrada'),
+            'total_entradas_val' => $queryClone->sum('kardex.total_entrada'),
+        ];
+        $queryClone2 = clone $query;
+        $resumen->total_salidas     = $queryClone2->sum('kardex.cantidad_salida');
+        $resumen->total_salidas_val = $queryClone2->sum('kardex.total_salida');
 
-        return view('inventario.kardex', compact('movimientos', 'tiposDocumento'));
+        // Ultimo saldo valorizado de cada producto en el filtro
+        $ultimosSaldos = DB::table('kardex')
+            ->whereIn('id_kardex', function ($sub) {
+                $sub->select(DB::raw('MAX(k2.id_kardex)'))
+                    ->from('kardex as k2')
+                    ->whereColumn('k2.codigo_producto', 'kardex.codigo_producto')
+                    ->whereColumn('k2.codigo_almacen', 'kardex.codigo_almacen');
+            })
+            ->select(DB::raw('SUM(cantidad_saldo) as total_cantidad'), DB::raw('SUM(total_saldo) as total_valorizado'))
+            ->first();
+
+        $resumen->saldo_final_cantidad = $ultimosSaldos?->total_cantidad ?? 0;
+        $resumen->saldo_final_valor    = $ultimosSaldos?->total_valorizado ?? 0;
+
+        $movimientos = $query->orderBy('kardex.fecha_movimiento', 'desc')
+            ->orderBy('kardex.id_kardex', 'desc')
+            ->paginate(15);
+
+        $tiposDocumento = DB::table('kardex')->select('documento')->distinct()->orderBy('documento')->pluck('documento');
+        $almacenes = \App\Models\Almacen::where('activo', 1)->get();
+
+        return view('inventario.kardex', compact('movimientos', 'tiposDocumento', 'almacenes', 'resumen'));
+    }
+
+    // 3.1 EXPORTAR KARDEX (CSV)
+    public function exportarKardex(Request $request) {
+        $query = DB::table('kardex')
+            ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
+            ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen');
+
+        if ($request->filled('documento')) {
+            $query->where('kardex.documento', $request->documento);
+        }
+
+        if ($request->filled('codigo_producto')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('kardex.codigo_producto', 'LIKE', "%{$request->codigo_producto}%")
+                  ->orWhere('producto.descripcion', 'LIKE', "%{$request->codigo_producto}%");
+            });
+        }
+
+        if ($request->filled('codigo_almacen')) {
+            $query->where('kardex.codigo_almacen', $request->codigo_almacen);
+        }
+
+        if ($request->filled('fecha_desde')) {
+            $query->where('kardex.fecha_movimiento', '>=', $request->fecha_desde . ' 00:00:00');
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->where('kardex.fecha_movimiento', '<=', $request->fecha_hasta . ' 23:59:59');
+        }
+
+        $movimientos = $query->orderBy('kardex.fecha_movimiento', 'asc')
+            ->orderBy('kardex.id_kardex', 'asc')
+            ->get();
+
+        $filename = 'kardex_valorizado_' . now()->format('Ymd_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv; charset=utf-8',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function () use ($movimientos) {
+            $output = fopen('php://output', 'w');
+
+            // BOM UTF-8
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Cabeceras
+            fputcsv($output, [
+                'Fecha', 'Producto', 'Almacen', 'Tipo', 'Documento',
+                'Entrada Cant', 'Entrada Costo', 'Entrada Total',
+                'Salida Cant', 'Salida Costo', 'Salida Total',
+                'Saldo Cant', 'Costo Prom.', 'Saldo Total'
+            ]);
+
+            foreach ($movimientos as $mov) {
+                fputcsv($output, [
+                    \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/Y H:i'),
+                    $mov->producto . ' (' . $mov->codigo_producto . ')',
+                    $mov->almacen,
+                    $mov->tipo_movimiento,
+                    $mov->documento . ' ' . $mov->numero_documento,
+                    $mov->cantidad_entrada ?: 0,
+                    $mov->costo_entrada ?: 0,
+                    $mov->total_entrada ?: 0,
+                    $mov->cantidad_salida ?: 0,
+                    $mov->costo_salida ?: 0,
+                    $mov->total_salida ?: 0,
+                    $mov->cantidad_saldo ?: 0,
+                    $mov->costo_promedio ?: 0,
+                    $mov->total_saldo ?: 0,
+                ]);
+            }
+
+            fclose($output);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     // 4. AJUSTE MANUAL
@@ -309,10 +458,30 @@ class InventarioController extends Controller
 
             $nuevo_saldo = $request->tipo === 'INGRESO' ? $saldo_anterior + $request->cantidad : $saldo_anterior - $request->cantidad;
 
+            // Calcular costos con promedio ponderado
+            $kardexService = app(KardexService::class);
+            $cantidadEntrada = $request->tipo === 'INGRESO' ? $request->cantidad : 0;
+            $cantidadSalida = $request->tipo === 'SALIDA' ? $request->cantidad : 0;
+
+            $ultimoKardex = DB::table('kardex')
+                ->where('codigo_producto', $request->codigo_producto)
+                ->where('codigo_almacen', $request->codigo_almacen)
+                ->orderBy('fecha_movimiento', 'desc')
+                ->orderBy('id_kardex', 'desc')
+                ->first();
+            $costoPromedioActual = $ultimoKardex?->costo_promedio ?? 0;
+
+            $costos = $kardexService->calcularCostos(
+                $request->codigo_producto, $request->codigo_almacen,
+                $cantidadEntrada, $costoPromedioActual,
+                $cantidadSalida, $nuevo_saldo
+            );
+
             DB::table('inventario')->updateOrInsert(
                 ['codigo_producto' => $request->codigo_producto, 'codigo_almacen' => $request->codigo_almacen],
                 [
                     'stock_actual' => $nuevo_saldo,
+                    'costo_promedio' => $costos['costo_promedio'],
                     'codigo_unidad_medida' => $request->codigo_unidad_medida,
                     'fecha_ultimo_movimiento' => now(),
                     'usuario_ultimo_movimiento' => Auth::id()
@@ -327,9 +496,15 @@ class InventarioController extends Controller
                 'tipo_movimiento'      => 'AJUSTE',
                 'documento'            => 'TICKET',
                 'numero_documento'     => 'AJ-' . date('YmdHis'),
-                'cantidad_entrada'     => $request->tipo === 'INGRESO' ? $request->cantidad : 0,
-                'cantidad_salida'      => $request->tipo === 'SALIDA' ? $request->cantidad : 0,
-                'cantidad_saldo'       => $nuevo_saldo,
+                'cantidad_entrada'     => $cantidadEntrada,
+                'costo_entrada'        => $costos['costo_entrada'],
+                'total_entrada'        => $costos['total_entrada'],
+                'cantidad_salida'      => $cantidadSalida,
+                'costo_salida'         => $costos['costo_salida'],
+                'total_salida'         => $costos['total_salida'],
+                'cantidad_saldo'       => $costos['cantidad_saldo'],
+                'costo_promedio'       => $costos['costo_promedio'],
+                'total_saldo'          => $costos['total_saldo'],
                 'usuario_registro'     => Auth::id()
             ]);
 
@@ -537,6 +712,12 @@ class InventarioController extends Controller
                 'observaciones'        => $request->observaciones,
             ]);
 
+            // Recalcular costos para este producto/almacen
+            app(KardexService::class)->recalcular(
+                $ajusteOriginal->codigo_producto,
+                $ajusteOriginal->codigo_almacen
+            );
+
             DB::commit();
             return redirect()->route('inventario.ajuste.lista')->with('success', 'Ajuste actualizado exitosamente.');
         } catch (\Exception $e) {
@@ -601,6 +782,12 @@ class InventarioController extends Controller
                 ->update(['stock_actual' => $saldoAnterior, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]);
 
             DB::table('kardex')->where('id_kardex', $id)->delete();
+
+            // Recalcular costos para este producto/almacen
+            app(KardexService::class)->recalcular(
+                $ajuste->codigo_producto,
+                $ajuste->codigo_almacen
+            );
 
             DB::commit();
             return redirect()->route('inventario.ajuste.lista')->with('success', 'Ajuste eliminado correctamente y stock revertido.');
@@ -698,10 +885,36 @@ class InventarioController extends Controller
                 $nuevo_saldo = $stock_actual + $movimientoOriginal->cantidad_salida;
             }
 
+            // Obtener costo promedio actual para el extorno
+            $ultimoKardex = DB::table('kardex')
+                ->where('codigo_producto', $movimientoOriginal->codigo_producto)
+                ->where('codigo_almacen', $movimientoOriginal->codigo_almacen)
+                ->orderBy('fecha_movimiento', 'desc')
+                ->orderBy('id_kardex', 'desc')
+                ->first();
+            $costoPromedioActual = $ultimoKardex?->costo_promedio ?? 0;
+
+            $cantEntradaExtorno = $movimientoOriginal->cantidad_salida > 0 ? $movimientoOriginal->cantidad_salida : 0;
+            $cantSalidaExtorno  = $movimientoOriginal->cantidad_entrada > 0 ? $movimientoOriginal->cantidad_entrada : 0;
+
+            // Calcular costos para el extorno usando KardexService
+            $kardexService = app(KardexService::class);
+            $costos = $kardexService->calcularCostos(
+                $movimientoOriginal->codigo_producto,
+                $movimientoOriginal->codigo_almacen,
+                $cantEntradaExtorno, $costoPromedioActual,
+                $cantSalidaExtorno, $nuevo_saldo
+            );
+
             // 4. Actualizar el stock físico
             DB::table('inventario')->updateOrInsert(
                 ['codigo_producto' => $movimientoOriginal->codigo_producto, 'codigo_almacen' => $movimientoOriginal->codigo_almacen],
-                ['stock_actual' => $nuevo_saldo, 'fecha_ultimo_movimiento' => now(), 'usuario_ultimo_movimiento' => Auth::id()]
+                [
+                    'stock_actual' => $nuevo_saldo,
+                    'costo_promedio' => $costos['costo_promedio'],
+                    'fecha_ultimo_movimiento' => now(),
+                    'usuario_ultimo_movimiento' => Auth::id()
+                ]
             );
 
             // 5. Registrar el movimiento de EXTORNO en el Kardex
@@ -712,9 +925,15 @@ class InventarioController extends Controller
                 'tipo_movimiento'  => 'EXTORNO',
                 'documento'        => 'EXT',
                 'numero_documento' => 'REV-' . $movimientoOriginal->numero_documento,
-                'cantidad_entrada' => $movimientoOriginal->cantidad_salida > 0 ? $movimientoOriginal->cantidad_salida : 0,
-                'cantidad_salida'  => $movimientoOriginal->cantidad_entrada > 0 ? $movimientoOriginal->cantidad_entrada : 0,
-                'cantidad_saldo'   => $nuevo_saldo,
+                'cantidad_entrada' => $cantEntradaExtorno,
+                'costo_entrada'    => $costos['costo_entrada'],
+                'total_entrada'    => $costos['total_entrada'],
+                'cantidad_salida'  => $cantSalidaExtorno,
+                'costo_salida'     => $costos['costo_salida'],
+                'total_salida'     => $costos['total_salida'],
+                'cantidad_saldo'   => $costos['cantidad_saldo'],
+                'costo_promedio'   => $costos['costo_promedio'],
+                'total_saldo'      => $costos['total_saldo'],
                 'observaciones'    => "Extorno de DOC: " . $movimientoOriginal->numero_documento . " | Motivo: " . $request->motivo,
                 'usuario_registro' => Auth::id()
             ]);

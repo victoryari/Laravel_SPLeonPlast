@@ -111,8 +111,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InventarioController::class, 'index'])->name('inventario.index');
 
         // 2. Kardex / Historial de Movimientos
-        // Nota: Cambiamos el nombre a plural 'inventario.kardex' para ser consistentes
         Route::get('/kardex', [InventarioController::class, 'kardex'])->name('inventario.kardex');
+        Route::get('/kardex/exportar', [InventarioController::class, 'exportarKardex'])->name('inventario.kardex.exportar');
 
         // 3. Acciones de Almacén (Restringidas a Administrador y Supervisor)
         Route::middleware('role:Administrador,Supervisor')->group(function () {
