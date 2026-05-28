@@ -72,9 +72,10 @@
                                 <colgroup>
                                     <col class="w-[28%]">
                                     <col class="w-[15%]">
-                                    <col class="w-[13%]">
+                                    <col class="w-[10%]">
+                                    <col class="w-[10%]">
                                     <col class="w-[15%]">
-                                    <col class="w-[15%]">
+                                    <col class="w-[14%]">
                                     <col class="w-[8%]">
                                 </colgroup>
                                 <thead>
@@ -82,6 +83,7 @@
                                         <th class="p-2 font-semibold">Producto</th>
                                         <th class="p-2 font-semibold">Almacén</th>
                                         <th class="p-2 font-semibold text-center">Cant.</th>
+                                        <th class="p-2 font-semibold text-center">U.M.</th>
                                         <th class="p-2 font-semibold text-right">P. Unit.</th>
                                         <th class="p-2 font-semibold text-right">Subtotal</th>
                                         <th class="p-2 font-semibold text-center"><i class="fas fa-cog"></i></th>
@@ -183,29 +185,36 @@
     let tablaBody;
     let searchUrl;
     let almacenesData;
+    let unidadesData;
     function getProductName(text) {
         const m = text.match(/\]\s*(.*)/);
         return m ? m[1] : text;
     }
 
-    function generarTemplateHTML() {
+    function generarTemplateHTML(idx, codigo, nombre) {
         let opcionesAlmacen = almacenesData.map(a => `<option value="${a.codigo}">${a.descripcion}</option>`).join('');
+        let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}">${u.codigo}</option>`).join('');
         return `
         <tr class="fila-producto">
             <td class="p-1">
-                <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title=""></span>
-                <input type="hidden" class="input-cod">
+                <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="${nombre}">${nombre}</span>
+                <input type="hidden" class="input-cod" name="productos[${idx}][codigo]" value="${codigo}">
             </td>
             <td class="p-1">
-                <select class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" style="height:28px">
+                <select class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-alm" style="height:28px" name="productos[${idx}][codigo_almacen]">
                     ${opcionesAlmacen}
                 </select>
             </td>
             <td class="p-1">
-                <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-50 text-center rounded-md text-xs input-cant" style="height:28px">
+                <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-50 text-center rounded-md text-xs input-cant" style="height:28px" name="productos[${idx}][cantidad]">
             </td>
             <td class="p-1">
-                <input type="number" step="0.01" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
+                <select class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-um" style="height:28px" name="productos[${idx}][codigo_unidad_medida]">
+                    ${opcionesUM}
+                </select>
+            </td>
+            <td class="p-1">
+                <input type="number" step="0.01" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px" name="productos[${idx}][precio]">
             </td>
             <td class="p-1">
                 <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="0.00" readonly tabindex="-1" style="height:28px">
@@ -218,23 +227,10 @@
     }
 
     function agregarFila(producto) {
-        const div = document.createElement('div');
-        div.innerHTML = generarTemplateHTML();
-        const tr = div.firstElementChild;
-
         const idx = filaIdx++;
-        tr.querySelector('.input-cod').name = `productos[${idx}][codigo]`;
-        tr.querySelector('.select-alm').name = `productos[${idx}][codigo_almacen]`;
-        tr.querySelector('.input-cant').name = `productos[${idx}][cantidad]`;
-        tr.querySelector('.input-prec').name = `productos[${idx}][precio]`;
-
-        tr.querySelector('.input-cod').value = producto.id;
         const nombre = getProductName(producto.text);
-        const span = tr.querySelector('.texto-prod');
-        span.textContent = nombre;
-        span.title = nombre;
-
-        tablaBody.appendChild(tr);
+        const html = generarTemplateHTML(idx, producto.id, nombre);
+        tablaBody.insertAdjacentHTML('beforeend', html);
     }
 
     function cerrarModalProducto() {
@@ -258,6 +254,7 @@
         tablaBody = document.getElementById('tbodyProductos');
         searchUrl = '/productos/search-ajax';
         almacenesData = {!! json_encode($almacenes->map(fn($a) => ['codigo' => $a->codigo_almacen, 'descripcion' => $a->descripcion])->all()) !!};
+        unidadesData = {!! json_encode($unidades_medida->map(fn($u) => ['codigo' => $u->codigo, 'descripcion' => $u->descripcion])->all()) !!};
 
         if (typeof $().select2 !== 'undefined') {
             $('#selectProductoModal').select2({

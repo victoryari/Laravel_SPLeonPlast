@@ -172,6 +172,34 @@
                     </table>
                 </div>
 
+                @if($estado_proceso_actual !== 'COMPLETADO' && !$es_actividad)
+                <!-- Productos Resultantes -->
+                <div class="mt-6 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-base font-bold text-slate-800">
+                            <i class="fas fa-arrow-right text-primary mr-2"></i>Productos Resultantes
+                        </h3>
+                        <button type="button" onclick="agregarFilaProductoResultante()" class="text-sm bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dark transition">
+                            <i class="fas fa-plus mr-1"></i>Agregar Producto
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-slate-700 text-white">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase">Producto</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase">Cantidad</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold uppercase">U.M.</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold uppercase w-16">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody_resultantes" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <input type="hidden" name="productos_resultantes_json" id="productos_resultantes_json">
+                </div>
+                @endif
+
                 <!-- Footer del Formulario -->
                 <div class="mt-6 pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     <div>
@@ -403,6 +431,32 @@
 
     function agregarFilaManual() { agregarFila({}); }
 
+    function agregarFilaProductoResultante() {
+        const tbody = document.getElementById('tbody_resultantes');
+        const rowId = 'resultado_' + Date.now() + Math.floor(Math.random()*1000);
+        
+        let unitsHtml = unidadesData.map(u=>`<option value="${u.codigo}" ${u.codigo=='KG'?'selected':''}>${u.codigo}</option>`).join('');
+        
+        let html = `<tr id="${rowId}" class="nueva-fila-resultado bg-white">
+            <td class="px-2 py-2 relative">
+                <input type="text" class="text-xs py-1 border border-gray-300 rounded c-prod-search w-full min-w-50" placeholder="Buscar...">
+                <input type="hidden" class="c-prod" value="">
+                <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-[300px] z-50 shadow-lg rounded mt-1"></div>
+            </td>
+            
+            <td class="px-2 py-2"><input type="number" class="text-xs py-1 border border-gray-300 rounded c-cant" style="width: 70px;" value="" step="0.01"></td>
+            
+            <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-um" style="width: 60px;">${unitsHtml}</select></td>
+            
+            <td class="px-2 py-2 text-center">
+                <button type="button" onclick="document.getElementById('${rowId}').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-trash-alt"></i></button>
+            </td>
+        </tr>`;
+        
+        tbody.insertAdjacentHTML('afterbegin', html);
+        setupSearchableDropdown(rowId);
+    }
+
     function agregarFila(item = {}) {
         const tbody = document.getElementById('tbody_items');
         const rowId = 'row_' + Date.now() + Math.floor(Math.random()*1000);
@@ -485,7 +539,27 @@
         
         if (error) return window.toast("Por favor seleccione un producto y especifique una cantidad en todas las filas.", 'warning');
         
+        // Serializar productos resultantes
+        const resultados = document.querySelectorAll('.nueva-fila-resultado');
+        let resultadosData = [];
+        let resultadosError = false;
+        
+        resultados.forEach(r => {
+            const prod = r.querySelector('.c-prod').value;
+            const cant = r.querySelector('.c-cant').value;
+            if (!prod || !cant) resultadosError = true;
+            
+            resultadosData.push({
+                codigo_producto: prod,
+                cantidad: cant,
+                codigo_unidad_medida: r.querySelector('.c-um').value
+            });
+        });
+        
+        if (resultadosError) return window.toast("Por favor seleccione un producto y especifique una cantidad en todas las filas de productos resultantes.", 'warning');
+        
         document.getElementById('componentes_json').value = JSON.stringify(data);
+        document.getElementById('productos_resultantes_json').value = JSON.stringify(resultadosData);
         document.getElementById('form_masivo').submit();
     }
 

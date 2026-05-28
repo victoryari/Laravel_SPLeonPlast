@@ -16,6 +16,7 @@ class DetalleCompra extends Model
     'descripcion_producto', // Recomendado
     'cantidad', 
     'precio_unitario', 
+    'codigo_unidad_medida',
     'subtotal', 
     'igv', 
     'total', 

@@ -537,6 +537,31 @@ class OrdenProcesoController extends Controller
                         }
                         $grupos_pep[$key]['cant'] += $cantidad;
                     }
+                } elseif (!empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] !== 'ACT') {
+                    $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+                    if ($op && !empty($op->descripcion_producto_proceso)) {
+                        $producto_pep = DB::table('producto')
+                            ->where('descripcion', $op->descripcion_producto_proceso)
+                            ->where('codigo_tipo_producto', 'PEP')
+                            ->where('estado', 1)
+                            ->first();
+                        $codigo_pep = $producto_pep ? $producto_pep->codigo : null;
+                        
+                        if ($codigo_pep) {
+                            $key = $codigo_pep . '_' . ($codigo_color ?: 'SC');
+                            if (!isset($grupos_pep[$key])) {
+                                $grupos_pep[$key] = [
+                                    'codigo_pep' => $codigo_pep,
+                                    'descripcion_pep' => DB::table('producto')->where('codigo', $codigo_pep)->value('descripcion'),
+                                    'formula' => null,
+                                    'color' => $codigo_color,
+                                    'cant' => 0,
+                                    'unidad' => $comp['codigo_unidad_medida'] ?? 'KG'
+                                ];
+                            }
+                            $grupos_pep[$key]['cant'] += $cantidad;
+                        }
+                    }
                 }
 
                 $componente = ComponenteOrdenProduccion::create([
@@ -695,7 +720,34 @@ class OrdenProcesoController extends Controller
                 }
             }
 
-            $merma_registrada = false;
+            // Procesar productos resultantes manuales (no formula-based)
+            $productos_resultantes = json_decode($request->productos_resultantes_json ?? '[]', true);
+            foreach ($productos_resultantes as $pr) {
+                $codigo_pr = $pr['codigo_producto'];
+                $cantidad_pr = floatval($pr['cantidad']);
+                $unidad_pr = $pr['codigo_unidad_medida'] ?? 'KG';
+
+                if ($cantidad_pr > 0) {
+                    $desc_pr = DB::table('producto')->where('codigo', $codigo_pr)->value('descripcion');
+                    $lote_pr = $this->generarCodigoPEP($codigo_pr, null, $id);
+
+                    DB::table('produccion_ingresos_proceso')->insert([
+                        'idop' => $idop,
+                        'id_proceso' => $id,
+                        'codigo_producto_proceso' => $codigo_pr,
+                        'descripcion_producto_proceso' => $desc_pr,
+                        'cantidad' => $cantidad_pr,
+                        'codigo_unidad_medida' => $unidad_pr,
+                        'codigo_almacen' => 'ALM-PEP',
+                        'lote_produccion' => $lote_pr,
+                        'fecha_ingreso' => now(),
+                        'usuario_registro' => $usuario_id,
+                    ]);
+                    $ingresos_creados++;
+                }
+            }
+             
+             $merma_registrada = false;
             if ($merma_kg > 0) {
                 $codigo_merma = 'MERMA-001';
                 
@@ -753,6 +805,7 @@ class OrdenProcesoController extends Controller
             return back()->with('success', "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados, Merma: " . ($merma_registrada ? "$merma_kg KG" : "0 KG"));
             
         } catch (\Exception $e) {
+            \Log::error('Error en storeComponentes: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
             DB::rollBack();
             return back()->with('error', 'Error al procesar: ' . $e->getMessage());
         }
@@ -1012,6 +1065,18 @@ class OrdenProcesoController extends Controller
                 $codigo_pep = $this->determinarCodigoPEP($componente->codigo_formula_produccion);
             } elseif ($componente->codigo_tipo_producto === 'PEP') {
                 $codigo_pep = $this->determinarPEPdesdeProducto($componente->codigo_producto);
+            } elseif ($componente->codigo_tipo_producto !== 'ACT') {
+                $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+                if ($op && !empty($op->descripcion_producto_proceso)) {
+                    $producto_pep = DB::table('producto')
+                        ->where('descripcion', $op->descripcion_producto_proceso)
+                        ->where('codigo_tipo_producto', 'PEP')
+                        ->where('estado', 1)
+                        ->first();
+                    $codigo_pep = $producto_pep ? $producto_pep->codigo : null;
+                } else {
+                    $codigo_pep = null;
+                }
             } else {
                 $codigo_pep = null;
             }
@@ -1164,6 +1229,18 @@ class OrdenProcesoController extends Controller
                 $codigo_pep = $this->determinarCodigoPEP($componente->codigo_formula_produccion);
             } elseif ($componente->codigo_tipo_producto === 'PEP') {
                 $codigo_pep = $this->determinarPEPdesdeProducto($componente->codigo_producto);
+            } elseif ($componente->codigo_tipo_producto !== 'ACT') {
+                $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+                if ($op && !empty($op->descripcion_producto_proceso)) {
+                    $producto_pep = DB::table('producto')
+                        ->where('descripcion', $op->descripcion_producto_proceso)
+                        ->where('codigo_tipo_producto', 'PEP')
+                        ->where('estado', 1)
+                        ->first();
+                    $codigo_pep = $producto_pep ? $producto_pep->codigo : null;
+                } else {
+                    $codigo_pep = null;
+                }
             } else {
                 $codigo_pep = null;
             }
@@ -1206,6 +1283,15 @@ class OrdenProcesoController extends Controller
 
     private function determinarPEPdesdeProducto($codigo_producto)
     {
+        // Si el producto existe como PEP, retornarlo directamente
+        $producto = DB::table('producto')
+            ->where('codigo', $codigo_producto)
+            ->where('codigo_tipo_producto', 'PEP')
+            ->where('estado', 1)
+            ->first();
+        if ($producto) return $producto->codigo;
+
+        // Fallback original para MZ07-
         if (str_starts_with($codigo_producto, 'MZ07-')) {
             $codigo_inyectado = str_replace('MZ07-', 'CA07-', $codigo_producto);
             $existe = DB::table('producto')

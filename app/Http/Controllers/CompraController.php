@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Compra, DetalleCompra, Proveedor, Producto, Almacen};
+use App\Models\{Compra, DetalleCompra, Proveedor, Producto, Almacen, UnidadMedida};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Auth};
 
@@ -33,8 +33,9 @@ class CompraController extends Controller
     {
         $proveedores = Proveedor::where('activo', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
+        $unidades_medida = UnidadMedida::where('estado', 1)->get();
 
-        return view('compras.create', compact('proveedores', 'almacenes'));
+        return view('compras.create', compact('proveedores', 'almacenes', 'unidades_medida'));
     }
 
     public function show($id)
@@ -58,6 +59,7 @@ class CompraController extends Controller
             'productos.*.cantidad' => 'required|numeric|min:0.01',
             'productos.*.precio' => 'required|numeric|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
+            'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
         ]);
 
         try {
@@ -89,6 +91,7 @@ class CompraController extends Controller
                     'descripcion_producto' => $prod->descripcion ?? '',
                     'cantidad' => $item['cantidad'],
                     'precio_unitario' => $item['precio'],
+                    'codigo_unidad_medida' => $item['codigo_unidad_medida'] ?? null,
                     'subtotal' => $sub,
                     'igv' => $igv_item,
                     'total' => $sub + $igv_item,
@@ -107,7 +110,8 @@ class CompraController extends Controller
         $compra = Compra::with('detalles')->findOrFail($id);
         $proveedores = Proveedor::where('activo', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('compras.edit', compact('compra', 'proveedores', 'almacenes'));
+        $unidades_medida = UnidadMedida::where('estado', 1)->get();
+        return view('compras.edit', compact('compra', 'proveedores', 'almacenes', 'unidades_medida'));
     }
 
     public function update(Request $request, $id) {
@@ -122,6 +126,7 @@ class CompraController extends Controller
             'productos.*.cantidad' => 'required|numeric|min:0.01',
             'productos.*.precio' => 'required|numeric|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
+            'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
         ]);
 
         try {
@@ -157,6 +162,7 @@ class CompraController extends Controller
                     'descripcion_producto' => $prod->descripcion ?? '',
                     'cantidad' => $item['cantidad'],
                     'precio_unitario' => $item['precio'],
+                    'codigo_unidad_medida' => $item['codigo_unidad_medida'] ?? null,
                     'subtotal' => $sub,
                     'igv' => $sub * 0.18,
                     'total' => $sub * 1.18,
