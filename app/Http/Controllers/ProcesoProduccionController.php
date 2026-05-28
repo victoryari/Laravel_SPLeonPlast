@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProcesoProduccion;
+use App\Models\Almacen;
 use Carbon\Carbon;
 
 class ProcesoProduccionController extends Controller
@@ -40,7 +41,8 @@ class ProcesoProduccionController extends Controller
      */
     public function create()
     {
-        return view('tablas_maestras.proceso_produccion.create');
+        $almacenes = Almacen::where('activo', 1)->get();
+        return view('tablas_maestras.proceso_produccion.create', compact('almacenes'));
     }
 
     /**
@@ -51,15 +53,18 @@ class ProcesoProduccionController extends Controller
         $request->validate([
             'codigo' => 'required|string|max:15|unique:proceso_produccion,codigo',
             'descripcion' => 'required|string|max:150',
+            'codigo_almacen' => 'nullable|string|max:10|exists:almacen,codigo_almacen',
         ], [
             'codigo.required' => 'El código es obligatorio.',
             'codigo.unique' => 'Este código de proceso ya está registrado.',
             'descripcion.required' => 'La descripción es obligatoria.',
+            'codigo_almacen.exists' => 'El almacén seleccionado no es válido.',
         ]);
 
         ProcesoProduccion::create([
             'codigo' => strtoupper($request->codigo),
             'descripcion' => $request->descripcion,
+            'codigo_almacen' => $request->codigo_almacen,
             'estado' => 1,
             'fecha_creacion' => Carbon::now(),
         ]);
@@ -79,7 +84,9 @@ class ProcesoProduccionController extends Controller
             return redirect()->route('procesos_produccion.index')->with('error', 'No se puede editar un registro anulado.');
         }
 
-        return view('tablas_maestras.proceso_produccion.edit', compact('proceso'));
+        $almacenes = Almacen::where('activo', 1)->get();
+
+        return view('tablas_maestras.proceso_produccion.edit', compact('proceso', 'almacenes'));
     }
 
     /**
@@ -91,12 +98,15 @@ class ProcesoProduccionController extends Controller
 
         $request->validate([
             'descripcion' => 'required|string|max:150',
+            'codigo_almacen' => 'nullable|string|max:10|exists:almacen,codigo_almacen',
         ], [
             'descripcion.required' => 'La descripción es obligatoria.',
+            'codigo_almacen.exists' => 'El almacén seleccionado no es válido.',
         ]);
 
         $proceso->update([
             'descripcion' => $request->descripcion,
+            'codigo_almacen' => $request->codigo_almacen,
         ]);
 
         return redirect()->route('procesos_produccion.index')

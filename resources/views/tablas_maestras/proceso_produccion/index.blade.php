@@ -30,6 +30,7 @@
                         <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold">
                             <th class="p-4 border-r border-slate-700 text-center">Código</th>
                             <th class="p-4 border-r border-slate-700 text-center">Descripción</th>
+                            <th class="p-4 border-r border-slate-700 text-center">Almacén Vinculado</th>
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -38,6 +39,15 @@
                             <tr class="hover:bg-slate-50/50 transition duration-150">
                                 <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $proc->codigo }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $proc->descripcion }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700 text-center">
+                                    @if($proc->almacen)
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            {{ $proc->almacen->descripcion }}
+                                        </span>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">No asignado</span>
+                                    @endif
+                                </td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <div class="flex items-center justify-center gap-2 md:gap-3">
                                         <a href="{{ route('procesos_produccion.edit', $proc->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition-all" title="Editar">
@@ -55,7 +65,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3">
+                                <td colspan="4">
                                     <x-empty-state icon="fa-cogs" message="No se encontraron procesos de producción con los criterios ingresados." />
                                 </td>
                             </tr>

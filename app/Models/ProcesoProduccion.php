@@ -19,6 +19,7 @@ class ProcesoProduccion extends Model
     protected $fillable = [
         'codigo',
         'descripcion',
+        'codigo_almacen',
         'estado',
         'fecha_creacion'
     ];
@@ -27,4 +28,9 @@ class ProcesoProduccion extends Model
         'fecha_creacion' => 'datetime',
         'estado' => 'integer',
     ];
+
+    public function almacen()
+    {
+        return $this->belongsTo(Almacen::class, 'codigo_almacen', 'codigo_almacen');
+    }
 }

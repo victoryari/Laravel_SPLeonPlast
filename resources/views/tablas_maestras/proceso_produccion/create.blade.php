@@ -24,6 +24,21 @@
                 @enderror
             </x-form-group>
 
+            <x-form-group label="Almacén de Producción" :error="$errors->first('codigo_almacen')">
+                <select name="codigo_almacen" id="codigo_almacen" class="input-field @error('codigo_almacen') border-red-500 @enderror">
+                    <option value="">-- No Asignado --</option>
+                    @foreach($almacenes as $almacen)
+                        <option value="{{ $almacen->codigo_almacen }}" {{ old('codigo_almacen') == $almacen->codigo_almacen ? 'selected' : '' }}>
+                            {{ $almacen->descripcion }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Si selecciona un almacén, este proceso consumirá materias primas EXCLUSIVAMENTE de este almacén.</p>
+                @error('codigo_almacen')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </x-form-group>
+
             <div class="flex justify-end space-x-3 pt-4">
                 <a href="{{ route('procesos_produccion.index') }}" class="btn-secondary">Cancelar</a>
                 <button type="submit" class="btn-primary">Guardar</button>

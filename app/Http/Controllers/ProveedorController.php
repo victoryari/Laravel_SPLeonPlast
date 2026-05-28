@@ -101,7 +101,7 @@ class ProveedorController extends Controller
     {
         // Validamos que el RUC no exista previamente
         $request->validate([
-            'ruc' => 'required|string|max:11|unique:proveedor,ruc',
+            'ruc' => 'required|string|max:11|unique:proveedores,ruc',
             'razon_social' => 'required|string|max:255'
         ]);
 
