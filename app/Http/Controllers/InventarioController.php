@@ -61,7 +61,12 @@ class InventarioController extends Controller
                 $cantidad_recibida = floatval($data['cantidad']);
                 $codigo_producto = $data['codigo_producto'];
                 $codigo_almacen = $data['codigo_almacen'];
-                $precio_unitario = floatval($data['precio'] ?? 0);
+                $precio_original = floatval($data['precio'] ?? 0);
+
+                // Convertir a soles si la compra fue en dólares
+                $precio_unitario = ($compra->moneda === 'USD' && $compra->tipo_cambio > 0)
+                    ? $precio_original * $compra->tipo_cambio
+                    : $precio_original;
 
                 // Bloqueo de fila para evitar condiciones de carrera
                 $registroInventario = DB::table('inventario')

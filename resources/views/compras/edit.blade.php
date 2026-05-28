@@ -44,7 +44,18 @@
                                 <input type="date" name="fecha_compra" value="{{ $compra->fecha_compra }}" class="input-field" required>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-8" label="Proveedor" required>
+                            <x-form-group class="md:col-span-4" label="Moneda" required>
+                                <select name="moneda" id="selectMoneda" class="input-field" required>
+                                    <option value="PEN" {{ $compra->moneda == 'PEN' ? 'selected' : '' }}>Soles (PEN)</option>
+                                    <option value="USD" {{ $compra->moneda == 'USD' ? 'selected' : '' }}>Dólares (USD)</option>
+                                </select>
+                            </x-form-group>
+
+                            <x-form-group class="md:col-span-4" label="Tipo de Cambio" id="groupTipoCambio" style="display: {{ $compra->moneda == 'USD' ? 'block' : 'none' }};">
+                                <input type="number" name="tipo_cambio" id="inputTipoCambio" step="0.001" min="0" class="input-field" placeholder="Ej. 3.800" value="{{ $compra->tipo_cambio ?? '1.000' }}" {{ $compra->moneda == 'USD' ? 'required' : '' }}>
+                            </x-form-group>
+
+                            <x-form-group class="md:col-span-12" label="Proveedor" required>
                                 <select name="ruc_proveedor" id="selectProveedor" class="input-field" required>
                                     @foreach($proveedores as $p)
                                         <option value="{{ $p->ruc }}" {{ $compra->ruc_proveedor == $p->ruc ? 'selected' : '' }}>{{ $p->ruc }} - {{ $p->razon_social }}</option>
@@ -294,6 +305,20 @@
         }
 
         $('#btnCerrarProducto').on('click', cerrarModalProducto);
+
+        $('#selectMoneda').on('change', function() {
+            if ($(this).val() === 'USD') {
+                $('#groupTipoCambio').show();
+                $('#inputTipoCambio').attr('required', true);
+                if (parseFloat($('#inputTipoCambio').val()) === 1) {
+                    $('#inputTipoCambio').val('');
+                }
+            } else {
+                $('#groupTipoCambio').hide();
+                $('#inputTipoCambio').removeAttr('required');
+                $('#inputTipoCambio').val('1.000');
+            }
+        });
 
         $('#btnAgregarFila').on('click', function () {
             $('#selectProductoModal').val(null).trigger('change');

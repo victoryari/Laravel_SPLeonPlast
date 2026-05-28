@@ -43,7 +43,18 @@
                                 <input type="date" name="fecha_compra" value="{{ date('Y-m-d') }}" class="input-field" required>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-8" label="Proveedor" required>
+                            <x-form-group class="md:col-span-4" label="Moneda" required>
+                                <select name="moneda" id="selectMoneda" class="input-field" required>
+                                    <option value="PEN">Soles (PEN)</option>
+                                    <option value="USD">Dólares (USD)</option>
+                                </select>
+                            </x-form-group>
+
+                            <x-form-group class="md:col-span-4" label="Tipo de Cambio" id="groupTipoCambio" style="display: none;">
+                                <input type="number" name="tipo_cambio" id="inputTipoCambio" step="0.001" min="0" class="input-field" placeholder="Ej. 3.800" value="1.000">
+                            </x-form-group>
+
+                            <x-form-group class="md:col-span-12" label="Proveedor" required>
                                 <div class="flex gap-2">
                                     <select name="ruc_proveedor" id="selectProveedor" class="input-field" required>
                                         <option value="">Seleccione Proveedor...</option>
@@ -288,6 +299,20 @@
                     $('#selectProductoModal').select2('open');
                 }
             }, 250);
+        });
+
+        $('#selectMoneda').on('change', function() {
+            if ($(this).val() === 'USD') {
+                $('#groupTipoCambio').show();
+                $('#inputTipoCambio').attr('required', true);
+                if (parseFloat($('#inputTipoCambio').val()) === 1) {
+                    $('#inputTipoCambio').val('');
+                }
+            } else {
+                $('#groupTipoCambio').hide();
+                $('#inputTipoCambio').removeAttr('required');
+                $('#inputTipoCambio').val('1.000');
+            }
         });
 
         $('#tablaProductos').on('input', function (e) {

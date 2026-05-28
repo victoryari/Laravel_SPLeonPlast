@@ -60,6 +60,8 @@ class CompraController extends Controller
             'productos.*.precio' => 'required|numeric|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
             'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
+            'moneda' => 'required|in:PEN,USD',
+            'tipo_cambio' => 'nullable|numeric|min:0.001',
         ]);
 
         try {
@@ -76,6 +78,8 @@ class CompraController extends Controller
                 'subtotal'         => $request->total_subtotal,
                 'igv'              => $request->total_impuestos,
                 'total'            => $request->total_general,
+                'moneda'           => $request->moneda,
+                'tipo_cambio'      => $request->moneda === 'USD' ? $request->tipo_cambio : 1.000,
                 'estado'           => 'PENDIENTE',
                 'usuario_creacion' => Auth::id()
             ]);
@@ -127,6 +131,8 @@ class CompraController extends Controller
             'productos.*.precio' => 'required|numeric|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
             'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
+            'moneda' => 'required|in:PEN,USD',
+            'tipo_cambio' => 'nullable|numeric|min:0.001',
         ]);
 
         try {
@@ -149,6 +155,8 @@ class CompraController extends Controller
                 'subtotal' => $request->total_subtotal,
                 'igv' => $request->total_impuestos,
                 'total' => $request->total_general,
+                'moneda' => $request->moneda,
+                'tipo_cambio' => $request->moneda === 'USD' ? $request->tipo_cambio : 1.000,
                 'usuario_aprobacion' => Auth::id(),
             ]);
 
