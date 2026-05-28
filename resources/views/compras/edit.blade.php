@@ -26,41 +26,41 @@
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-                            <x-form-group class="md:col-span-4" label="Tipo Doc." required>
+                            <x-form-group class="md:col-span-3" label="Tipo Doc." required>
                                 <select name="tipo_documento" class="input-field" required>
                                     @foreach(['FACTURA' => 'FACTURA', 'BOLETA' => 'BOLETA', 'GUIA_REMISION' => 'GUÍA DE REMISIÓN', 'OTRO' => 'OTRO'] as $val => $label)
                                         <option value="{{ $val }}" {{ $compra->tipo_documento == $val ? 'selected' : '' }}>{{ $label }}</option>
                                     @endforeach
                                 </select>
                             </x-form-group>
-                            <x-form-group class="md:col-span-3" label="Serie" required>
+                            <x-form-group class="md:col-span-2" label="Serie" required>
                                 <input type="text" name="serie_documento" value="{{ $compra->serie_documento }}" class="input-field uppercase" required>
                             </x-form-group>
-                            <x-form-group class="md:col-span-5" label="N° Documento" required>
+                            <x-form-group class="md:col-span-3" label="N° Documento" required>
                                 <input type="text" name="numero_documento" value="{{ $compra->numero_documento }}" class="input-field" required>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-4" label="Fecha de Emisión" required>
+                            <x-form-group class="md:col-span-2" label="Fecha de Emisión" required>
                                 <input type="date" name="fecha_compra" value="{{ $compra->fecha_compra }}" class="input-field" required>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-4" label="Moneda" required>
+                            <x-form-group class="md:col-span-2" label="Moneda" required>
                                 <select name="moneda" id="selectMoneda" class="input-field" required>
                                     <option value="PEN" {{ $compra->moneda == 'PEN' ? 'selected' : '' }}>Soles (PEN)</option>
                                     <option value="USD" {{ $compra->moneda == 'USD' ? 'selected' : '' }}>Dólares (USD)</option>
                                 </select>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-4" label="Tipo de Cambio" id="groupTipoCambio" style="display: {{ $compra->moneda == 'USD' ? 'block' : 'none' }};">
-                                <input type="number" name="tipo_cambio" id="inputTipoCambio" step="0.001" min="0" class="input-field" placeholder="Ej. 3.800" value="{{ $compra->tipo_cambio ?? '1.000' }}" {{ $compra->moneda == 'USD' ? 'required' : '' }}>
-                            </x-form-group>
-
-                            <x-form-group class="md:col-span-12" label="Proveedor" required>
+                            <x-form-group class="md:col-span-8" label="Proveedor" required>
                                 <select name="ruc_proveedor" id="selectProveedor" class="input-field" required>
                                     @foreach($proveedores as $p)
                                         <option value="{{ $p->ruc }}" {{ $compra->ruc_proveedor == $p->ruc ? 'selected' : '' }}>{{ $p->ruc }} - {{ $p->razon_social }}</option>
                                     @endforeach
                                 </select>
+                            </x-form-group>
+
+                            <x-form-group class="md:col-span-4" label="Tipo de Cambio" id="groupTipoCambio" style="display: {{ $compra->moneda == 'USD' ? 'block' : 'none' }};">
+                                <input type="number" name="tipo_cambio" id="inputTipoCambio" step="0.001" min="0" class="input-field" placeholder="Ej. 3.800" value="{{ $compra->tipo_cambio ?? '1.000' }}" {{ $compra->moneda == 'USD' ? 'required' : '' }}>
                             </x-form-group>
                         </div>
                     </div>

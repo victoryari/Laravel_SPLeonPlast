@@ -24,7 +24,7 @@
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-                            <x-form-group class="md:col-span-4" label="Tipo Doc." required>
+                            <x-form-group class="md:col-span-3" label="Tipo Doc." required>
                                 <select name="tipo_documento" class="input-field" required>
                                     <option value="FACTURA">FACTURA</option>
                                     <option value="BOLETA">BOLETA</option>
@@ -32,29 +32,25 @@
                                     <option value="OTRO">OTRO</option>
                                 </select>
                             </x-form-group>
-                            <x-form-group class="md:col-span-3" label="Serie" required>
+                            <x-form-group class="md:col-span-2" label="Serie" required>
                                 <input type="text" name="serie_documento" class="input-field uppercase" placeholder="F001" required>
                             </x-form-group>
-                            <x-form-group class="md:col-span-5" label="N° Documento" required>
+                            <x-form-group class="md:col-span-3" label="N° Documento" required>
                                 <input type="text" name="numero_documento" class="input-field" placeholder="0004512" required>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-4" label="Fecha de Emisión" required>
+                            <x-form-group class="md:col-span-2" label="Fecha de Emisión" required>
                                 <input type="date" name="fecha_compra" value="{{ date('Y-m-d') }}" class="input-field" required>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-4" label="Moneda" required>
+                            <x-form-group class="md:col-span-2" label="Moneda" required>
                                 <select name="moneda" id="selectMoneda" class="input-field" required>
                                     <option value="PEN">Soles (PEN)</option>
                                     <option value="USD">Dólares (USD)</option>
                                 </select>
                             </x-form-group>
 
-                            <x-form-group class="md:col-span-4" label="Tipo de Cambio" id="groupTipoCambio" style="display: none;">
-                                <input type="number" name="tipo_cambio" id="inputTipoCambio" step="0.001" min="0" class="input-field" placeholder="Ej. 3.800" value="1.000">
-                            </x-form-group>
-
-                            <x-form-group class="md:col-span-12" label="Proveedor" required>
+                            <x-form-group class="md:col-span-8" label="Proveedor" required>
                                 <div class="flex gap-2">
                                     <select name="ruc_proveedor" id="selectProveedor" class="input-field" required>
                                         <option value="">Seleccione Proveedor...</option>
@@ -66,6 +62,10 @@
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
+                            </x-form-group>
+
+                            <x-form-group class="md:col-span-4" label="Tipo de Cambio" id="groupTipoCambio" style="display: none;">
+                                <input type="number" name="tipo_cambio" id="inputTipoCambio" step="0.001" min="0" class="input-field" placeholder="Ej. 3.800" value="1.000">
                             </x-form-group>
                         </div>
                     </div>
