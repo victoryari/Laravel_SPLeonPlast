@@ -20,7 +20,8 @@ class InventarioController extends Controller
                 'almacen.descripcion as almacen',
                 'inventario.stock_actual',
                 'inventario.fecha_ultimo_movimiento'
-            );
+            )
+            ->where('inventario.stock_actual', '!=', 0);
 
         if ($request->search) {
             $query->where('producto.descripcion', 'LIKE', "%{$request->search}%")
