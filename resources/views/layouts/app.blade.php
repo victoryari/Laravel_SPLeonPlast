@@ -57,6 +57,7 @@
                             @if(Auth::user()->hasAccess('actividades.index'))<a href="{{ route('actividades.index') }}" class="block p-2 text-sm {{ request()->routeIs('actividades.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Actividades</a>@endif
                             @if(Auth::user()->hasAccess('moldes.index'))<a href="{{ route('moldes.index') }}" class="block p-2 text-sm {{ request()->routeIs('moldes.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Moldes</a>@endif
                             @if(Auth::user()->hasAccess('colores.index'))<a href="{{ route('colores.index') }}" class="block p-2 text-sm {{ request()->routeIs('colores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Color</a>@endif
+                            @if(Auth::user()->rol == 'Administrador')<a href="{{ route('parametros.index') }}" class="block p-2 text-sm {{ request()->routeIs('parametros.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Parámetros del Sistema</a>@endif
                         </div>
                     </div>
                     @endif
@@ -266,7 +267,7 @@
             'unidades-medida', 'tipos-producto', 'productos',
             'procesos-produccion', 'formulas', 'operaciones-produccion',
             'centros-trabajo', 'trabajadores', 'proveedores',
-            'actividades', 'moldes', 'colores'
+            'actividades', 'moldes', 'colores', 'parametros'
         ];
 
         if (maestrasSlugs.some(slug => currentUrl.includes(slug))) {

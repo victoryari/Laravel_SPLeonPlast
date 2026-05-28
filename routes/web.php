@@ -8,10 +8,12 @@ use App\Http\Controllers\{
     TrabajadorController, ProveedorController, ActividadProduccionController,
     MoldeController, ColorController, UsuarioController, CompraController,
     InventarioController, AlmacenController, RolController,
-    OrdenProduccionController, OrdenProcesoController, ReporteController
+    OrdenProduccionController, OrdenProcesoController, ReporteController,
+    ParametroSistemaController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +80,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('colores', ColorController::class)->names('colores');
         Route::resource('usuarios', UsuarioController::class)->names('usuarios');
         Route::resource('roles', RolController::class)->names('roles');
+        
+        // Rutas de Parámetros del Sistema
+        Route::get('/parametros', [ParametroSistemaController::class, 'index'])->name('parametros.index');
+        Route::post('/parametros/update', [ParametroSistemaController::class, 'updateBulk'])->name('parametros.updateBulk');
+        Route::post('/parametros/fetch-tipo-cambio', [ParametroSistemaController::class, 'fetchTipoCambio'])->name('parametros.fetchTipoCambio');
 
         // Proveedores
         Route::resource('proveedores', ProveedorController::class)->names('proveedores');

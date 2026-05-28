@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ParametroSistema;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+
+class ParametroSistemaController extends Controller
+{
+    public function index()
+    {
+        // Obtener todos los parámetros y agruparlos por categoría
+        $parametros = ParametroSistema::orderBy('id_parametro', 'asc')->get();
+        $categorias = $parametros->groupBy('categoria');
+
+        return view('parametros.index', compact('categorias', 'parametros'));
+    }
+
+    public function updateBulk(Request $request)
+    {
+        $data = $request->except('_token', '_method');
+
+        foreach ($data as $codigo => $valor) {
+            $parametro = ParametroSistema::where('codigo_parametro', $codigo)->first();
+            
+            if ($parametro && $parametro->editable) {
+                // Validación básica según tipo (opcional, pero buena práctica)
+                if ($parametro->tipo === 'NUMERICO' && !is_numeric($valor)) {
+                    continue; // Ignorar si se envió texto donde va un número
+                }
+
+                $parametro->valor = $valor;
+                $parametro->save();
+            }
+        }
+
+        return redirect()->route('parametros.index')->with('success', 'Parámetros actualizados correctamente.');
+    }
+
+    public function fetchTipoCambio()
+    {
+        try {
+            // Usamos la API pública de apis.net.pe para obtener el tipo de cambio de la SUNAT
+            // Nota: Algunas APIs pueden requerir token. Si es pública como esta, puede variar.
+            // Para asegurar funcionalidad, podemos usar esta o un fallback si falla.
+            $response = Http::timeout(10)->get('https://api.apis.net.pe/v1/tipo-cambio-sunat');
+
+            if ($response->successful()) {
+                $data = $response->json();
+                
+                if (isset($data['venta'])) {
+                    $parametro = ParametroSistema::where('codigo_parametro', 'TIPO_CAMBIO_USD')->first();
+                    if ($parametro) {
+                        $parametro->valor = $data['venta'];
+                        $parametro->save();
+
+                        return redirect()->route('parametros.index')->with('success', 'Tipo de cambio actualizado a S/ ' . $data['venta'] . ' exitosamente desde SUNAT.');
+                    }
+                }
+            }
+
+            return redirect()->route('parametros.index')->with('error', 'No se pudo obtener el tipo de cambio de la API en este momento. Intenta ingresarlo manualmente.');
+            
+        } catch (\Exception $e) {
+            return redirect()->route('parametros.index')->with('error', 'Error de conexión con el servicio de tipo de cambio.');
+        }
+    }
+}
