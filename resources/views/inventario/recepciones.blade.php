@@ -16,9 +16,15 @@
                 <h2 class="text-lg font-bold text-slate-800">Mercadería en Tránsito (Compras)</h2>
                 <p class="text-sm text-slate-500">Confirme el almacén destino y cantidades de proveedores.</p>
             </div>
-            <div class="inline-flex items-center gap-2 bg-primary-100 text-primary px-3 py-1 rounded-lg text-sm font-semibold">
-                <i class="fas fa-truck text-primary"></i>
-                {{ $comprasPendientes->count() }} pendientes
+            <div class="flex items-center gap-2">
+                <a href="{{ route('inventario.recepciones.historial') }}"
+                   class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-sm font-semibold transition">
+                    <i class="fas fa-history"></i> Historial
+                </a>
+                <div class="inline-flex items-center gap-2 bg-primary-100 text-primary px-3 py-1 rounded-lg text-sm font-semibold">
+                    <i class="fas fa-truck text-primary"></i>
+                    {{ $comprasPendientes->count() }} pendientes
+                </div>
             </div>
         </div>
 
@@ -72,8 +78,8 @@
                                 @foreach($compra->detalles as $detalle)
                                     <div class="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
 
-                                        <div class="lg:col-span-4">
-                                            <p class="font-semibold text-slate-800">
+                                        <div class="lg:col-span-3">
+                                            <p class="font-semibold text-slate-800 text-sm">
                                                 {{ $detalle->producto->descripcion ?? $detalle->descripcion_producto }}
                                             </p>
                                             <p class="text-xs text-slate-400">
@@ -81,49 +87,56 @@
                                             </p>
                                         </div>
 
-                                        <div class="lg:col-span-3">
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Almacén destino</label>
-                                            <div class="relative">
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <i class="fas fa-warehouse text-slate-400"></i>
-                                                </div>
-
-                                                <select name="items[{{ $detalle->id_detalle_compra }}][codigo_almacen]"
-                                                        class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-primary focus:border-primary"
-                                                        required>
-                                                    <option value="">Seleccione...</option>
-                                                    @foreach($almacenes as $almacen)
-                                                        <option value="{{ $almacen->codigo_almacen }}"
-                                                            {{ $detalle->codigo_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>
-                                                            {{ $almacen->descripcion }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-
-                                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                    <i class="fas fa-chevron-down text-slate-400 text-xs"></i>
-                                                </div>
-                                            </div>
+                                        <div class="lg:col-span-2">
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Almacén</label>
+                                            <select name="items[{{ $detalle->id_detalle_compra }}][codigo_almacen]"
+                                                    class="w-full rounded-xl border border-slate-300 px-2 py-2.5 text-sm focus:ring-2 focus:ring-primary"
+                                                    required>
+                                                <option value="">Seleccione...</option>
+                                                @foreach($almacenes as $almacen)
+                                                    <option value="{{ $almacen->codigo_almacen }}"
+                                                        {{ $detalle->codigo_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>
+                                                        {{ $almacen->descripcion }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
 
-                                        <div class="lg:col-span-2">
-                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Facturado</label>
-                                            <div class="bg-slate-100 rounded-xl px-4 py-2 text-center font-bold text-slate-700">
+                                        <div class="lg:col-span-1">
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Fact.</label>
+                                            <div class="bg-slate-100 rounded-xl px-2 py-2 text-center font-bold text-slate-700 text-sm">
                                                 {{ number_format($detalle->cantidad, 2) }}
                                             </div>
                                         </div>
 
-                                        <div class="lg:col-span-3">
-                                            <label class="block text-xs font-semibold text-primary mb-1">Recibido físico</label>
+                                        <div class="lg:col-span-2">
+                                            <label class="block text-xs font-semibold text-primary mb-1">Recibido</label>
                                             <input type="number"
                                                    name="items[{{ $detalle->id_detalle_compra }}][cantidad]"
                                                    value="{{ $detalle->cantidad }}"
                                                    step="0.01"
-                                                   class="w-full rounded-xl border-2 border-primary/20 bg-primary-50 text-center text-lg font-bold text-primary py-2 focus:ring-4 focus:ring-primary/20"
+                                                   class="w-full rounded-xl border-2 border-primary/20 bg-primary-50 text-center font-bold text-primary py-2 focus:ring-4 focus:ring-primary/20"
                                                    required>
-
                                             <input type="hidden" name="items[{{ $detalle->id_detalle_compra }}][codigo_producto]" value="{{ $detalle->codigo_producto }}">
                                             <input type="hidden" name="items[{{ $detalle->id_detalle_compra }}][precio]" value="{{ $detalle->precio_unitario }}">
+                                            <input type="hidden" name="items[{{ $detalle->id_detalle_compra }}][codigo_unidad_medida]" value="{{ $detalle->codigo_unidad_medida }}">
+                                        </div>
+
+                                        <div class="lg:col-span-2">
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Lote</label>
+                                            <input type="text"
+                                                   name="items[{{ $detalle->id_detalle_compra }}][lote]"
+                                                   value="{{ $detalle->lote }}"
+                                                   placeholder="Opcional"
+                                                   class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary">
+                                        </div>
+
+                                        <div class="lg:col-span-2">
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Vencimiento</label>
+                                            <input type="date"
+                                                   name="items[{{ $detalle->id_detalle_compra }}][fecha_vencimiento]"
+                                                   value="{{ $detalle->fecha_vencimiento }}"
+                                                   class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary">
                                         </div>
 
                                     </div>

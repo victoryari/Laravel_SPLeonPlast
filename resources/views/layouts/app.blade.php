@@ -82,6 +82,8 @@
                         <div id="menuInventario" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
                             @if(Auth::user()->hasAccess('inventario.index'))<a href="{{ route('inventario.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.index') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Existencias</a>@endif
 
+                            @if(Auth::user()->hasAccess('inventario.alertas_stock'))<a href="{{ route('inventario.alertas_stock') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.alertas*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exclamation-triangle text-yellow-400 mr-1.5"></i>Alertas de Stock</a>@endif
+
                             @if(Auth::user()->hasAccess('inventario.recepciones'))<a href="{{ route('inventario.recepciones') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.recepciones') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Recepciones Pendientes</a>@endif
 
                             @if(Auth::user()->hasAccess('inventario.kardex'))<a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Kardex de Movimientos</a>@endif
@@ -287,7 +289,7 @@
         const menuInventario = document.getElementById('menuInventario');
         const iconInventario = document.getElementById('iconInventario');
 
-        const inventarioSlugs = ['existencias', 'recepciones', 'kardex', 'ajuste', 'extornos'];
+        const inventarioSlugs = ['existencias', 'recepciones', 'kardex', 'ajuste', 'extornos', 'alertas'];
 
         if (inventarioSlugs.some(slug => currentUrl.includes(slug))) {
             menuInventario?.classList.remove('hidden');

@@ -118,7 +118,12 @@ Route::middleware('auth')->group(function () {
         Route::middleware('role:Administrador,Supervisor')->group(function () {
             // Recepciones
             Route::get('/recepciones', [InventarioController::class, 'recepciones'])->name('inventario.recepciones');
+            Route::get('/recepciones/historial', [InventarioController::class, 'recepcionesHistorial'])->name('inventario.recepciones.historial');
             Route::post('/recibir/{id}', [InventarioController::class, 'procesarRecepcion'])->name('inventario.procesar_recepcion');
+
+            // Alertas de Stock
+            Route::get('/alertas-stock', [InventarioController::class, 'alertasStock'])->name('inventario.alertas_stock');
+            Route::post('/actualizar-stock-minimo', [InventarioController::class, 'actualizarStockMinimo'])->name('inventario.actualizar_stock_minimo');
             Route::post('/recibir-produccion/{id}', [InventarioController::class, 'procesarRecepcionProduccion'])->name('inventario.procesar_recepcion_produccion');
 
             // Ajustes Manuales

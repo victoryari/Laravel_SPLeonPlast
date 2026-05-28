@@ -34,17 +34,17 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+        <a href="{{ route('inventario.alertas_stock') }}" class="block bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500 hover:shadow-lg hover:bg-yellow-50/50 transition">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500 uppercase">Alertas Almacén</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ $stats['alertas_almacen'] }}</p>
+                    <p class="text-2xl font-bold {{ $stats['alertas_almacen'] > 0 ? 'text-red-600' : 'text-gray-800' }}">{{ $stats['alertas_almacen'] }}</p>
                 </div>
                 <div class="bg-yellow-100 p-3 rounded-lg">
                     <i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
                 </div>
             </div>
-        </div>
+        </a>
 
         <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
             <div class="flex items-center justify-between">

@@ -33,13 +33,18 @@
                             <th class="px-6 py-4 text-left">Producto / Insumo</th>
                             <th class="px-6 py-4 text-center">Almacén</th>
                             <th class="px-6 py-4 text-right">Stock</th>
+                            <th class="px-6 py-4 text-right">Stock Mín</th>
+                            <th class="px-6 py-4 text-right">Stock Máx</th>
                             <th class="px-6 py-4 text-center">Último Movimiento</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-slate-100 text-sm">
                         @forelse($stocks as $stock)
-                            <tr class="hover:bg-slate-50 transition">
+                            @php
+                                $bajoMinimo = $stock->stock_minimo > 0 && $stock->stock_actual < $stock->stock_minimo;
+                            @endphp
+                            <tr class="hover:bg-slate-50 transition {{ $bajoMinimo ? 'bg-red-50/50' : '' }}">
                                 <td class="px-6 py-4 text-slate-500 font-medium">
                                     {{ $stock->codigo_producto }}
                                 </td>
@@ -48,6 +53,11 @@
                                     <span class="font-semibold text-slate-800">
                                         {{ $stock->producto }}
                                     </span>
+                                    @if($bajoMinimo)
+                                        <span class="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                                            <i class="fas fa-exclamation-triangle"></i> BAJO MÍNIMO
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="px-6 py-4 text-center">
@@ -58,11 +68,31 @@
 
                                 <td class="px-6 py-4 text-right">
                                     <span class="inline-flex px-3 py-1 rounded-xl text-sm font-bold
-                                        {{ $stock->stock_actual <= 0 
-                                            ? 'bg-red-50 text-red-600 border border-red-100' 
-                                            : 'bg-green-50 text-green-600 border border-green-100' }}">
+                                        {{ $bajoMinimo
+                                            ? 'bg-red-50 text-red-600 border border-red-100'
+                                            : ($stock->stock_actual <= 0 
+                                                ? 'bg-red-50 text-red-600 border border-red-100' 
+                                                : 'bg-green-50 text-green-600 border border-green-100') }}">
                                         {{ number_format($stock->stock_actual, 2) }}
                                     </span>
+                                </td>
+
+                                <td class="px-6 py-4 text-right">
+                                    <input type="number"
+                                           value="{{ number_format($stock->stock_minimo, 2, '.', '') }}"
+                                           step="0.01"
+                                           data-id="{{ $stock->id_inventario ?? $stock->codigo_producto }}"
+                                           data-field="stock_minimo"
+                                           class="w-20 text-right rounded-lg border border-slate-200 px-2 py-1 text-sm focus:ring-2 focus:ring-primary/20 stock-min-input">
+                                </td>
+
+                                <td class="px-6 py-4 text-right">
+                                    <input type="number"
+                                           value="{{ $stock->stock_maximo ? number_format($stock->stock_maximo, 2, '.', '') : '' }}"
+                                           step="0.01"
+                                           data-id="{{ $stock->id_inventario ?? $stock->codigo_producto }}"
+                                           data-field="stock_maximo"
+                                           class="w-20 text-right rounded-lg border border-slate-200 px-2 py-1 text-sm focus:ring-2 focus:ring-primary/20 stock-min-input">
                                 </td>
 
                                 <td class="px-6 py-4 text-center text-slate-500 text-xs">
@@ -73,7 +103,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-16 text-center">
+                                <td colspan="7" class="px-6 py-16 text-center">
                                     <i class="fas fa-box-open text-5xl text-slate-300 mb-4"></i>
                                     <p class="text-lg font-semibold text-slate-600">
                                         No hay registros de inventario
@@ -146,6 +176,37 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             fetchResults(new URL(aTag.href));
         }
+    });
+
+    // Inline update de stock_minimo / stock_maximo
+    tableContainer.addEventListener('change', function(e) {
+        const input = e.target.closest('.stock-min-input');
+        if (!input) return;
+
+        const id = input.dataset.id;
+        const field = input.dataset.field;
+        const value = input.value;
+
+        const formData = new FormData();
+        formData.append('id_inventario', id);
+        formData.append(field, value);
+
+        fetch('{{ route("inventario.actualizar_stock_minimo") }}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                input.classList.add('border-green-400');
+                setTimeout(() => input.classList.remove('border-green-400'), 1500);
+            }
+        })
+        .catch(error => console.error('Error al actualizar stock:', error));
     });
 });
 </script>

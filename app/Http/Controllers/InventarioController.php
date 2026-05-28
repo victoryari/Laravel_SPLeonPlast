@@ -15,11 +15,14 @@ class InventarioController extends Controller
             ->join('producto', 'inventario.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'inventario.codigo_almacen', '=', 'almacen.codigo_almacen')
             ->select(
+                'inventario.id_inventario',
                 'inventario.codigo_producto', 
                 'inventario.codigo_almacen',
                 'producto.descripcion as producto',
                 'almacen.descripcion as almacen',
                 'inventario.stock_actual',
+                'inventario.stock_minimo',
+                'inventario.stock_maximo',
                 'inventario.fecha_ultimo_movimiento'
             )
             ->where('inventario.stock_actual', '!=', 0);
@@ -48,6 +51,16 @@ class InventarioController extends Controller
         return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'almacenes'));
     }
 
+    // 2.0.1 HISTORIAL DE RECEPCIONES
+    public function recepcionesHistorial() {
+        $recepciones = Compra::with(['datosProveedor', 'detalles'])
+            ->where('estado', 'RECIBIDA')
+            ->orderBy('fecha_compra', 'desc')
+            ->paginate(20);
+
+        return view('inventario.recepciones_historial', compact('recepciones'));
+    }
+
     // 2.1 PROCESAR RECEPCIÓN
     public function procesarRecepcion(Request $request, $id) {
         $compra = Compra::with('detalles')->findOrFail($id);
@@ -64,6 +77,8 @@ class InventarioController extends Controller
                 $codigo_producto = $data['codigo_producto'];
                 $codigo_almacen = $data['codigo_almacen'];
                 $precio_original = floatval($data['precio'] ?? 0);
+                $lote = $data['lote'] ?? null;
+                $fecha_vencimiento = $data['fecha_vencimiento'] ?? null;
 
                 // Convertir a soles si la compra fue en dólares
                 $precio_unitario = ($compra->moneda === 'USD' && $compra->tipo_cambio > 0)
@@ -102,7 +117,7 @@ class InventarioController extends Controller
 
                 // Insertar en Kardex si hubo ingreso real
                 if ($cantidad_recibida > 0) {
-                    DB::table('kardex')->insert([
+                    $kardexId = DB::table('kardex')->insertGetId([
                         'codigo_almacen'   => $codigo_almacen,
                         'codigo_producto'  => $codigo_producto,
                         'fecha_movimiento' => now(),
@@ -118,8 +133,38 @@ class InventarioController extends Controller
                         'cantidad_saldo'   => $costos['cantidad_saldo'],
                         'costo_promedio'   => $costos['costo_promedio'],
                         'total_saldo'      => $costos['total_saldo'],
+                        'lote'             => $lote,
                         'usuario_registro' => Auth::id()
                     ]);
+
+                    // Insertar en movimientos_inventario
+                    DB::table('movimientos_inventario')->insert([
+                        'codigo_almacen'       => $codigo_almacen,
+                        'codigo_producto'      => $codigo_producto,
+                        'codigo_unidad_medida' => $data['codigo_unidad_medida'] ?? null,
+                        'lote'                 => $lote,
+                        'fecha_vencimiento'    => $fecha_vencimiento,
+                        'tipo_movimiento'      => 'INGRESO',
+                        'cantidad'             => $cantidad_recibida,
+                        'costo_unitario'       => $costos['costo_entrada'],
+                        'total'                => $costos['total_entrada'],
+                        'documento_referencia' => $compra->tipo_documento,
+                        'numero_referencia'    => $compra->serie_documento . '-' . $compra->numero_documento,
+                        'observaciones'        => 'Recepción de compra',
+                        'usuario_movimiento'   => Auth::id(),
+                        'tiene_kardex'         => 1,
+                        'fecha_movimiento'     => now(),
+                    ]);
+                }
+            }
+
+            // Actualizar lote/fecha_vencimiento en detalle_compra
+            foreach ($request->items as $id_detalle => $data) {
+                $updates = [];
+                if (!empty($data['lote'])) $updates['lote'] = $data['lote'];
+                if (!empty($data['fecha_vencimiento'])) $updates['fecha_vencimiento'] = $data['fecha_vencimiento'];
+                if (!empty($updates)) {
+                    DB::table('detalle_compra')->where('id_detalle_compra', $id_detalle)->update($updates);
                 }
             }
 
@@ -247,7 +292,7 @@ class InventarioController extends Controller
             DB::table('kardex')->insert([
                 'codigo_almacen'       => $almacen_destino,
                 'codigo_producto'      => $codigo_prod,
-                'fecha_movimiento'     => now(),
+                'fecha_movimiento'     => $ingreso->fecha_ingreso,
                 'tipo_movimiento'      => 'INGRESO',
                 'documento'            => 'RECEPCION_PEP',
                 'numero_documento'     => $num_ref,
@@ -335,14 +380,50 @@ class InventarioController extends Controller
         $resumen->saldo_final_cantidad = $ultimosSaldos?->total_cantidad ?? 0;
         $resumen->saldo_final_valor    = $ultimosSaldos?->total_valorizado ?? 0;
 
-        $movimientos = $query->orderBy('kardex.fecha_movimiento', 'desc')
-            ->orderBy('kardex.id_kardex', 'desc')
+        $movimientos = $query->orderBy('kardex.fecha_movimiento', 'asc')
+            ->orderBy('kardex.id_kardex', 'asc')
             ->paginate(15);
 
         $tiposDocumento = DB::table('kardex')->select('documento')->distinct()->orderBy('documento')->pluck('documento');
         $almacenes = \App\Models\Almacen::where('activo', 1)->get();
 
         return view('inventario.kardex', compact('movimientos', 'tiposDocumento', 'almacenes', 'resumen'));
+    }
+
+    // 2.2 ALERTAS DE STOCK (productos por debajo del mínimo)
+    public function alertasStock() {
+        $alertas = DB::table('inventario')
+            ->join('producto', 'inventario.codigo_producto', '=', 'producto.codigo')
+            ->join('almacen', 'inventario.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->whereColumn('inventario.stock_actual', '<', 'inventario.stock_minimo')
+            ->where('inventario.stock_minimo', '>', 0)
+            ->select(
+                'inventario.*',
+                'producto.descripcion as producto',
+                'producto.codigo_unidad_medida',
+                'almacen.descripcion as almacen'
+            )
+            ->orderBy('inventario.stock_actual', 'asc')
+            ->paginate(20);
+
+        return view('inventario.alertas_stock', compact('alertas'));
+    }
+
+    // 2.3 ACTUALIZAR STOCK MÍNIMO/MÁXIMO (AJAX)
+    public function actualizarStockMinimo(Request $request) {
+        $request->validate([
+            'id_inventario' => 'required|integer|exists:inventario,id_inventario',
+            'stock_minimo'  => 'nullable|numeric|min:0',
+            'stock_maximo'  => 'nullable|numeric|min:0',
+        ]);
+
+        $updates = [];
+        if ($request->has('stock_minimo')) $updates['stock_minimo'] = $request->stock_minimo;
+        if ($request->has('stock_maximo')) $updates['stock_maximo'] = $request->stock_maximo;
+
+        DB::table('inventario')->where('id_inventario', $request->id_inventario)->update($updates);
+
+        return response()->json(['success' => true]);
     }
 
     // 3.1 EXPORTAR KARDEX (CSV)
