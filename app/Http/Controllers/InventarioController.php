@@ -400,11 +400,17 @@ class InventarioController extends Controller
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->where('kardex.codigo_producto', $ajuste->codigo_producto)
             ->where('kardex.codigo_almacen', $ajuste->codigo_almacen)
-            ->where('kardex.id_kardex', '!=', $id)
-            ->where('kardex.fecha_movimiento', '>=', $ajuste->fecha_movimiento)
+            ->where(function($q) use ($ajuste) {
+                $q->where('kardex.fecha_movimiento', '>', $ajuste->fecha_movimiento)
+                  ->orWhere(function($q2) use ($ajuste) {
+                      $q2->where('kardex.fecha_movimiento', '=', $ajuste->fecha_movimiento)
+                         ->where('kardex.id_kardex', '>', $ajuste->id_kardex);
+                  });
+            })
             ->where('kardex.tipo_movimiento', '!=', 'AJUSTE')
             ->select('kardex.*', 'producto.descripcion as producto')
             ->orderBy('kardex.fecha_movimiento', 'asc')
+            ->orderBy('kardex.id_kardex', 'asc')
             ->get();
 
         return view('inventario.ajuste_show', compact('ajuste', 'movimientosPosteriores'));
@@ -449,9 +455,15 @@ class InventarioController extends Controller
             $movimientosPosteriores = DB::table('kardex')
                 ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                 ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                ->where('id_kardex', '!=', $id)
-                ->where('fecha_movimiento', '>=', $ajusteOriginal->fecha_movimiento)
+                ->where(function($q) use ($ajusteOriginal) {
+                    $q->where('fecha_movimiento', '>', $ajusteOriginal->fecha_movimiento)
+                      ->orWhere(function($q2) use ($ajusteOriginal) {
+                          $q2->where('fecha_movimiento', '=', $ajusteOriginal->fecha_movimiento)
+                             ->where('id_kardex', '>', $ajusteOriginal->id_kardex);
+                      });
+                })
                 ->orderBy('fecha_movimiento', 'asc')
+                ->orderBy('id_kardex', 'asc')
                 ->get();
 
             if ($movimientosPosteriores->isNotEmpty()) {
@@ -544,9 +556,15 @@ class InventarioController extends Controller
             $movimientosPosteriores = DB::table('kardex')
                 ->where('codigo_producto', $ajuste->codigo_producto)
                 ->where('codigo_almacen', $ajuste->codigo_almacen)
-                ->where('id_kardex', '!=', $id)
-                ->where('fecha_movimiento', '>=', $ajuste->fecha_movimiento)
+                ->where(function($q) use ($ajuste) {
+                    $q->where('fecha_movimiento', '>', $ajuste->fecha_movimiento)
+                      ->orWhere(function($q2) use ($ajuste) {
+                          $q2->where('fecha_movimiento', '=', $ajuste->fecha_movimiento)
+                             ->where('id_kardex', '>', $ajuste->id_kardex);
+                      });
+                })
                 ->orderBy('fecha_movimiento', 'asc')
+                ->orderBy('id_kardex', 'asc')
                 ->get();
 
             if ($movimientosPosteriores->isNotEmpty()) {
