@@ -2,6 +2,7 @@
 @section('title', 'Ajuste Manual de Inventario')
 
 @section('content')
+<link href="/vendor/select2/select2.min.css" rel="stylesheet" />
 <div class="min-h-screen bg-slate-50 py-10 px-4">
     <div class="max-w-3xl mx-auto">
 
@@ -29,7 +30,7 @@
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         Producto
                     </label>
-                    <select name="codigo_producto"
+                    <select name="codigo_producto" id="selectProducto"
                         class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                         required>
                         <option value="">-- Buscar producto --</option>
@@ -128,4 +129,18 @@
         </div>
     </div>
 </div>
+
+<script src="/vendor/jquery/jquery.min.js"></script>
+<script src="/vendor/select2/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        if (typeof $().select2 !== 'undefined') {
+            $('#selectProducto').select2({
+                placeholder: "-- Buscar producto --",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+    });
+</script>
 @endsection
