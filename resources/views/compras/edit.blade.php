@@ -109,7 +109,7 @@
                                             </select>
                                         </td>
                                         <td class="p-1">
-                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $det->precio_unitario }}" step="0.01" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
+                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $det->precio_unitario }}" step="any" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
                                         </td>
                                         <td class="p-1">
                                             <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="{{ number_format($det->subtotal, 2, '.', '') }}" readonly tabindex="-1" style="height:28px">
@@ -227,7 +227,7 @@
                 </select>
             </td>
             <td class="p-1">
-                <input type="number" step="0.01" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px" name="productos[${idx}][precio]">
+                <input type="number" step="any" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px" name="productos[${idx}][precio]">
             </td>
             <td class="p-1">
                 <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="0.00" readonly tabindex="-1" style="height:28px">
