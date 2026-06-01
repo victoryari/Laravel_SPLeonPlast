@@ -25,7 +25,7 @@ class GuiaRemisionCompraController extends Controller
     public function create()
     {
         $proveedores = Proveedor::where('activo', 1)->get();
-        $productos = Producto::where('activo', 1)->get();
+        $productos = Producto::where('estado', 1)->get();
 
         return view('guia_compras.create', compact('proveedores', 'productos'));
     }
