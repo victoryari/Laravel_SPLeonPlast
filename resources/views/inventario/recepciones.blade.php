@@ -127,8 +127,9 @@
                                             <input type="text"
                                                    name="items[{{ $detalle->id_detalle_compra }}][lote]"
                                                    value="{{ $detalle->lote }}"
-                                                   placeholder="Opcional"
-                                                   class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary">
+                                                   placeholder="Obligatorio"
+                                                   class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary"
+                                                   required>
                                         </div>
 
                                         <div class="lg:col-span-2">
@@ -169,6 +170,135 @@
                 </div>
             @endforelse
 
+        </div>
+    </div>
+
+    <!-- SECCIÓN DE GUÍAS DE REMISIÓN EN TRÁNSITO -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+        <div class="px-6 py-4 border-b bg-blue-50 flex flex-col sm:flex-row justify-between gap-4 items-center">
+            <div>
+                <h2 class="text-lg font-bold text-blue-800">Guías de Remisión en Tránsito (Por Ubicar)</h2>
+                <p class="text-sm text-blue-600">Transfiera los productos desde el almacén transitorio (ALM04) a su almacén definitivo.</p>
+            </div>
+            <div class="inline-flex items-center gap-2 bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm font-semibold">
+                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                {{ $guiasPendientes->count() }} por ubicar
+            </div>
+        </div>
+
+        <div class="p-6 space-y-4 bg-gray-50">
+            @forelse($guiasPendientes as $guia)
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+
+                    <div class="px-6 py-5 cursor-pointer border-l-4 border-blue-400 flex flex-col lg:flex-row justify-between gap-4"
+                         onclick="toggleAccordion('guia-{{ $guia->id_guia }}')">
+
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                <i class="fas fa-file-invoice text-xl"></i>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-bold text-slate-800 text-sm uppercase">
+                                        Guía #{{ $guia->numero_guia }}
+                                    </h3>
+                                    <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                                        En Tránsito
+                                    </span>
+                                </div>
+                                <p class="text-sm text-slate-500 mt-1">
+                                    Proveedor: {{ $guia->datosProveedor->razon_social ?? $guia->proveedor }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            <div class="text-right">
+                                <p class="text-xs uppercase text-slate-400">Emisión</p>
+                                <p class="font-bold text-slate-700">
+                                    {{ \Carbon\Carbon::parse($guia->fecha_emision)->format('d/m/Y') }}
+                                </p>
+                            </div>
+
+                            <div class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center">
+                                <i class="fas fa-chevron-down transition-transform duration-300" id="icon-guia-{{ $guia->id_guia }}"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="guia-{{ $guia->id_guia }}" class="hidden border-t bg-slate-50">
+                        <form action="{{ route('inventario.procesar_ubicacion_guia', $guia->id_guia) }}" method="POST" class="p-6">
+                            @csrf
+
+                            <div class="space-y-4">
+                                @foreach($guia->detalles as $detalle)
+                                    <div class="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+
+                                        <div class="lg:col-span-4">
+                                            <p class="font-semibold text-slate-800 text-sm">
+                                                {{ $detalle->producto->descripcion ?? $detalle->descripcion_producto }}
+                                            </p>
+                                            <p class="text-xs text-slate-400">
+                                                Código: {{ $detalle->codigo_producto }} | Lote: {{ $detalle->lote ?? 'N/A' }}
+                                            </p>
+                                        </div>
+
+                                        <div class="lg:col-span-3">
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Ubicación Actual</label>
+                                            <div class="bg-slate-100 rounded-xl px-3 py-2 text-center text-sm text-slate-600">
+                                                ALM04 - COMPRAS NAC/IMP
+                                            </div>
+                                        </div>
+
+                                        <div class="lg:col-span-3">
+                                            <label class="block text-xs font-semibold text-blue-600 mb-1">Transferir al Almacén Destino</label>
+                                            <div class="relative">
+                                                <select name="items[{{ $detalle->id_detalle_guia_compra }}][codigo_almacen]" class="w-full pl-3 pr-8 py-2 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-800 text-sm focus:ring-2 focus:ring-blue-500" required>
+                                                    <option value="ALM04">No transferir (Mantener en ALM04)</option>
+                                                    @foreach($almacenes as $almacen)
+                                                        @if($almacen->codigo_almacen !== 'ALM04')
+                                                            <option value="{{ $almacen->codigo_almacen }}">
+                                                                {{ $almacen->descripcion }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div class="lg:col-span-2">
+                                            <label class="block text-xs font-semibold text-slate-500 mb-1">Cantidad a Transferir</label>
+                                            <div class="bg-slate-100 rounded-xl px-3 py-2 text-center font-bold text-slate-700">
+                                                {{ number_format($detalle->cantidad, 2) }} {{ $detalle->codigo_unidad_medida }}
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+                                <button type="button" onclick="toggleAccordion('guia-{{ $guia->id_guia }}')" class="px-6 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 font-semibold">
+                                    Cancelar
+                                </button>
+
+                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg">
+                                    <i class="fas fa-exchange-alt mr-2"></i>
+                                    Confirmar Transferencias
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+            @empty
+                <div class="text-center py-16">
+                    <i class="fas fa-check-circle text-5xl text-slate-300 mb-4"></i>
+                    <h3 class="text-lg font-bold text-slate-700">Todo Ubicado</h3>
+                    <p class="text-slate-500">No hay guías de remisión pendientes de ubicación.</p>
+                </div>
+            @endforelse
         </div>
     </div>
 
@@ -297,7 +427,7 @@ function toggleAccordion(id) {
     const content = document.getElementById(id);
     const icon = document.getElementById('icon-' + id);
 
-    document.querySelectorAll('[id^="compra-"], [id^="pep-"]').forEach(el => {
+    document.querySelectorAll('[id^="compra-"], [id^="pep-"], [id^="guia-"]').forEach(el => {
         if (el.id !== id && !el.classList.contains('hidden')) {
             el.classList.add('hidden');
             const otherIcon = document.getElementById('icon-' + el.id);

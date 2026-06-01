@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Inventario, MovimientoInventario, Kardex, Compra, Almacen, Producto, ProduccionIngresoProceso, UnidadMedida};
+use App\Models\{Inventario, MovimientoInventario, Kardex, Compra, Almacen, Producto, ProduccionIngresoProceso, UnidadMedida, GuiaRemisionCompra};
 use App\Services\KardexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Auth};
@@ -50,8 +50,13 @@ class InventarioController extends Controller
             ->orderBy('fecha_ingreso', 'asc')
             ->get();
 
+        $guiasPendientes = GuiaRemisionCompra::with(['datosProveedor', 'detalles.producto'])
+            ->where('estado', 'RECIBIDA')
+            ->orderBy('fecha_emision', 'asc')
+            ->get();
+
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'almacenes'));
+        return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'guiasPendientes', 'almacenes'));
     }
 
     // 2.0.1 HISTORIAL DE RECEPCIONES
@@ -71,6 +76,12 @@ class InventarioController extends Controller
         if ($compra->estado !== 'PENDIENTE') {
             return back()->with('error', 'La compra ya ha sido procesada o no está pendiente.');
         }
+
+        $request->validate([
+            'items.*.lote' => 'required|string|max:50'
+        ], [
+            'items.*.lote.required' => 'Es obligatorio ingresar el número de Lote para todos los productos recibidos.'
+        ]);
 
         try {
             DB::beginTransaction();
@@ -326,6 +337,154 @@ class InventarioController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al procesar recepción de producción: ' . $e->getMessage());
+        }
+    }
+
+    // 2.3 PROCESAR UBICACIÓN DE GUÍA (TRANSFERENCIA DESDE ALM04)
+    public function procesarUbicacionGuia(Request $request, $id) {
+        $guia = GuiaRemisionCompra::with('detalles')->findOrFail($id);
+
+        if ($guia->estado !== 'RECIBIDA') {
+            return back()->with('error', 'La guía ya ha sido ubicada o no está en estado RECIBIDA.');
+        }
+
+        if (!$request->has('items') || !is_array($request->items)) {
+            return back()->with('error', 'No se enviaron items para procesar.');
+        }
+
+        try {
+            DB::beginTransaction();
+            $kardexService = app(KardexService::class);
+            $almacen_origen = 'ALM04';
+
+            foreach ($request->items as $id_detalle => $data) {
+                $almacen_destino = $data['codigo_almacen'];
+                if ($almacen_destino === $almacen_origen) {
+                    continue; // No transferir si el destino es igual al origen
+                }
+
+                $detalle = $guia->detalles->where('id_detalle_guia_compra', $id_detalle)->first();
+                if (!$detalle) continue;
+
+                $codigo_producto = $detalle->codigo_producto;
+                $cantidad_transferir = floatval($detalle->cantidad);
+
+                if ($cantidad_transferir <= 0) continue;
+
+                // ===== 1. SALIDA DE ALM04 =====
+                // Bloqueo de inventario origen
+                $inventarioOrigen = DB::table('inventario')
+                    ->where('codigo_producto', $codigo_producto)
+                    ->where('codigo_almacen', $almacen_origen)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$inventarioOrigen || $inventarioOrigen->stock_actual < $cantidad_transferir) {
+                    throw new \Exception("Stock insuficiente en ALMACEN COMPRAS NAC/IMP para el producto $codigo_producto.");
+                }
+
+                $costoPromedioActualOrigen = $inventarioOrigen->costo_promedio;
+                
+                $costosSalida = $kardexService->calcularCostos(
+                    $codigo_producto, $almacen_origen,
+                    0, 0, // No hay ingreso
+                    $cantidad_transferir, $inventarioOrigen->stock_actual - $cantidad_transferir
+                );
+
+                // Actualizar inventario origen
+                DB::table('inventario')
+                    ->where('id_inventario', $inventarioOrigen->id_inventario)
+                    ->update([
+                        'stock_actual' => $inventarioOrigen->stock_actual - $cantidad_transferir,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]);
+
+                // Registrar SALIDA en Kardex origen
+                DB::table('kardex')->insert([
+                    'codigo_almacen'   => $almacen_origen,
+                    'codigo_producto'  => $codigo_producto,
+                    'codigo_unidad_medida' => $detalle->codigo_unidad_medida ?? 'NIU',
+                    'fecha_movimiento' => now(),
+                    'tipo_movimiento'  => 'SALIDA',
+                    'documento'        => 'TRANSFERENCIA',
+                    'numero_documento' => $guia->numero_guia,
+                    'cantidad_entrada' => 0,
+                    'costo_entrada'    => 0,
+                    'total_entrada'    => 0,
+                    'cantidad_salida'  => $cantidad_transferir,
+                    'costo_salida'     => $costoPromedioActualOrigen,
+                    'total_salida'     => $cantidad_transferir * $costoPromedioActualOrigen,
+                    'cantidad_saldo'   => $costosSalida['cantidad_saldo'],
+                    'costo_promedio'   => $costosSalida['costo_promedio'],
+                    'total_saldo'      => $costosSalida['total_saldo'],
+                    'lote'             => $detalle->lote,
+                    'observaciones'    => "Ubicación de Guía hacia {$almacen_destino}",
+                    'usuario_registro' => Auth::id()
+                ]);
+
+                // ===== 2. INGRESO ALMACEN DESTINO =====
+                $inventarioDestino = DB::table('inventario')
+                    ->where('codigo_producto', $codigo_producto)
+                    ->where('codigo_almacen', $almacen_destino)
+                    ->lockForUpdate()
+                    ->first();
+
+                $saldo_anterior_destino = $inventarioDestino ? $inventarioDestino->stock_actual : 0;
+                $nuevo_saldo_destino = $saldo_anterior_destino + $cantidad_transferir;
+
+                $costosIngreso = $kardexService->calcularCostos(
+                    $codigo_producto, $almacen_destino,
+                    $cantidad_transferir, $costoPromedioActualOrigen, // Ingresa con el costo origen
+                    0, $nuevo_saldo_destino
+                );
+
+                // Actualizar inventario destino
+                DB::table('inventario')->updateOrInsert(
+                    ['codigo_producto' => $codigo_producto, 'codigo_almacen' => $almacen_destino],
+                    [
+                        'codigo_unidad_medida' => $detalle->codigo_unidad_medida ?? 'NIU',
+                        'stock_actual' => $nuevo_saldo_destino,
+                        'costo_promedio' => $costosIngreso['costo_promedio'],
+                        'ultimo_costo' => $costoPromedioActualOrigen,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]
+                );
+
+                // Registrar INGRESO en Kardex destino
+                DB::table('kardex')->insert([
+                    'codigo_almacen'   => $almacen_destino,
+                    'codigo_producto'  => $codigo_producto,
+                    'codigo_unidad_medida' => $detalle->codigo_unidad_medida ?? 'NIU',
+                    'fecha_movimiento' => now(),
+                    'tipo_movimiento'  => 'INGRESO',
+                    'documento'        => 'TRANSFERENCIA',
+                    'numero_documento' => $guia->numero_guia,
+                    'cantidad_entrada' => $cantidad_transferir,
+                    'costo_entrada'    => $costoPromedioActualOrigen,
+                    'total_entrada'    => $cantidad_transferir * $costoPromedioActualOrigen,
+                    'cantidad_salida'  => 0,
+                    'costo_salida'     => 0,
+                    'total_salida'     => 0,
+                    'cantidad_saldo'   => $costosIngreso['cantidad_saldo'],
+                    'costo_promedio'   => $costosIngreso['costo_promedio'],
+                    'total_saldo'      => $costosIngreso['total_saldo'],
+                    'lote'             => $detalle->lote,
+                    'observaciones'    => "Recepción por Ubicación de Guía desde {$almacen_origen}",
+                    'usuario_registro' => Auth::id()
+                ]);
+            }
+
+            // Cambiar estado a UBICADA
+            $guia->update(['estado' => 'UBICADA']);
+            DB::commit();
+
+            return back()->with('success', 'Guía ubicada y stock transferido correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al ubicar guía: ' . $e->getMessage());
         }
     }
 

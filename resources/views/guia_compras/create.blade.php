@@ -80,10 +80,10 @@
                         <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider font-bold">
                             <th class="p-3 border-b border-slate-200 w-12 text-center">Item</th>
                             <th class="p-3 border-b border-slate-200">Código - Descripción</th>
-                            <th class="p-3 border-b border-slate-200 w-20 text-center">U.M.</th>
+                            <th class="p-3 border-b border-slate-200 w-32 text-center">Cant. <span class="text-red-500">*</span></th>
+                            <th class="p-3 border-b border-slate-200 w-24 text-center">U.M.</th>
                             <th class="p-3 border-b border-slate-200 w-32 text-center">Lote</th>
                             <th class="p-3 border-b border-slate-200 w-32 text-center">Venc.</th>
-                            <th class="p-3 border-b border-slate-200 w-32 text-right">Cant. <span class="text-red-500">*</span></th>
                             <th class="p-3 border-b border-slate-200 w-16 text-center"></th>
                         </tr>
                     </thead>
@@ -96,17 +96,21 @@
                                     <div class="text-sm font-bold text-slate-800" x-text="item.codigo"></div>
                                     <div class="text-xs text-slate-500 truncate w-48 lg:w-auto" x-text="item.descripcion" :title="item.descripcion"></div>
                                 </td>
+                                <td class="p-2">
+                                    <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 rounded-md text-sm text-center px-2 py-1 font-semibold focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][cantidad]`" x-model="item.cantidad" required>
+                                </td>
                                 <td class="p-2 text-center">
-                                    <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded" x-text="item.um"></span>
+                                    <select class="w-full border border-slate-200 bg-white rounded-md text-xs text-center focus:border-primary focus:ring-1 focus:ring-primary px-1 py-1" :name="`productos[${index}][codigo_unidad_medida]`" x-model="item.um">
+                                        @foreach($unidades_medida as $um)
+                                            <option value="{{ $um->codigo }}">{{ $um->codigo }}</option>
+                                        @endforeach
+                                    </select>
                                 </td>
                                 <td class="p-2">
                                     <input type="text" class="w-full border border-slate-200 rounded-md text-xs text-center px-2 py-1 focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Lote..." :name="`productos[${index}][lote]`" x-model="item.lote">
                                 </td>
                                 <td class="p-2">
                                     <input type="date" class="w-full border border-slate-200 rounded-md text-xs text-center px-1 py-1 focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][fecha_vencimiento]`" x-model="item.vencimiento">
-                                </td>
-                                <td class="p-2">
-                                    <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 rounded-md text-sm text-right px-2 py-1 font-semibold focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][cantidad]`" x-model="item.cantidad" required>
                                 </td>
                                 <td class="p-2 text-center">
                                     <button type="button" @click="eliminarProducto(index)" class="text-slate-300 hover:text-red-500 transition-colors p-1" title="Eliminar fila">
@@ -140,6 +144,8 @@
     </form>
 </div>
 
+@push('scripts')
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('guiaForm', () => ({
@@ -203,4 +209,18 @@
         }));
     });
 </script>
+
+@if(session('success_ask'))
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            if(!confirm("{{ session('success_ask') }}")) {
+                window.location.href = "{{ route('guia_compras.index') }}";
+            }
+        }, 100);
+    });
+</script>
+@endif
+
+@endpush
 @endsection

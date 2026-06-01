@@ -38,6 +38,11 @@ class Compra extends Model
         return $this->hasMany(DetalleCompra::class, 'id_compra', 'id_compra');
     }
 
+    public function guias()
+    {
+        return $this->hasMany(GuiaRemisionCompra::class, 'id_compra', 'id_compra');
+    }
+
     public function almacen()
     {
         return $this->belongsTo(Almacen::class, 'id_almacen', 'id_almacen');

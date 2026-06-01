@@ -99,6 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrador,Supervisor')->prefix('admin')->group(function () {
         Route::resource('compras', CompraController::class)->names('compras');
         Route::post('compras/{id}/anular', [CompraController::class, 'anular'])->name('compras.anular');
+        Route::post('compras/api/guias-multi', [CompraController::class, 'getGuiasMultiAjax'])->name('compras.api.guias_multi');
         Route::get('compras/api/guia/{id}', [CompraController::class, 'getGuiaAjax'])->name('compras.api.guia');
         
         Route::resource('guia_compras', GuiaRemisionCompraController::class)->names('guia_compras')->except(['edit', 'update', 'destroy']);
@@ -130,6 +131,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/alertas-stock', [InventarioController::class, 'alertasStock'])->name('inventario.alertas_stock');
             Route::post('/actualizar-stock-minimo', [InventarioController::class, 'actualizarStockMinimo'])->name('inventario.actualizar_stock_minimo');
             Route::post('/recibir-produccion/{id}', [InventarioController::class, 'procesarRecepcionProduccion'])->name('inventario.procesar_recepcion_produccion');
+            Route::post('/ubicar-guia/{id}', [InventarioController::class, 'procesarUbicacionGuia'])->name('inventario.procesar_ubicacion_guia');
 
             // Ajustes Manuales
             Route::get('/ajuste', [InventarioController::class, 'ajuste'])->name('inventario.ajuste');

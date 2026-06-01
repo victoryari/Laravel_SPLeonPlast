@@ -34,7 +34,9 @@ class CompraController extends Controller
         $proveedores = Proveedor::where('activo', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
         $unidades_medida = UnidadMedida::where('estado', 1)->get();
-        $guiasPendientes = \App\Models\GuiaRemisionCompra::where('estado', 'RECIBIDA')->get();
+        $guiasPendientes = \App\Models\GuiaRemisionCompra::whereIn('estado', ['RECIBIDA', 'UBICADA'])
+            ->whereNull('id_compra')
+            ->get();
 
         return view('compras.create', compact('proveedores', 'almacenes', 'unidades_medida', 'guiasPendientes'));
     }
@@ -43,6 +45,15 @@ class CompraController extends Controller
     {
         $guia = \App\Models\GuiaRemisionCompra::with(['detalles.producto', 'datosProveedor'])->findOrFail($id);
         return response()->json($guia);
+    }
+
+    public function getGuiasMultiAjax(Request $request) 
+    {
+        $ids = $request->input('ids', []);
+        $guias = \App\Models\GuiaRemisionCompra::with(['detalles.producto', 'datosProveedor'])
+            ->whereIn('id_guia', $ids)
+            ->get();
+        return response()->json($guias);
     }
 
     public function show($id)
@@ -58,27 +69,37 @@ class CompraController extends Controller
         $request->validate([
             'tipo_documento' => 'required|string|max:50',
             'serie_documento' => 'required|string|max:20',
-            'numero_documento' => 'required|string|max:50',
+            'numero_documento' => [
+                'required',
+                'string',
+                'max:50',
+                \Illuminate\Validation\Rule::unique('compras')->where(function ($query) use ($request) {
+                    return $query->where('ruc_proveedor', $request->ruc_proveedor)
+                                 ->where('serie_documento', strtoupper($request->serie_documento))
+                                 ->where('tipo_documento', $request->tipo_documento);
+                })
+            ],
             'fecha_compra' => 'required|date',
             'ruc_proveedor' => 'required|string|max:20|exists:proveedores,ruc',
             'productos' => 'required|array|min:1',
             'productos.*.codigo' => 'required|string|max:50',
             'productos.*.cantidad' => 'required|numeric|min:0.01',
-            'productos.*.precio' => 'required|numeric|min:0',
+            'productos.*.precio' => 'required|numeric|decimal:0,9|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
             'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
             'productos.*.lote' => 'nullable|string|max:50',
             'productos.*.fecha_vencimiento' => 'nullable|date',
             'moneda' => 'required|in:PEN,USD',
             'tipo_cambio' => 'nullable|numeric|min:0.001',
-            'id_guia_remision_compra' => 'nullable|exists:guia_remision_compras,id_guia'
+            'ids_guias' => 'nullable|array',
+            'ids_guias.*' => 'exists:guia_remision_compras,id_guia'
         ]);
 
         try {
             DB::beginTransaction();
             $prov = Proveedor::where('ruc', $request->ruc_proveedor)->firstOrFail();
 
-            $estadoCompra = $request->id_guia_remision_compra ? 'RECIBIDA' : 'PENDIENTE';
+            $estadoCompra = !empty($request->ids_guias) ? 'RECIBIDA' : 'PENDIENTE';
 
             $compra = Compra::create([
                 'tipo_documento'   => $request->tipo_documento,
@@ -93,13 +114,15 @@ class CompraController extends Controller
                 'moneda'           => $request->moneda,
                 'tipo_cambio'      => $request->moneda === 'USD' ? $request->tipo_cambio : 1.000,
                 'estado'           => $estadoCompra,
-                'id_guia_remision_compra' => $request->id_guia_remision_compra,
                 'usuario_creacion' => Auth::id()
             ]);
 
-            if ($request->id_guia_remision_compra) {
-                \App\Models\GuiaRemisionCompra::where('id_guia', $request->id_guia_remision_compra)
-                    ->update(['estado' => 'FACTURADA']);
+            if (!empty($request->ids_guias)) {
+                \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)
+                    ->update([
+                        'id_compra' => $compra->id_compra,
+                        'estado' => 'FACTURADA'
+                    ]);
             }
 
             foreach ($request->productos as $item) {
@@ -142,13 +165,22 @@ class CompraController extends Controller
         $request->validate([
             'tipo_documento' => 'required|string|max:50',
             'serie_documento' => 'required|string|max:20',
-            'numero_documento' => 'required|string|max:50',
+            'numero_documento' => [
+                'required',
+                'string',
+                'max:50',
+                \Illuminate\Validation\Rule::unique('compras')->where(function ($query) use ($request) {
+                    return $query->where('ruc_proveedor', $request->ruc_proveedor)
+                                 ->where('serie_documento', strtoupper($request->serie_documento))
+                                 ->where('tipo_documento', $request->tipo_documento);
+                })->ignore($id, 'id_compra')
+            ],
             'fecha_compra' => 'required|date',
             'ruc_proveedor' => 'required|string|max:20|exists:proveedores,ruc',
             'productos' => 'required|array|min:1',
             'productos.*.codigo' => 'required|string|max:50',
             'productos.*.cantidad' => 'required|numeric|min:0.01',
-            'productos.*.precio' => 'required|numeric|min:0',
+            'productos.*.precio' => 'required|numeric|decimal:0,9|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
             'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
             'productos.*.lote' => 'nullable|string|max:50',

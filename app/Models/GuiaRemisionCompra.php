@@ -18,6 +18,7 @@ class GuiaRemisionCompra extends Model
         'numero_guia',
         'fecha_emision',
         'estado',
+        'id_compra',
         'observaciones',
         'usuario_registro'
     ];
@@ -27,9 +28,9 @@ class GuiaRemisionCompra extends Model
         return $this->hasMany(DetalleGuiaCompra::class, 'id_guia', 'id_guia');
     }
 
-    public function compras()
+    public function compra()
     {
-        return $this->hasMany(Compra::class, 'id_guia_remision_compra', 'id_guia');
+        return $this->belongsTo(Compra::class, 'id_compra', 'id_compra');
     }
 
     public function datosProveedor()

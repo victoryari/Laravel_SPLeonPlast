@@ -25,10 +25,11 @@
                         <!-- Selector de Guía de Remisión -->
                         <div class="flex items-center gap-2">
                             <label class="text-xs font-semibold text-slate-500">¿Vincular a Guía?</label>
-                            <select name="id_guia_remision_compra" id="selectGuia" class="border border-slate-300 rounded-lg text-sm px-2 py-1 bg-white focus:ring-primary focus:border-primary">
-                                <option value="">No (Compra Directa)</option>
+                            <select name="ids_guias[]" id="selectGuia" multiple="multiple" class="border border-slate-300 rounded-lg text-sm px-2 py-1 bg-white focus:ring-primary focus:border-primary" style="width: 350px;">
                                 @foreach($guiasPendientes as $guia)
-                                    <option value="{{ $guia->id_guia }}">Guía {{ $guia->numero_guia }} - {{ Str::limit($guia->proveedor, 20) }}</option>
+                                    <option value="{{ $guia->id_guia }}" data-ruc="{{ $guia->ruc_proveedor }}">
+                                        Guía {{ $guia->numero_guia }} - {{ Str::limit($guia->proveedor, 20) }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -336,57 +337,99 @@
             }
         });
 
-        // Lógica para autocompletar desde Guía de Remisión
+        if (typeof $().select2 !== 'undefined') {
+            $('#selectGuia').select2({
+                placeholder: 'Seleccionar guías',
+                allowClear: true
+            });
+        }
+
+        // Lógica para autocompletar desde Guía de Remisión Múltiples
         $('#selectGuia').on('change', async function() {
-            const idGuia = $(this).val();
-            if(!idGuia) return;
+            const idsGuias = $(this).val();
+            
+            // Validar proveedor único
+            let valid = true;
+            let currentRuc = null;
+            $('#selectGuia option:selected').each(function() {
+                let ruc = $(this).data('ruc');
+                if (currentRuc === null) {
+                    currentRuc = ruc;
+                } else if (currentRuc !== ruc) {
+                    valid = false;
+                }
+            });
+
+            if (!valid) {
+                alert('Las guías seleccionadas deben pertenecer al mismo proveedor.');
+                // Quitar la última selección (la que rompió la regla)
+                let selected = $(this).val();
+                selected.pop();
+                $(this).val(selected).trigger('change');
+                return;
+            }
+
+            if(!idsGuias || idsGuias.length === 0) {
+                $('#tbodyProductos').empty();
+                recalcularTotales();
+                return;
+            }
 
             try {
-                const response = await fetch(`/admin/compras/api/guia/${idGuia}`);
-                const data = await response.json();
+                // Hacer POST con el array de IDs
+                const response = await fetch(`/admin/compras/api/guias-multi`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ ids: idsGuias })
+                });
                 
-                // Setear proveedor
-                $('#selectProveedor').val(data.ruc_proveedor).trigger('change');
+                const dataArray = await response.json();
                 
-                // Setear fecha (opcional, usualmente la factura tiene su propia fecha, pero podemos sugerir)
-                // document.querySelector('input[name="fecha_compra"]').value = data.fecha_emision;
-
+                // Setear proveedor con el primero encontrado
+                if(dataArray.length > 0) {
+                    $('#selectProveedor').val(dataArray[0].ruc_proveedor).trigger('change');
+                }
+                
                 // Limpiar tabla actual
                 $('#tbodyProductos').empty();
                 filaIdx = 0;
 
-                // Llenar detalles
-                data.detalles.forEach(d => {
-                    const idx = filaIdx++;
-                    const nombre = d.producto ? d.producto.descripcion : d.descripcion_producto;
-                    let opcionesAlmacen = almacenesData.map(a => `<option value="${a.codigo}" ${a.codigo === d.codigo_almacen ? 'selected' : ''}>${a.descripcion}</option>`).join('');
-                    let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}" ${u.codigo === d.codigo_unidad_medida ? 'selected' : ''}>${u.codigo}</option>`).join('');
-                    
-                    const html = `
-                    <tr class="fila-producto bg-yellow-50/30">
-                        <td class="p-1">
-                            <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="${nombre}">${d.codigo_producto} - ${nombre}</span>
-                            <input type="hidden" class="input-cod" name="productos[${idx}][codigo]" value="${d.codigo_producto}">
-                        </td>
-                        <td class="p-1">
-                            <select class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs select-alm pointer-events-none" style="height:28px" name="productos[${idx}][codigo_almacen]" readonly tabindex="-1">
-                                ${opcionesAlmacen}
-                            </select>
-                        </td>
-                        <td class="p-1">
-                            <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-100 text-center rounded-md text-xs input-cant font-bold" style="height:28px" name="productos[${idx}][cantidad]" value="${d.cantidad}" readonly tabindex="-1">
-                        </td>
-                        <td class="p-1">
-                            <select class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs select-um pointer-events-none" style="height:28px" name="productos[${idx}][codigo_unidad_medida]" readonly tabindex="-1">
-                                ${opcionesUM}
-                            </select>
-                        </td>
-                        <td class="p-1">
-                            <input type="text" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][lote]" value="${d.lote || ''}" readonly tabindex="-1">
-                        </td>
-                        <td class="p-1">
-                            <input type="date" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]" value="${d.fecha_vencimiento ? d.fecha_vencimiento.split('T')[0] : ''}" readonly tabindex="-1">
-                        </td>
+                // Llenar detalles iterando sobre cada guía y sus detalles
+                dataArray.forEach(data => {
+                    data.detalles.forEach(d => {
+                        const idx = filaIdx++;
+                        const nombre = d.producto ? d.producto.descripcion : d.descripcion_producto;
+                        let opcionesAlmacen = almacenesData.map(a => `<option value="${a.codigo}" ${a.codigo === d.codigo_almacen ? 'selected' : ''}>${a.descripcion}</option>`).join('');
+                        let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}" ${u.codigo === d.codigo_unidad_medida ? 'selected' : ''}>${u.codigo}</option>`).join('');
+                        
+                        const html = `
+                        <tr class="fila-producto bg-yellow-50/30">
+                            <td class="p-1">
+                                <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="${nombre}">${d.codigo_producto} - ${nombre}</span>
+                                <input type="hidden" class="input-cod" name="productos[${idx}][codigo]" value="${d.codigo_producto}">
+                            </td>
+                            <td class="p-1">
+                                <select class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs select-alm pointer-events-none" style="height:28px" name="productos[${idx}][codigo_almacen]" readonly tabindex="-1">
+                                    ${opcionesAlmacen}
+                                </select>
+                            </td>
+                            <td class="p-1">
+                                <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-100 text-center rounded-md text-xs input-cant font-bold" style="height:28px" name="productos[${idx}][cantidad]" value="${d.cantidad}" readonly tabindex="-1">
+                            </td>
+                            <td class="p-1">
+                                <select class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs select-um pointer-events-none" style="height:28px" name="productos[${idx}][codigo_unidad_medida]" readonly tabindex="-1">
+                                    ${opcionesUM}
+                                </select>
+                            </td>
+                            <td class="p-1">
+                                <input type="text" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][lote]" value="${d.lote || ''}" readonly tabindex="-1">
+                            </td>
+                            <td class="p-1">
+                                <input type="date" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]" value="${d.fecha_vencimiento ? d.fecha_vencimiento.split('T')[0] : ''}" readonly tabindex="-1">
+                            </td>
                         <td class="p-1">
                             <input type="number" step="any" min="0" class="w-full border border-primary bg-white text-right rounded-md text-xs text-primary font-bold input-prec focus:ring-primary shadow-inner" style="height:28px" name="productos[${idx}][precio]" placeholder="0.00" required autofocus>
                         </td>
@@ -400,8 +443,9 @@
                     </tr>`;
                     tablaBody.insertAdjacentHTML('beforeend', html);
                 });
-                recalcularTotales();
-                window.toast('Datos de la guía cargados. Por favor ingrese los precios unitarios.', 'success');
+            });
+            recalcularTotales();
+            window.toast('Datos de las guías cargados. Por favor ingrese los precios unitarios.', 'success');
                 
                 // Focus el primer precio
                 setTimeout(() => {

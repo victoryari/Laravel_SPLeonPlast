@@ -26,8 +26,9 @@ class GuiaRemisionCompraController extends Controller
     {
         $proveedores = Proveedor::where('activo', 1)->get();
         $productos = Producto::where('estado', 1)->get();
+        $unidades_medida = \App\Models\UnidadMedida::where('estado', 1)->get();
 
-        return view('guia_compras.create', compact('proveedores', 'productos'));
+        return view('guia_compras.create', compact('proveedores', 'productos', 'unidades_medida'));
     }
 
     public function store(Request $request)
@@ -64,14 +65,16 @@ class GuiaRemisionCompraController extends Controller
             // 2. Guardar Detalles e Ingresar al Kardex
             foreach ($request->productos as $item) {
                 $producto = Producto::where('codigo', $item['codigo_producto'])->first();
-                $almacen_destino = 'P2A'; // ALMACEN COMPRAS NAC/IMP
+                $almacen_destino = 'ALM04'; // ALMACEN COMPRAS NAC/IMP
+
+                $unidad_medida = $item['codigo_unidad_medida'] ?? ($producto->unidad_medida_codigo ?? 'NIU');
 
                 $detalle = DetalleGuiaCompra::create([
                     'id_guia' => $guia->id_guia,
                     'codigo_producto' => $item['codigo_producto'],
                     'descripcion_producto' => $producto->descripcion ?? '',
                     'cantidad' => $item['cantidad'],
-                    'codigo_unidad_medida' => $producto->unidad_medida_codigo ?? 'NIU',
+                    'codigo_unidad_medida' => $unidad_medida,
                     'codigo_almacen' => $almacen_destino,
                     'lote' => $item['lote'] ?? null,
                     'fecha_vencimiento' => $item['fecha_vencimiento'] ?? null
@@ -133,7 +136,7 @@ class GuiaRemisionCompraController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_producto'      => $item['codigo_producto'],
                     'codigo_almacen'       => $almacen_destino,
-                    'codigo_unidad_medida' => $producto->unidad_medida_codigo ?? 'NIU',
+                    'codigo_unidad_medida' => $unidad_medida,
                     'fecha_movimiento'     => now(),
                     'tipo_movimiento'      => 'INGRESO',
                     'documento'            => 'GUIA REMISION',
@@ -153,7 +156,7 @@ class GuiaRemisionCompraController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('guia_compras.index')->with('success', 'Guía de Remisión registrada exitosamente.');
+            return redirect()->route('guia_compras.create')->with('success_ask', 'Guía de Remisión registrada exitosamente.');
 
         } catch (\Exception $e) {
             DB::rollBack();
