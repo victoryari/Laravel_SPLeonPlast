@@ -34,8 +34,15 @@ class CompraController extends Controller
         $proveedores = Proveedor::where('activo', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
         $unidades_medida = UnidadMedida::where('estado', 1)->get();
+        $guiasPendientes = \App\Models\GuiaRemisionCompra::where('estado', 'RECIBIDA')->get();
 
-        return view('compras.create', compact('proveedores', 'almacenes', 'unidades_medida'));
+        return view('compras.create', compact('proveedores', 'almacenes', 'unidades_medida', 'guiasPendientes'));
+    }
+
+    public function getGuiaAjax($id) 
+    {
+        $guia = \App\Models\GuiaRemisionCompra::with(['detalles.producto', 'datosProveedor'])->findOrFail($id);
+        return response()->json($guia);
     }
 
     public function show($id)
@@ -64,11 +71,14 @@ class CompraController extends Controller
             'productos.*.fecha_vencimiento' => 'nullable|date',
             'moneda' => 'required|in:PEN,USD',
             'tipo_cambio' => 'nullable|numeric|min:0.001',
+            'id_guia_remision_compra' => 'nullable|exists:guia_remision_compras,id_guia'
         ]);
 
         try {
             DB::beginTransaction();
             $prov = Proveedor::where('ruc', $request->ruc_proveedor)->firstOrFail();
+
+            $estadoCompra = $request->id_guia_remision_compra ? 'RECIBIDA' : 'PENDIENTE';
 
             $compra = Compra::create([
                 'tipo_documento'   => $request->tipo_documento,
@@ -82,9 +92,15 @@ class CompraController extends Controller
                 'total'            => $request->total_general,
                 'moneda'           => $request->moneda,
                 'tipo_cambio'      => $request->moneda === 'USD' ? $request->tipo_cambio : 1.000,
-                'estado'           => 'PENDIENTE',
+                'estado'           => $estadoCompra,
+                'id_guia_remision_compra' => $request->id_guia_remision_compra,
                 'usuario_creacion' => Auth::id()
             ]);
+
+            if ($request->id_guia_remision_compra) {
+                \App\Models\GuiaRemisionCompra::where('id_guia', $request->id_guia_remision_compra)
+                    ->update(['estado' => 'FACTURADA']);
+            }
 
             foreach ($request->productos as $item) {
                 $prod = Producto::where('codigo', $item['codigo'])->first();

@@ -63,6 +63,13 @@
                     @endif
 
                     @if(Auth::user()->hasAccess('compras.index'))
+                    <a href="{{ route('guia_compras.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('guia_compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-truck-loading w-6"></i>
+                        <span>Guías de Remisión</span>
+                    </a>
+                    @endif
+
+                    @if(Auth::user()->hasAccess('compras.index'))
                     <a href="{{ route('compras.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-shopping-cart w-6"></i>
                         <span>Compras</span>

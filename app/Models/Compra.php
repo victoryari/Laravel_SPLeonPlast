@@ -24,7 +24,8 @@ class Compra extends Model
     'total',
     'estado',
     'usuario_creacion',
-    'usuario_aprobacion'
+    'usuario_aprobacion',
+    'id_guia_remision_compra'
 ];
 
     public function datosProveedor()
@@ -45,5 +46,10 @@ class Compra extends Model
     public function creador()
     {
         return $this->belongsTo(Usuario::class, 'usuario_creacion', 'id_usuario');
+    }
+
+    public function guiaRemision()
+    {
+        return $this->belongsTo(GuiaRemisionCompra::class, 'id_guia_remision_compra', 'id_guia');
     }
 }

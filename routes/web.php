@@ -9,7 +9,7 @@ use App\Http\Controllers\{
     MoldeController, ColorController, UsuarioController, CompraController,
     InventarioController, AlmacenController, RolController,
     OrdenProduccionController, OrdenProcesoController, ReporteController,
-    ParametroSistemaController
+    ParametroSistemaController, GuiaRemisionCompraController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -99,6 +99,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrador,Supervisor')->prefix('admin')->group(function () {
         Route::resource('compras', CompraController::class)->names('compras');
         Route::post('compras/{id}/anular', [CompraController::class, 'anular'])->name('compras.anular');
+        Route::get('compras/api/guia/{id}', [CompraController::class, 'getGuiaAjax'])->name('compras.api.guia');
+        
+        Route::resource('guia_compras', GuiaRemisionCompraController::class)->names('guia_compras')->except(['edit', 'update', 'destroy']);
+        
         Route::post('proveedores/ajax', [ProveedorController::class, 'storeAjax'])->name('proveedores.storeAjax');
     });
 

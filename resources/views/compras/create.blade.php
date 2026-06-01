@@ -17,10 +17,21 @@
 
             <div class="lg:col-span-8 xl:col-span-9 space-y-6">
                 <x-card>
-                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
                             <i class="fas fa-file-invoice text-primary"></i> Datos del Comprobante
                         </h2>
+                        
+                        <!-- Selector de Guía de Remisión -->
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-500">¿Vincular a Guía?</label>
+                            <select name="id_guia_remision_compra" id="selectGuia" class="border border-slate-300 rounded-lg text-sm px-2 py-1 bg-white focus:ring-primary focus:border-primary">
+                                <option value="">No (Compra Directa)</option>
+                                @foreach($guiasPendientes as $guia)
+                                    <option value="{{ $guia->id_guia }}">Guía {{ $guia->numero_guia }} - {{ Str::limit($guia->proveedor, 20) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
@@ -322,6 +333,85 @@
                 $('#groupTipoCambio').hide();
                 $('#inputTipoCambio').removeAttr('required');
                 $('#inputTipoCambio').val('1.000');
+            }
+        });
+
+        // Lógica para autocompletar desde Guía de Remisión
+        $('#selectGuia').on('change', async function() {
+            const idGuia = $(this).val();
+            if(!idGuia) return;
+
+            try {
+                const response = await fetch(`/admin/compras/api/guia/${idGuia}`);
+                const data = await response.json();
+                
+                // Setear proveedor
+                $('#selectProveedor').val(data.ruc_proveedor).trigger('change');
+                
+                // Setear fecha (opcional, usualmente la factura tiene su propia fecha, pero podemos sugerir)
+                // document.querySelector('input[name="fecha_compra"]').value = data.fecha_emision;
+
+                // Limpiar tabla actual
+                $('#tbodyProductos').empty();
+                filaIdx = 0;
+
+                // Llenar detalles
+                data.detalles.forEach(d => {
+                    const idx = filaIdx++;
+                    const nombre = d.producto ? d.producto.descripcion : d.descripcion_producto;
+                    let opcionesAlmacen = almacenesData.map(a => `<option value="${a.codigo}" ${a.codigo === d.codigo_almacen ? 'selected' : ''}>${a.descripcion}</option>`).join('');
+                    let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}" ${u.codigo === d.codigo_unidad_medida ? 'selected' : ''}>${u.codigo}</option>`).join('');
+                    
+                    const html = `
+                    <tr class="fila-producto bg-yellow-50/30">
+                        <td class="p-1">
+                            <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="${nombre}">${d.codigo_producto} - ${nombre}</span>
+                            <input type="hidden" class="input-cod" name="productos[${idx}][codigo]" value="${d.codigo_producto}">
+                        </td>
+                        <td class="p-1">
+                            <select class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs select-alm pointer-events-none" style="height:28px" name="productos[${idx}][codigo_almacen]" readonly tabindex="-1">
+                                ${opcionesAlmacen}
+                            </select>
+                        </td>
+                        <td class="p-1">
+                            <input type="number" step="0.01" min="0.01" class="w-full border border-slate-200 bg-slate-100 text-center rounded-md text-xs input-cant font-bold" style="height:28px" name="productos[${idx}][cantidad]" value="${d.cantidad}" readonly tabindex="-1">
+                        </td>
+                        <td class="p-1">
+                            <select class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs select-um pointer-events-none" style="height:28px" name="productos[${idx}][codigo_unidad_medida]" readonly tabindex="-1">
+                                ${opcionesUM}
+                            </select>
+                        </td>
+                        <td class="p-1">
+                            <input type="text" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][lote]" value="${d.lote || ''}" readonly tabindex="-1">
+                        </td>
+                        <td class="p-1">
+                            <input type="date" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]" value="${d.fecha_vencimiento ? d.fecha_vencimiento.split('T')[0] : ''}" readonly tabindex="-1">
+                        </td>
+                        <td class="p-1">
+                            <input type="number" step="any" min="0" class="w-full border border-primary bg-white text-right rounded-md text-xs text-primary font-bold input-prec focus:ring-primary shadow-inner" style="height:28px" name="productos[${idx}][precio]" placeholder="0.00" required autofocus>
+                        </td>
+                        <td class="p-1">
+                            <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="0.00" readonly tabindex="-1" style="height:28px">
+                        </td>
+                        <td class="p-1 text-center">
+                            <!-- No se puede eliminar items de una guia -->
+                            <i class="fas fa-lock text-slate-300 text-xs" title="Vinculado a Guía"></i>
+                        </td>
+                    </tr>`;
+                    tablaBody.insertAdjacentHTML('beforeend', html);
+                });
+                recalcularTotales();
+                window.toast('Datos de la guía cargados. Por favor ingrese los precios unitarios.', 'success');
+                
+                // Focus el primer precio
+                setTimeout(() => {
+                    const firstPrice = document.querySelector('.input-prec');
+                    if(firstPrice) firstPrice.focus();
+                }, 100);
+
+            } catch (err) {
+                console.error(err);
+                window.toast('Error al cargar la guía.', 'error');
             }
         });
 
