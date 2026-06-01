@@ -81,12 +81,14 @@
                         <div class="rounded-lg border border-slate-200 mb-3 overflow-x-auto">
                             <table class="w-full text-left border-collapse table-fixed" id="tablaProductos">
                                 <colgroup>
-                                    <col class="w-[28%]">
-                                    <col class="w-[15%]">
+                                    <col class="w-[22%]">
+                                    <col class="w-[11%]">
+                                    <col class="w-[8%]">
+                                    <col class="w-[8%]">
+                                    <col class="w-[11%]">
+                                    <col class="w-[11%]">
+                                    <col class="w-[11%]">
                                     <col class="w-[10%]">
-                                    <col class="w-[10%]">
-                                    <col class="w-[15%]">
-                                    <col class="w-[14%]">
                                     <col class="w-[8%]">
                                 </colgroup>
                                 <thead>
@@ -95,6 +97,8 @@
                                         <th class="p-2 font-semibold">Almacén</th>
                                         <th class="p-2 font-semibold text-center">Cant.</th>
                                         <th class="p-2 font-semibold text-center">U.M.</th>
+                                        <th class="p-2 font-semibold text-center">Lote</th>
+                                        <th class="p-2 font-semibold text-center">Venc.</th>
                                         <th class="p-2 font-semibold text-right">P. Unit.</th>
                                         <th class="p-2 font-semibold text-right">Subtotal</th>
                                         <th class="p-2 font-semibold text-center"><i class="fas fa-cog"></i></th>
@@ -223,6 +227,12 @@
                 <select class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs select-um" style="height:28px" name="productos[${idx}][codigo_unidad_medida]">
                     ${opcionesUM}
                 </select>
+            </td>
+            <td class="p-1">
+                <input type="text" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px" placeholder="Lote" name="productos[${idx}][lote]">
+            </td>
+            <td class="p-1">
+                <input type="date" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]">
             </td>
             <td class="p-1">
                 <input type="number" step="any" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px" name="productos[${idx}][precio]">

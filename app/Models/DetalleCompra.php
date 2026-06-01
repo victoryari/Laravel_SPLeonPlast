@@ -20,7 +20,9 @@ class DetalleCompra extends Model
     'subtotal', 
     'igv', 
     'total', 
-    'codigo_almacen'
+    'codigo_almacen',
+    'lote',
+    'fecha_vencimiento'
     ];
 
     public function producto() {

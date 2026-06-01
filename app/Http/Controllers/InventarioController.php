@@ -6,6 +6,9 @@ use App\Models\{Inventario, MovimientoInventario, Kardex, Compra, Almacen, Produ
 use App\Services\KardexService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Auth};
+use App\Exports\KardexExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class InventarioController extends Controller
 {
@@ -388,6 +391,34 @@ class InventarioController extends Controller
         $almacenes = \App\Models\Almacen::where('activo', 1)->get();
 
         return view('inventario.kardex', compact('movimientos', 'tiposDocumento', 'almacenes', 'resumen'));
+    }
+
+    public function exportarKardexExcel(Request $request)
+    {
+        return Excel::download(new KardexExport($request->all()), 'kardex_valorizado_'.date('Ymd_Hi').'.xlsx');
+    }
+
+    public function exportarKardexPdf(Request $request)
+    {
+        $export = new KardexExport($request->all());
+        $movimientos = $export->collection();
+        
+        // Obtener resumen como en kardex()
+        $resumen = (object)[
+            'total_entradas' => $movimientos->sum('cantidad_entrada'),
+            'total_entradas_val' => $movimientos->sum('total_entrada'),
+            'total_salidas' => $movimientos->sum('cantidad_salida'),
+            'total_salidas_val' => $movimientos->sum('total_salida'),
+            'saldo_final_cantidad' => $movimientos->last()?->cantidad_saldo ?? 0,
+            'saldo_final_val' => $movimientos->last()?->total_saldo ?? 0,
+        ];
+
+        $filtros = $request->all();
+
+        $pdf = Pdf::loadView('inventario.pdf.kardex_pdf', compact('movimientos', 'resumen', 'filtros'))
+                  ->setPaper('a4', 'landscape');
+
+        return $pdf->download('kardex_valorizado_'.date('Ymd_Hi').'.pdf');
     }
 
     // 2.2 ALERTAS DE STOCK (productos por debajo del mínimo)

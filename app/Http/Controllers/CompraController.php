@@ -60,6 +60,8 @@ class CompraController extends Controller
             'productos.*.precio' => 'required|numeric|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
             'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
+            'productos.*.lote' => 'nullable|string|max:50',
+            'productos.*.fecha_vencimiento' => 'nullable|date',
             'moneda' => 'required|in:PEN,USD',
             'tipo_cambio' => 'nullable|numeric|min:0.001',
         ]);
@@ -99,7 +101,9 @@ class CompraController extends Controller
                     'subtotal' => $sub,
                     'igv' => $igv_item,
                     'total' => $sub + $igv_item,
-                    'codigo_almacen' => $item['codigo_almacen']
+                    'codigo_almacen' => $item['codigo_almacen'],
+                    'lote' => $item['lote'] ?? null,
+                    'fecha_vencimiento' => $item['fecha_vencimiento'] ?? null
                 ]);
             }
             DB::commit();
@@ -131,6 +135,8 @@ class CompraController extends Controller
             'productos.*.precio' => 'required|numeric|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
             'productos.*.codigo_unidad_medida' => 'nullable|string|max:10',
+            'productos.*.lote' => 'nullable|string|max:50',
+            'productos.*.fecha_vencimiento' => 'nullable|date',
             'moneda' => 'required|in:PEN,USD',
             'tipo_cambio' => 'nullable|numeric|min:0.001',
         ]);
@@ -174,7 +180,9 @@ class CompraController extends Controller
                     'subtotal' => $sub,
                     'igv' => $sub * 0.18,
                     'total' => $sub * 1.18,
-                    'codigo_almacen' => $item['codigo_almacen']
+                    'codigo_almacen' => $item['codigo_almacen'],
+                    'lote' => $item['lote'] ?? null,
+                    'fecha_vencimiento' => $item['fecha_vencimiento'] ?? null
                 ]);
             }
             DB::commit();

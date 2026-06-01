@@ -9,10 +9,16 @@
             <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight">Kardex Valorizado</h1>
             <p class="text-sm text-slate-500 mt-1">Historial cronológico valorizado de entradas, salidas y saldos.</p>
         </div>
-        <a href="{{ route('inventario.kardex.exportar', request()->query()) }}"
-           class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow transition no-print">
-            <i class="fas fa-file-excel mr-1"></i> Exportar CSV
-        </a>
+        <div class="flex gap-2">
+            <a href="{{ route('inventario.kardex.exportar.excel', request()->query()) }}"
+               class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow transition no-print">
+                <i class="fas fa-file-excel mr-1"></i> Exportar Excel
+            </a>
+            <a href="{{ route('inventario.kardex.exportar.pdf', request()->query()) }}"
+               class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow transition no-print">
+                <i class="fas fa-file-pdf mr-1"></i> Exportar PDF
+            </a>
+        </div>
     </div>
 
     <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6">

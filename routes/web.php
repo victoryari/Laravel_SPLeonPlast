@@ -112,7 +112,8 @@ Route::middleware('auth')->group(function () {
 
         // 2. Kardex / Historial de Movimientos
         Route::get('/kardex', [InventarioController::class, 'kardex'])->name('inventario.kardex');
-        Route::get('/kardex/exportar', [InventarioController::class, 'exportarKardex'])->name('inventario.kardex.exportar');
+        Route::get('/kardex/exportar/excel', [InventarioController::class, 'exportarKardexExcel'])->name('inventario.kardex.exportar.excel');
+        Route::get('/kardex/exportar/pdf', [InventarioController::class, 'exportarKardexPdf'])->name('inventario.kardex.exportar.pdf');
 
         // 3. Acciones de Almacén (Restringidas a Administrador y Supervisor)
         Route::middleware('role:Administrador,Supervisor')->group(function () {
