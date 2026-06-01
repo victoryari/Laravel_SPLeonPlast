@@ -69,16 +69,20 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse table-fixed">
                         <colgroup>
-                            <col class="w-[40%]">
-                            <col class="w-[15%]">
-                            <col class="w-[13%]">
+                            <col class="w-[26%]">
+                            <col class="w-[12%]">
                             <col class="w-[16%]">
-                            <col class="w-[16%]">
+                            <col class="w-[14%]">
+                            <col class="w-[10%]">
+                            <col class="w-[10%]">
+                            <col class="w-[12%]">
                         </colgroup>
                         <thead>
                             <tr class="bg-slate-50 text-[11px] uppercase text-slate-500 tracking-wider">
                                 <th class="p-2 font-semibold">Producto</th>
                                 <th class="p-2 font-semibold text-center">Almacén</th>
+                                <th class="p-2 font-semibold text-center">Lote</th>
+                                <th class="p-2 font-semibold text-center">Venc.</th>
                                 <th class="p-2 font-semibold text-center">Cant.</th>
                                 <th class="p-2 font-semibold text-right">P. Unit.</th>
                                 <th class="p-2 font-semibold text-right">Total</th>
@@ -95,6 +99,12 @@
                                     <span class="px-1.5 py-0.5 bg-slate-100 rounded text-[10px] font-medium text-slate-600">
                                         {{ $detalle->codigo_almacen }}
                                     </span>
+                                </td>
+                                <td class="p-2 text-center text-slate-600">
+                                    {{ $detalle->lote ?: '-' }}
+                                </td>
+                                <td class="p-2 text-center text-slate-600">
+                                    {{ $detalle->fecha_vencimiento ? \Carbon\Carbon::parse($detalle->fecha_vencimiento)->format('d/m/Y') : '-' }}
                                 </td>
                                 <td class="p-2 text-center font-semibold text-slate-700">
                                     {{ number_format($detalle->cantidad, 2) }}
