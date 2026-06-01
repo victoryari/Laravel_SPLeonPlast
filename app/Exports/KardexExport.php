@@ -8,9 +8,11 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class KardexExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class KardexExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithColumnFormatting
 {
     protected $filtros;
 
@@ -83,16 +85,31 @@ class KardexExport implements FromCollection, WithHeadings, WithMapping, WithSty
             $mov->documento,
             $mov->numero_documento,
             $mov->tipo_movimiento,
-            $mov->cantidad_entrada ? number_format($mov->cantidad_entrada, 2) : '',
-            $mov->costo_entrada ? number_format($mov->costo_entrada, 4) : '',
-            $mov->total_entrada ? number_format($mov->total_entrada, 2) : '',
-            $mov->cantidad_salida ? number_format($mov->cantidad_salida, 2) : '',
-            $mov->costo_salida ? number_format($mov->costo_salida, 4) : '',
-            $mov->total_salida ? number_format($mov->total_salida, 2) : '',
-            $mov->cantidad_saldo ? number_format($mov->cantidad_saldo, 2) : '',
-            $mov->costo_promedio ? number_format($mov->costo_promedio, 4) : '',
-            $mov->total_saldo ? number_format($mov->total_saldo, 2) : '',
+            $mov->cantidad_entrada ? (float) $mov->cantidad_entrada : null,
+            $mov->costo_entrada ? (float) $mov->costo_entrada : null,
+            $mov->total_entrada ? (float) $mov->total_entrada : null,
+            $mov->cantidad_salida ? (float) $mov->cantidad_salida : null,
+            $mov->costo_salida ? (float) $mov->costo_salida : null,
+            $mov->total_salida ? (float) $mov->total_salida : null,
+            $mov->cantidad_saldo ? (float) $mov->cantidad_saldo : null,
+            $mov->costo_promedio ? (float) $mov->costo_promedio : null,
+            $mov->total_saldo ? (float) $mov->total_saldo : null,
             $mov->observaciones,
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'G' => NumberFormat::FORMAT_NUMBER_00,
+            'H' => '#,##0.0000', // 4 decimales
+            'I' => NumberFormat::FORMAT_NUMBER_00,
+            'J' => NumberFormat::FORMAT_NUMBER_00,
+            'K' => '#,##0.0000', // 4 decimales
+            'L' => NumberFormat::FORMAT_NUMBER_00,
+            'M' => NumberFormat::FORMAT_NUMBER_00,
+            'N' => '#,##0.0000', // 4 decimales
+            'O' => NumberFormat::FORMAT_NUMBER_00,
         ];
     }
 
