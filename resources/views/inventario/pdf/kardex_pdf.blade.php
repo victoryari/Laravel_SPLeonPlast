@@ -71,8 +71,8 @@
                 <td>{{ $mov->costo_salida > 0 ? number_format($mov->costo_salida, 4) : '-' }}</td>
                 <td>{{ $mov->total_salida > 0 ? number_format($mov->total_salida, 2) : '-' }}</td>
                 <td><strong>{{ number_format($mov->cantidad_saldo, 2) }}</strong></td>
-                <td>{{ number_format($mov->costo_promedio, 4) }}</td>
-                <td><strong>{{ number_format($mov->total_saldo, 2) }}</strong></td>
+                <td>{{ number_format($mov->costo_promedio, 9) }}</td>
+                <td><strong>{{ number_format($mov->total_saldo, 9) }}</strong></td>
             </tr>
             @endforeach
         </tbody>

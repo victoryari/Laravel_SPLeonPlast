@@ -103,6 +103,7 @@ class InventarioController extends Controller
                 $registroInventario = DB::table('inventario')
                     ->where('codigo_producto', $codigo_producto)
                     ->where('codigo_almacen', $codigo_almacen)
+                    ->where('lote', $lote)
                     ->lockForUpdate()
                     ->first();
 
@@ -119,13 +120,14 @@ class InventarioController extends Controller
 
                 // Actualizar inventario general
                 DB::table('inventario')->updateOrInsert(
-                    ['codigo_producto' => $codigo_producto, 'codigo_almacen' => $codigo_almacen],
+                    ['codigo_producto' => $codigo_producto, 'codigo_almacen' => $codigo_almacen, 'lote' => $lote],
                     [
                         'stock_actual' => $nuevo_saldo,
                         'costo_promedio' => $costos['costo_promedio'],
                         'ultimo_costo' => $precio_unitario,
                         'fecha_ultimo_movimiento' => now(),
-                        'usuario_ultimo_movimiento' => Auth::id()
+                        'usuario_ultimo_movimiento' => Auth::id(),
+                        'fecha_vencimiento' => !empty($fecha_vencimiento) ? $fecha_vencimiento : ($registroInventario->fecha_vencimiento ?? null)
                     ]
                 );
 
@@ -1137,9 +1139,11 @@ class InventarioController extends Controller
             if (!$movimientoOriginal) throw new \Exception("Movimiento no encontrado en la base de datos.");
 
             // 2. Bloquear y consultar el stock actual
+            $loteOriginal = !empty($movimientoOriginal->lote) ? $movimientoOriginal->lote : null;
             $registroInventario = DB::table('inventario')
                 ->where('codigo_producto', $movimientoOriginal->codigo_producto)
                 ->where('codigo_almacen', $movimientoOriginal->codigo_almacen)
+                ->where('lote', $loteOriginal)
                 ->lockForUpdate()
                 ->first();
 
@@ -1179,7 +1183,11 @@ class InventarioController extends Controller
 
             // 4. Actualizar el stock físico
             DB::table('inventario')->updateOrInsert(
-                ['codigo_producto' => $movimientoOriginal->codigo_producto, 'codigo_almacen' => $movimientoOriginal->codigo_almacen],
+                [
+                    'codigo_producto' => $movimientoOriginal->codigo_producto, 
+                    'codigo_almacen' => $movimientoOriginal->codigo_almacen,
+                    'lote' => $loteOriginal
+                ],
                 [
                     'stock_actual' => $nuevo_saldo,
                     'costo_promedio' => $costos['costo_promedio'],

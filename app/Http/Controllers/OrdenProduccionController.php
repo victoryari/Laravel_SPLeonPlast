@@ -78,4 +78,15 @@ class OrdenProduccionController extends Controller
             return back()->with('error', 'Error al anular: ' . $e->getMessage());
         }
     }
+
+    public function getProcesos($idop)
+    {
+        $procesos = \App\Models\OrdenProceso::where('idop', $idop)
+            ->where('estado', 1)
+            ->whereIn('estado_avance', ['PENDIENTE', 'EN_PROCESO'])
+            ->orderBy('secuencia', 'asc')
+            ->get(['id', 'codigo_proceso', 'descripcion_proceso', 'secuencia']);
+            
+        return response()->json($procesos);
+    }
 }

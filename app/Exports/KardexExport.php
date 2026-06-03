@@ -108,8 +108,8 @@ class KardexExport implements FromCollection, WithHeadings, WithMapping, WithSty
             'K' => '#,##0.0000', // 4 decimales
             'L' => NumberFormat::FORMAT_NUMBER_00,
             'M' => NumberFormat::FORMAT_NUMBER_00,
-            'N' => '#,##0.0000', // 4 decimales
-            'O' => NumberFormat::FORMAT_NUMBER_00,
+            'N' => '#,##0.000000000', // 9 decimales
+            'O' => '#,##0.000000000', // 9 decimales
         ];
     }
 

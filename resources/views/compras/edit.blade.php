@@ -6,9 +6,11 @@
 <div class="container mx-auto px-4 py-6 max-w-7xl">
 
     <x-page-header title="Editar Compra" subtitle="Modifique los datos del comprobante o el detalle de los insumos.">
-        <a href="{{ route('compras.index') }}" class="btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver al Listado
-        </a>
+        <x-slot:actions>
+            <a href="{{ route('compras.index') }}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Listado
+            </a>
+        </x-slot:actions>
     </x-page-header>
 
     <form action="{{ route('compras.update', $compra->id_compra) }}" method="POST" id="formCompra">

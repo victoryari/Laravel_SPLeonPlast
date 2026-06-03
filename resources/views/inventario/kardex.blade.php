@@ -165,10 +165,10 @@
                             {{ number_format($mov->cantidad_saldo, 2) }}
                         </td>
                         <td class="p-3 text-right text-slate-500">
-                            {{ $mov->costo_promedio ? 'S/ ' . number_format($mov->costo_promedio, 4) : '-' }}
+                            {{ $mov->costo_promedio ? 'S/ ' . number_format($mov->costo_promedio, 9) : '-' }}
                         </td>
                         <td class="p-3 text-right font-bold text-primary">
-                            {{ $mov->total_saldo ? 'S/ ' . number_format($mov->total_saldo, 2) : 'S/ 0.00' }}
+                            {{ $mov->total_saldo ? 'S/ ' . number_format($mov->total_saldo, 9) : 'S/ 0.000000000' }}
                         </td>
                     </tr>
                     @empty

@@ -6,10 +6,6 @@ use Illuminate\Support\Facades\DB;
 
 class KardexService
 {
-    /**
-     * Calcula el costo promedio ponderado y los valores monetarios
-     * para un nuevo movimiento de kardex.
-     */
     public function calcularCostos(
         string $codigoProducto,
         string $codigoAlmacen,
@@ -34,7 +30,7 @@ class KardexService
             $nuevaCantidadSaldo = $saldoAnterior + $cantidadEntrada;
             $nuevoTotalSaldo = $totalSaldoAnterior + $totalEntrada;
             $nuevoCostoPromedio = $nuevaCantidadSaldo > 0
-                ? round($nuevoTotalSaldo / $nuevaCantidadSaldo, 4)
+                ? round($nuevoTotalSaldo / $nuevaCantidadSaldo, 9)
                 : $costoUnitarioEntrada;
 
             return [
@@ -44,7 +40,7 @@ class KardexService
                 'total_salida'   => 0,
                 'cantidad_saldo' => $nuevaCantidadSaldo,
                 'costo_promedio' => $nuevoCostoPromedio,
-                'total_saldo'    => round($nuevaCantidadSaldo * $nuevoCostoPromedio, 2),
+                'total_saldo'    => round($nuevaCantidadSaldo * $nuevoCostoPromedio, 9),
             ];
         }
 
@@ -60,13 +56,10 @@ class KardexService
             'total_salida'   => $totalSalida,
             'cantidad_saldo' => max(0, $nuevaCantidadSaldo),
             'costo_promedio' => $costoPromedioAnterior,
-            'total_saldo'    => max(0, round($nuevaCantidadSaldo * $costoPromedioAnterior, 2)),
+            'total_saldo'    => max(0, round($nuevaCantidadSaldo * $costoPromedioAnterior, 9)),
         ];
     }
 
-    /**
-     * Recalcula todos los saldos y costos del kardex para un producto/almacen.
-     */
     public function recalcular(string $codigoProducto, string $codigoAlmacen): void
     {
         $movimientos = DB::table('kardex')
@@ -90,7 +83,7 @@ class KardexService
                         'total_salida' => round($totalSalida, 2),
                         'costo_promedio' => $costoPromedio,
                         'cantidad_saldo' => $cantidadAcumulada - $mov->cantidad_salida,
-                        'total_saldo' => round(($cantidadAcumulada - $mov->cantidad_salida) * $costoPromedio, 2),
+                        'total_saldo' => round(($cantidadAcumulada - $mov->cantidad_salida) * $costoPromedio, 9),
                     ]);
                 $cantidadAcumulada -= $mov->cantidad_salida;
                 $totalValorAcumulado = $cantidadAcumulada * $costoPromedio;
@@ -105,7 +98,7 @@ class KardexService
                     ->update([
                         'costo_promedio' => $costoPromedio,
                         'cantidad_saldo' => $cantidadAcumulada,
-                        'total_saldo' => round($totalValorAcumulado, 2),
+                        'total_saldo' => round($totalValorAcumulado, 9),
                     ]);
                 continue;
             }
@@ -114,7 +107,7 @@ class KardexService
             $cantidadAcumulada += $mov->cantidad_entrada;
             $totalValorAcumulado += $totalEntrada;
             $costoPromedio = $cantidadAcumulada > 0
-                ? round($totalValorAcumulado / $cantidadAcumulada, 4)
+                ? round($totalValorAcumulado / $cantidadAcumulada, 9)
                 : 0;
 
             DB::table('kardex')
@@ -123,11 +116,10 @@ class KardexService
                     'total_entrada'  => round($totalEntrada, 2),
                     'costo_promedio' => $costoPromedio,
                     'cantidad_saldo' => $cantidadAcumulada,
-                    'total_saldo'    => round($cantidadAcumulada * $costoPromedio, 2),
+                    'total_saldo'    => round($cantidadAcumulada * $costoPromedio, 9),
                 ]);
         }
 
-        // Sincronizar inventario con el ultimo registro
         $ultimo = DB::table('kardex')
             ->where('codigo_producto', $codigoProducto)
             ->where('codigo_almacen', $codigoAlmacen)

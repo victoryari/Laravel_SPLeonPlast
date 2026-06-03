@@ -167,6 +167,7 @@ class ProductoController extends Controller
                 'codigo_tipo_producto'   => $p->codigo_tipo_producto,
                 'descripcion_tipo_producto' => $p->tipo?->descripcion ?? $p->codigo_tipo_producto,
                 'codigo_unidad_medida'   => $p->codigo_unidad_medida,
+                'unidad_medida'          => $p->unidad?->codigo ?? $p->codigo_unidad_medida,
             ])
         );
     }

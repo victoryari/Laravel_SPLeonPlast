@@ -9,7 +9,8 @@ use App\Http\Controllers\{
     MoldeController, ColorController, UsuarioController, CompraController,
     InventarioController, AlmacenController, RolController,
     OrdenProduccionController, OrdenProcesoController, ReporteController,
-    ParametroSistemaController, GuiaRemisionCompraController
+    ParametroSistemaController, GuiaRemisionCompraController,
+    RequerimientoMaterialController, DespachoRequerimientoController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -102,9 +103,35 @@ Route::middleware('auth')->group(function () {
         Route::post('compras/api/guias-multi', [CompraController::class, 'getGuiasMultiAjax'])->name('compras.api.guias_multi');
         Route::get('compras/api/guia/{id}', [CompraController::class, 'getGuiaAjax'])->name('compras.api.guia');
         
-        Route::resource('guia_compras', GuiaRemisionCompraController::class)->names('guia_compras')->except(['edit', 'update', 'destroy']);
+        Route::post('guia_compras/{id}/deshacer-ubicacion', [GuiaRemisionCompraController::class, 'deshacerUbicacion'])->name('guia_compras.deshacer_ubicacion');
+        Route::resource('guia_compras', GuiaRemisionCompraController::class)->names('guia_compras')->except(['destroy']);
         
         Route::post('proveedores/ajax', [ProveedorController::class, 'storeAjax'])->name('proveedores.storeAjax');
+    });
+
+    // =========================================================
+    // MÓDULO DE REQUERIMIENTOS DE MATERIALES
+    // =========================================================
+    Route::middleware('role:Administrador,Supervisor,Especialista')
+        ->prefix('admin')
+        ->name('requerimientos_materiales.')
+        ->group(function () {
+
+        Route::get('requerimientos-materiales', [RequerimientoMaterialController::class, 'index'])->name('index');
+        Route::get('requerimientos-materiales/create', [RequerimientoMaterialController::class, 'create'])->name('create');
+        Route::post('requerimientos-materiales', [RequerimientoMaterialController::class, 'store'])->name('store');
+        Route::get('requerimientos-materiales/{id}', [RequerimientoMaterialController::class, 'show'])->name('show');
+        Route::get('requerimientos-materiales/{id}/edit', [RequerimientoMaterialController::class, 'edit'])->name('edit');
+        Route::put('requerimientos-materiales/{id}', [RequerimientoMaterialController::class, 'update'])->name('update');
+
+        Route::post('requerimientos-materiales/{id}/enviar', [RequerimientoMaterialController::class, 'enviar'])
+            ->name('enviar')->middleware('role:Administrador,Supervisor,Especialista');
+        Route::post('requerimientos-materiales/{id}/aprobar', [RequerimientoMaterialController::class, 'aprobar'])
+            ->name('aprobar')->middleware('role:Administrador');
+        Route::post('requerimientos-materiales/{id}/rechazar', [RequerimientoMaterialController::class, 'rechazar'])
+            ->name('rechazar')->middleware('role:Administrador');
+        Route::post('requerimientos-materiales/{id}/anular', [RequerimientoMaterialController::class, 'anular'])
+            ->name('anular')->middleware('role:Administrador');
     });
 
     // =========================================================
@@ -150,6 +177,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/extornos', [InventarioController::class, 'extornos'])->name('inventario.extornos');
             Route::post('/extornos/procesar/{id}', [InventarioController::class, 'procesarExtorno'])->name('inventario.procesar_extorno');
         });
+
+        // 5. Despachos (Atención de Requerimientos)
+        Route::middleware('role:Administrador,Supervisor,Almacenero')->group(function () {
+            Route::get('/despachos', [DespachoRequerimientoController::class, 'index'])->name('inventario.despachos.index');
+            Route::get('/despachos/{id}/atender', [DespachoRequerimientoController::class, 'atender'])->name('inventario.despachos.atender');
+            Route::post('/despachos/{id}/store-atender', [DespachoRequerimientoController::class, 'storeAtender'])->name('inventario.despachos.store_atender');
+        });
     });
 
     // =========================================================
@@ -163,6 +197,8 @@ Route::middleware('auth')->group(function () {
             'store' => 'produccion.ordenes.store',
             'destroy' => 'produccion.ordenes.destroy',
         ])->except(['show', 'edit', 'update']);
+        
+        Route::get('ordenes/{orden}/procesos-ajax', [OrdenProduccionController::class, 'getProcesos'])->name('produccion.ordenes.procesos_ajax');
         
         // Procesos de la Orden
         Route::get('ordenes/{orden}/procesos', [OrdenProcesoController::class, 'index'])->name('ordenes.procesos.index');

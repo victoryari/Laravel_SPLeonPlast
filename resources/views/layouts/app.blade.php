@@ -87,6 +87,12 @@
                         </button>
 
                         <div id="menuInventario" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                            @if(in_array(Auth::user()->rol, ['Administrador', 'Supervisor', 'Almacenero']))
+                            <a href="{{ route('inventario.despachos.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.despachos*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                <i class="fas fa-box-open mr-1 text-indigo-300"></i> Despachos a Producción
+                            </a>
+                            @endif
+
                             @if(Auth::user()->hasAccess('inventario.index'))<a href="{{ route('inventario.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.index') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Existencias</a>@endif
 
                             @if(Auth::user()->hasAccess('inventario.alertas_stock'))<a href="{{ route('inventario.alertas_stock') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.alertas*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exclamation-triangle text-yellow-400 mr-1.5"></i>Alertas de Stock</a>@endif
@@ -113,6 +119,11 @@
                         </button>
 
                         <div id="menuProduccion" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                            @if(Auth::user()->hasAccess('requerimientos_materiales.index'))
+                            <a href="{{ route('requerimientos_materiales.index') }}" class="block p-2 text-sm {{ request()->routeIs('requerimientos_materiales*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                <i class="fas fa-clipboard-list w-5"></i> Requerimientos
+                            </a>
+                            @endif
                             @if(Auth::user()->hasAccess('produccion.ordenes.index'))
                             <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
                                 Órdenes de Producción
@@ -296,7 +307,7 @@
         const menuInventario = document.getElementById('menuInventario');
         const iconInventario = document.getElementById('iconInventario');
 
-        const inventarioSlugs = ['existencias', 'recepciones', 'kardex', 'ajuste', 'extornos', 'alertas'];
+        const inventarioSlugs = ['existencias', 'recepciones', 'kardex', 'ajuste', 'extornos', 'alertas', 'despachos'];
 
         if (inventarioSlugs.some(slug => currentUrl.includes(slug))) {
             menuInventario?.classList.remove('hidden');
@@ -317,7 +328,7 @@
         const menuProduccion = document.getElementById('menuProduccion');
         const iconProduccion = document.getElementById('iconProduccion');
 
-        const produccionSlugs = ['ordenes'];
+        const produccionSlugs = ['ordenes', 'requerimientos_materiales'];
 
         if (produccionSlugs.some(slug => currentUrl.includes(slug))) {
             menuProduccion?.classList.remove('hidden');
