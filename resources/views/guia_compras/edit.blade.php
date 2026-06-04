@@ -151,7 +151,7 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('guiaForm', () => ({
             ruc_proveedor: '{{ old('ruc_proveedor', $guia->ruc_proveedor) }}',
-            proveedor_nombre: '{{ old('proveedor') }}',
+            proveedor_nombre: '{{ addslashes(old('proveedor', $guia->proveedor)) }}',
             detalles: [
                 @foreach($guia->detalles as $index => $det)
                 {

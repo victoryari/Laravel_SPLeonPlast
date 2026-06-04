@@ -73,13 +73,24 @@ class DespachoRequerimientoController extends Controller
             return back()->with('error', 'Solo se pueden atender requerimientos en estado APROBADO o ATENDIDO_PARCIAL.');
         }
 
+        // Convertir strings vacíos de cantidad a null para que nullable funcione correctamente
+        $input = $request->all();
+        if (isset($input['lotes']) && is_array($input['lotes'])) {
+            foreach ($input['lotes'] as $key => $lote) {
+                $input['lotes'][$key]['cantidad'] = (
+                    !isset($lote['cantidad']) || $lote['cantidad'] === '' || $lote['cantidad'] === null
+                ) ? null : $lote['cantidad'];
+            }
+            $request->merge($input);
+        }
+
         $request->validate([
             'lotes' => 'required|array|min:1',
             'lotes.*.id_detalle' => 'required|exists:detalle_requerimientos_materiales,id_detalle',
             'lotes.*.codigo_almacen_origen' => 'required|exists:almacen,codigo_almacen',
             'lotes.*.codigo_almacen_destino' => 'required|exists:almacen,codigo_almacen',
             'lotes.*.lote' => 'required|string|max:50',
-            'lotes.*.cantidad' => 'required|numeric|min:0.01',
+            'lotes.*.cantidad' => 'nullable|numeric|min:0',
         ]);
 
         $kardexService = app(KardexService::class);
@@ -91,7 +102,7 @@ class DespachoRequerimientoController extends Controller
             foreach ($request->lotes as $item) {
                 $detalle = DetalleRequerimientoMaterial::findOrFail($item['id_detalle']);
                 $saldo = $detalle->cantidad_solicitada - $detalle->cantidad_atendida;
-                $cantidad = min($item['cantidad'], $saldo);
+                $cantidad = min($item['cantidad'] ?? 0, $saldo);
 
                 if ($cantidad <= 0) {
                     continue;
@@ -146,13 +157,17 @@ class DespachoRequerimientoController extends Controller
                     'documento_referencia' => 'REQUERIMIENTO',
                     'numero_referencia' => $requerimiento->codigo,
                     'fecha_movimiento' => now(),
-                    'usuario_registro' => Auth::id(),
-                    'estado' => 'ACTIVO',
+                    'usuario_movimiento' => Auth::id(),
+                    'estado' => 1,
                 ]);
 
                 DB::table('inventario')
                     ->where('id_inventario', $inventarioOrigen->id_inventario)
-                    ->decrement('stock_actual', $cantidad);
+                    ->update([
+                        'stock_actual' => $inventarioOrigen->stock_actual - $cantidad,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id(),
+                    ]);
 
                 $invDestino = DB::table('inventario')
                     ->where('codigo_producto', $detalle->codigo_producto)
@@ -201,14 +216,19 @@ class DespachoRequerimientoController extends Controller
                     'documento_referencia' => 'REQUERIMIENTO',
                     'numero_referencia' => $requerimiento->codigo,
                     'fecha_movimiento' => now(),
-                    'usuario_registro' => Auth::id(),
-                    'estado' => 'ACTIVO',
+                    'usuario_movimiento' => Auth::id(),
+                    'estado' => 1,
                 ]);
 
                 if ($invDestino) {
                     DB::table('inventario')
                         ->where('id_inventario', $invDestino->id_inventario)
-                        ->increment('stock_actual', $cantidad);
+                        ->update([
+                            'stock_actual' => $invDestino->stock_actual + $cantidad,
+                            'costo_promedio' => $costosIngreso['costo_promedio'],
+                            'fecha_ultimo_movimiento' => now(),
+                            'usuario_ultimo_movimiento' => Auth::id(),
+                        ]);
                 } else {
                     DB::table('inventario')->insert([
                         'codigo_almacen' => $item['codigo_almacen_destino'],
@@ -217,6 +237,8 @@ class DespachoRequerimientoController extends Controller
                         'stock_actual' => $cantidad,
                         'costo_promedio' => $costosIngreso['costo_promedio'],
                         'ultimo_costo' => $costosSalida['costo_salida'],
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id(),
                     ]);
                 }
 
@@ -236,8 +258,9 @@ class DespachoRequerimientoController extends Controller
                 ]);
 
                 $detalle->increment('cantidad_atendida', $cantidad);
+                $detalle->refresh();
 
-                if (($detalle->cantidad_atendida + 0) < $detalle->cantidad_solicitada) {
+                if ($detalle->cantidad_atendida < $detalle->cantidad_solicitada) {
                     $todasCompletas = false;
                 }
             }

@@ -146,7 +146,34 @@ class CompraController extends Controller
                 ]);
             }
             DB::commit();
-            return redirect()->route('compras.index')->with('success', 'Compra registrada.');
+
+            if (!empty($request->ids_guias)) {
+                $kardexService = app(\App\Services\KardexService::class);
+                $guiasToUpdate = \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)->get();
+                foreach ($guiasToUpdate as $guia) {
+                    foreach ($request->productos as $item) {
+                        DB::table('kardex')
+                            ->where('numero_documento', $guia->numero_guia)
+                            ->where('tipo_movimiento', 'INGRESO')
+                            ->where('codigo_producto', $item['codigo'])
+                            ->update([
+                                'costo_entrada' => $item['precio']
+                            ]);
+                            
+                        $almacenesAfectados = DB::table('kardex')
+                            ->where('numero_documento', $guia->numero_guia)
+                            ->where('codigo_producto', $item['codigo'])
+                            ->pluck('codigo_almacen')
+                            ->unique();
+                            
+                        foreach ($almacenesAfectados as $almacen) {
+                            $kardexService->recalcular($item['codigo'], $almacen);
+                        }
+                    }
+                }
+            }
+
+            return redirect()->route('compras.index')->with('success', 'Compra registrada y Kardex actualizado.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', $e->getMessage());
@@ -234,7 +261,33 @@ class CompraController extends Controller
                 ]);
             }
             DB::commit();
-            return redirect()->route('compras.index')->with('success', 'Actualizado.');
+
+            if ($compra->guias && $compra->guias->count() > 0) {
+                $kardexService = app(\App\Services\KardexService::class);
+                foreach ($compra->guias as $guia) {
+                    foreach ($request->productos as $item) {
+                        DB::table('kardex')
+                            ->where('numero_documento', $guia->numero_guia)
+                            ->where('tipo_movimiento', 'INGRESO')
+                            ->where('codigo_producto', $item['codigo'])
+                            ->update([
+                                'costo_entrada' => $item['precio']
+                            ]);
+                            
+                        $almacenesAfectados = DB::table('kardex')
+                            ->where('numero_documento', $guia->numero_guia)
+                            ->where('codigo_producto', $item['codigo'])
+                            ->pluck('codigo_almacen')
+                            ->unique();
+                            
+                        foreach ($almacenesAfectados as $almacen) {
+                            $kardexService->recalcular($item['codigo'], $almacen);
+                        }
+                    }
+                }
+            }
+
+            return redirect()->route('compras.index')->with('success', 'Actualizado y Kardex recalculado.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', $e->getMessage());

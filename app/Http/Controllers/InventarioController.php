@@ -31,12 +31,19 @@ class InventarioController extends Controller
             ->where('inventario.stock_actual', '!=', 0);
 
         if ($request->search) {
-            $query->where('producto.descripcion', 'LIKE', "%{$request->search}%")
+            $query->where(function($q) use ($request) {
+                $q->where('producto.descripcion', 'LIKE', "%{$request->search}%")
                   ->orWhere('inventario.codigo_producto', 'LIKE', "%{$request->search}%");
+            });
         }
 
-        $stocks = $query->orderBy('producto.descripcion')->paginate(10);
-        return view('inventario.index', compact('stocks'));
+        if ($request->filled('almacen') && $request->almacen !== 'todos') {
+            $query->where('inventario.codigo_almacen', $request->almacen);
+        }
+
+        $stocks = $query->orderBy('producto.descripcion')->paginate(15);
+        $almacenes = Almacen::where('activo', 1)->get();
+        return view('inventario.index', compact('stocks', 'almacenes'));
     }
 
     // 2. RECEPCIONES (Facturas Pendientes)
@@ -365,7 +372,7 @@ class InventarioController extends Controller
                     continue; // No transferir si el destino es igual al origen
                 }
 
-                $detalle = $guia->detalles->where('id_detalle_guia_compra', $id_detalle)->first();
+                $detalle = $guia->detalles->where('id_detalle_guia', $id_detalle)->first();
                 if (!$detalle) continue;
 
                 $codigo_producto = $detalle->codigo_producto;
@@ -443,7 +450,7 @@ class InventarioController extends Controller
 
                 // Actualizar inventario destino
                 DB::table('inventario')->updateOrInsert(
-                    ['codigo_producto' => $codigo_producto, 'codigo_almacen' => $almacen_destino],
+                    ['codigo_producto' => $codigo_producto, 'codigo_almacen' => $almacen_destino, 'lote' => $detalle->lote],
                     [
                         'codigo_unidad_medida' => $detalle->codigo_unidad_medida ?? 'NIU',
                         'stock_actual' => $nuevo_saldo_destino,

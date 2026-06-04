@@ -20,4 +20,14 @@ class ProductoProceso extends Model
         'descripcion',
         'estado'
     ];
+
+    public function rutas()
+    {
+        return $this->belongsToMany(
+            ProcesoProduccion::class, 
+            'producto_proceso_rutas', 
+            'codigo_producto_proceso', 
+            'codigo_proceso'
+        )->withPivot('secuencia', 'id')->orderBy('secuencia', 'asc');
+    }
 }

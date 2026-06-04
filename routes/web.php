@@ -10,7 +10,8 @@ use App\Http\Controllers\{
     InventarioController, AlmacenController, RolController,
     OrdenProduccionController, OrdenProcesoController, ReporteController,
     ParametroSistemaController, GuiaRemisionCompraController,
-    RequerimientoMaterialController, DespachoRequerimientoController
+    RequerimientoMaterialController, DespachoRequerimientoController,
+    RutasProduccionController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -81,6 +82,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('colores', ColorController::class)->names('colores');
         Route::resource('usuarios', UsuarioController::class)->names('usuarios');
         Route::resource('roles', RolController::class)->names('roles');
+        
+        // Rutas de Producción
+        Route::get('/rutas-produccion', [RutasProduccionController::class, 'index'])->name('admin.rutas_produccion.index');
+        Route::post('/rutas-produccion', [RutasProduccionController::class, 'store'])->name('admin.rutas_produccion.store');
         
         // Rutas de Parámetros del Sistema
         Route::get('/parametros', [ParametroSistemaController::class, 'index'])->name('parametros.index');
@@ -211,6 +216,7 @@ Route::middleware('auth')->group(function () {
         Route::put('ordenes/{orden}/procesos/{proceso}/componentes/{componente}', [OrdenProcesoController::class, 'updateComponente'])->name('ordenes.procesos.componentes.update');
         Route::post('ordenes/{orden}/procesos/{proceso}/finalizar', [OrdenProcesoController::class, 'finalizar'])->name('ordenes.procesos.finalizar');
         Route::get('api/formulas/composicion', [OrdenProcesoController::class, 'getFormulaComponents'])->name('api.formulas.composicion');
+        Route::get('api/verificar-stock', [OrdenProcesoController::class, 'verificarStock'])->name('api.verificar_stock');
     });
 
     // =========================================================

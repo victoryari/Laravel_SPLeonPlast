@@ -20,6 +20,7 @@ class RequerimientoMaterial extends Model
         'estado',
         'usuario_creacion',
         'usuario_aprobacion',
+        'fecha_aprobacion',
         'observaciones',
     ];
 

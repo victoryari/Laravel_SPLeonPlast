@@ -7,18 +7,33 @@
 
         <x-page-header title="Control de Almacenes" subtitle="Consulta de saldos físicos y movimientos del inventario" />
 
-        <!-- Buscador -->
+        <!-- Buscador y Filtros -->
         <div class="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 mb-6">
-            <div class="relative max-w-md">
-                <input 
-                    type="text"
-                    id="searchInput"
-                    name="search"
-                    value="{{ request('search') }}"
-                    placeholder="Buscar por código o descripción..."
-                    class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
-                >
-                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="relative flex-1">
+                    <input 
+                        type="text"
+                        id="searchInput"
+                        name="search"
+                        value="{{ request('search') }}"
+                        placeholder="Buscar por código o descripción..."
+                        class="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                    >
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                </div>
+                <div class="relative sm:w-72">
+                    <select id="almacenFilter" name="almacen"
+                        class="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-300 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition appearance-none text-sm">
+                        <option value="todos">Todos los almacenes</option>
+                        @foreach($almacenes as $almacen)
+                            <option value="{{ $almacen->codigo_almacen }}"
+                                {{ request('almacen', 'todos') == $almacen->codigo_almacen ? 'selected' : '' }}>
+                                {{ $almacen->descripcion }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <i class="fas fa-warehouse absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                </div>
             </div>
         </div>
 
@@ -144,6 +159,12 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 url.searchParams.delete('search');
             }
+            const almFilter = document.getElementById('almacenFilter');
+            if (almFilter && almFilter.value !== 'todos') {
+                url.searchParams.set('almacen', almFilter.value);
+            } else {
+                url.searchParams.delete('almacen');
+            }
             url.searchParams.delete('page');
         }
         window.history.pushState({}, '', url);
@@ -168,6 +189,10 @@ document.addEventListener('DOMContentLoaded', function () {
     searchInput.addEventListener('input', function () {
         clearTimeout(timeout);
         timeout = setTimeout(() => fetchResults(), 400);
+    });
+
+    document.getElementById('almacenFilter').addEventListener('change', function () {
+        fetchResults();
     });
 
     tableContainer.addEventListener('click', function(e) {

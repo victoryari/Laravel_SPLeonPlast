@@ -85,10 +85,10 @@
                     <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
                         <th class="p-3 border-b border-slate-200 text-center">Item</th>
                         <th class="p-3 border-b border-slate-200">Producto</th>
+                        <th class="p-3 border-b border-slate-200 text-center">Cant.</th>
                         <th class="p-3 border-b border-slate-200 text-center">U.M.</th>
                         <th class="p-3 border-b border-slate-200 text-center">Lote</th>
-                        <th class="p-3 border-b border-slate-200 text-center">Vencimiento</th>
-                        <th class="p-3 border-b border-slate-200 text-right">Cantidad Entrante</th>
+                        <th class="p-3 border-b border-slate-200 text-center">Venc.</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -99,12 +99,12 @@
                             <p class="text-sm font-bold text-slate-800">{{ $item->codigo_producto }}</p>
                             <p class="text-xs text-slate-500">{{ $item->descripcion_producto }}</p>
                         </td>
+                        <td class="p-3 text-center text-sm font-bold text-slate-800">{{ number_format($item->cantidad, 2) }}</td>
                         <td class="p-3 text-center text-sm font-semibold text-slate-600">{{ $item->codigo_unidad_medida }}</td>
                         <td class="p-3 text-center text-sm text-slate-600">{{ $item->lote ?: '-' }}</td>
                         <td class="p-3 text-center text-sm text-slate-600">
                             {{ $item->fecha_vencimiento ? \Carbon\Carbon::parse($item->fecha_vencimiento)->format('d/m/Y') : '-' }}
                         </td>
-                        <td class="p-3 text-right text-sm font-bold text-slate-800">{{ number_format($item->cantidad, 2) }}</td>
                     </tr>
                     @endforeach
                 </tbody>

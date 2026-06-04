@@ -102,9 +102,34 @@
                     <i class="fas fa-box-open mr-2"></i>Cargar
                 </button>
             </div>
+
+            <div class="flex flex-wrap items-end gap-4 mt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Almacén de Consumo</label>
+                    <select id="codigo_almacen_consumo" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3 w-64">
+                        <option value="">-- Seleccione Almacén --</option>
+                        @foreach($almacenes as $almacen)
+                            <option value="{{ $almacen->codigo_almacen }}" {{ $proceso_produccion_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>
+                                {{ $almacen->descripcion }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
         </div>
     </div>
     @endif
+
+    <!-- Stock Warning Banner -->
+    <div id="stock-warning" class="hidden bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl mb-4">
+        <div class="flex items-start">
+            <i class="fas fa-exclamation-triangle text-red-600 mt-0.5 mr-3"></i>
+            <div>
+                <p class="text-sm font-semibold text-red-800">Stock insuficiente</p>
+                <p id="stock-warning-text" class="text-sm text-red-700 mt-1"></p>
+            </div>
+        </div>
+    </div>
 
     <!-- Detalle de Componentes -->
     <div class="bg-white rounded-xl shadow-md border-t-4 border-primary overflow-hidden mb-6">
@@ -121,6 +146,7 @@
             <form id="form_masivo" action="{{ route('ordenes.procesos.componentes.store', [$orden->idop, $proceso->id]) }}" method="POST">
                 @csrf
                 <input type="hidden" name="componentes_json" id="componentes_json">
+                <input type="hidden" name="codigo_almacen_consumo" id="codigo_almacen_consumo_hidden">
                 
                 <div class="overflow-x-auto min-h-87.5 pb-10">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
@@ -132,6 +158,7 @@
                                 @if($es_inyectado) <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Molde</th> @endif
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cant.</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">U.M.</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Stock Disp.</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Trabajador</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hora In/Fin</th>
                                 <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Acción</th>
@@ -212,26 +239,13 @@
                     
                     <div class="flex flex-wrap items-center justify-end gap-4">
                         @if($estado_proceso_actual !== 'COMPLETADO')
-                        <div class="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200 flex items-center shadow-sm">
-                            <label class="text-blue-700 font-bold text-sm mr-3">
-                                Almacén de Consumo:
-                            </label>
-                            <select name="codigo_almacen_consumo" id="codigo_almacen_consumo" class="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-48">
-                                <option value="">-- Seleccione Almacén --</option>
-                                @foreach($almacenes as $almacen)
-                                    <option value="{{ $almacen->codigo_almacen }}" {{ (old('codigo_almacen_consumo') ?? $proceso_produccion_almacen) == $almacen->codigo_almacen ? 'selected' : '' }}>
-                                        {{ $almacen->descripcion }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
                         <div class="bg-orange-50 px-4 py-2 rounded-lg border border-orange-200 flex items-center shadow-sm">
                             <label class="text-orange-700 font-bold text-sm mr-3">
                                 Merma (KG):
                             </label>
                             <input type="number" name="merma_kg" id="merma_kg" class="w-24 text-center font-bold text-gray-900 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500" value="0.00" step="0.01">
                         </div>
-                        <button type="button" onclick="enviarGuardado()" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition shadow-sm transform hover:-translate-y-0.5">
+                        <button type="button" id="btnGuardar" onclick="enviarGuardado()" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition shadow-sm transform hover:-translate-y-0.5">
                             💾 Guardar Componentes
                         </button>
                         @endif
@@ -318,6 +332,7 @@
 
 <script>
     const urlApiFormula = '/produccion/api/formulas/composicion';
+    const urlVerificarStock = '/produccion/api/verificar-stock';
     const urlDeleteBase = "{{ url("produccion/ordenes/{$orden->idop}/procesos/{$proceso->id}/componentes") }}";
     
     const centros = @json($centros_trabajo);
@@ -335,6 +350,71 @@
             sf.value = sm.options[sm.selectedIndex].getAttribute('data-formula');
         }
     }
+
+    function verificarStock() {
+        const almacen = document.getElementById('codigo_almacen_consumo').value;
+        if (!almacen) return;
+
+        const productos = [...document.querySelectorAll('#tbody_items .nueva-fila .c-prod')]
+            .map(el => el.value)
+            .filter(Boolean);
+
+        if (productos.length === 0) return;
+
+        const params = new URLSearchParams();
+        params.set('codigo_almacen', almacen);
+        productos.forEach(p => params.append('productos[]', p));
+
+        fetch(urlVerificarStock + '?' + params.toString())
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success) return;
+                let faltantes = [];
+                const filas = document.querySelectorAll('#tbody_items .nueva-fila');
+                filas.forEach(row => {
+                    const prod = row.querySelector('.c-prod').value;
+                    const req = parseFloat(row.querySelector('.c-cant').value) || 0;
+                    const stock = data.data[prod] || 0;
+                    const cell = row.querySelector('.stock-cell');
+
+                    cell.textContent = stock.toFixed(2);
+                    cell.classList.remove('text-green-600', 'text-red-600');
+                    if (stock >= req) {
+                        cell.classList.add('text-green-600');
+                        row.classList.remove('bg-red-50');
+                    } else {
+                        cell.classList.add('text-red-600');
+                        row.classList.add('bg-red-50');
+                        faltantes.push(prod + ' (req: ' + req.toFixed(2) + ', disp: ' + stock.toFixed(2) + ')');
+                    }
+                });
+
+                const warning = document.getElementById('stock-warning');
+                const text = document.getElementById('stock-warning-text');
+                const btn = document.getElementById('btnGuardar');
+
+                if (faltantes.length > 0) {
+                    warning.classList.remove('hidden');
+                    const almacenEl = document.getElementById('codigo_almacen_consumo');
+                    const almacenNombre = almacenEl.options[almacenEl.selectedIndex]?.text || almacen;
+                    text.textContent = 'Falta stock en "' + almacenNombre + '" para: ' + faltantes.join('; ') + '. Seleccione otro almacén o abastezca primero.';
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    warning.classList.add('hidden');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            })
+            .catch(err => console.error('Error al verificar stock:', err));
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const almacenSelect = document.getElementById('codigo_almacen_consumo');
+        if (almacenSelect) {
+            almacenSelect.addEventListener('change', verificarStock);
+        }
+    });
 
     function setupSearchableDropdown(rowId) {
         const row = document.getElementById(rowId);
@@ -387,6 +467,7 @@
                             hiddenInput.value = p.id;
                             if (p.codigo_tipo_producto) tipoSelect.value = p.codigo_tipo_producto;
                             optionsContainer.style.display = 'none';
+                            verificarStock();
                         };
                         optionsContainer.appendChild(div);
                     });
@@ -433,6 +514,7 @@
                     agregarFila({ ...comp, cantidad: cant, formula: f, centro, molde,
                                  codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin });
                 });
+                verificarStock();
             } else {
                 window.toast(data.message, 'error');
             }
@@ -500,6 +582,10 @@
             
             <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-um" style="width: 60px;">${unitsHtml}</select></td>
             
+            <td class="px-2 py-2 text-center">
+                <span class="stock-cell text-xs font-bold">—</span>
+            </td>
+            
             <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-trab" style="width: 100px;">${trabsHtml}</select></td>
             
             <td style="display:none;">
@@ -522,10 +608,11 @@
     }
 
     function enviarGuardado() {
-        const almacenConsumo = document.getElementById('codigo_almacen_consumo');
-        if (almacenConsumo && !almacenConsumo.value) {
+        const almacenSelect = document.getElementById('codigo_almacen_consumo');
+        if (!almacenSelect.value) {
             return window.toast("Por favor seleccione el Almacén de Consumo antes de guardar.", 'warning');
         }
+        document.getElementById('codigo_almacen_consumo_hidden').value = almacenSelect.value;
 
         const filas = document.querySelectorAll('.nueva-fila');
         if (filas.length === 0) return window.toast("No hay datos nuevos para guardar.", 'warning');

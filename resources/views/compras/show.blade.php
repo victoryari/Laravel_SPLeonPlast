@@ -147,6 +147,42 @@
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Guías de Remisión Vinculadas</h3>
+                @if($compra->guias && $compra->guias->count() > 0)
+                    <ul class="space-y-3">
+                        @foreach($compra->guias as $guiaVinculada)
+                        <li class="flex items-center justify-between p-2 hover:bg-slate-50 rounded-lg transition-colors border border-transparent hover:border-slate-100">
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">{{ $guiaVinculada->numero_guia }}</p>
+                                <p class="text-xs text-slate-500 flex items-center gap-2">
+                                    <span>{{ \Carbon\Carbon::parse($guiaVinculada->fecha_emision)->format('d/m/Y') }}</span>
+                                    @php
+                                        $guiaBadgeColor = [
+                                            'RECIBIDA' => 'bg-green-100 text-green-700',
+                                            'UBICADA' => 'bg-blue-100 text-blue-700',
+                                            'ANULADA' => 'bg-red-100 text-red-700'
+                                        ][$guiaVinculada->estado] ?? 'bg-slate-100 text-slate-700';
+                                    @endphp
+                                    <span class="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider {{ $guiaBadgeColor }}">
+                                        {{ $guiaVinculada->estado }}
+                                    </span>
+                                </p>
+                            </div>
+                            <a href="{{ route('guia_compras.show', $guiaVinculada->id_guia) }}" class="text-primary hover:text-primary-600 hover:underline text-xs font-bold px-3 py-1 bg-primary-50 rounded-lg transition-colors">
+                                Ver
+                            </a>
+                        </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <div class="text-center py-4">
+                        <i class="fas fa-link text-slate-300 text-2xl mb-2"></i>
+                        <p class="text-sm text-slate-500 italic">No hay guías vinculadas aún.</p>
+                    </div>
+                @endif
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
                 <h3 class="text-xs font-bold text-slate-400 uppercase mb-4">Auditoría</h3>
                 <div class="flex items-center gap-3">
                     <div class="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center text-primary font-bold uppercase">

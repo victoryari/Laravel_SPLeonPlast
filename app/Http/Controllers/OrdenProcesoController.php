@@ -40,8 +40,13 @@ class OrdenProcesoController extends Controller
 
     public function create($idop)
     {
-        $orden = OrdenProduccion::where('idop', $idop)->where('activo', 1)->firstOrFail();
-        $cat_procesos = ProcesoProduccion::where('estado', 1)->get();
+        $orden = OrdenProduccion::with('productoProceso.rutas')->where('idop', $idop)->where('activo', 1)->firstOrFail();
+        
+        if ($orden->productoProceso && $orden->productoProceso->rutas->count() > 0) {
+            $cat_procesos = $orden->productoProceso->rutas;
+        } else {
+            $cat_procesos = ProcesoProduccion::where('estado', 1)->get();
+        }
         
         return view('produccion.procesos.create', compact('orden', 'cat_procesos'));
     }
@@ -55,7 +60,13 @@ class OrdenProcesoController extends Controller
         try {
             $procesoRef = ProcesoProduccion::findOrFail($request->codigo_proceso);
             
-            $orden = OrdenProduccion::where('idop', $idop)->where('activo', 1)->firstOrFail();
+            $orden = OrdenProduccion::with('productoProceso.rutas')->where('idop', $idop)->where('activo', 1)->firstOrFail();
+
+            if ($orden->productoProceso && $orden->productoProceso->rutas->count() > 0) {
+                if (!$orden->productoProceso->rutas->contains('codigo', $request->codigo_proceso)) {
+                    throw new \Exception('El proceso seleccionado no pertenece a la ruta de producción de este producto.');
+                }
+            }
 
             $max_seq = OrdenProceso::where('idop', $idop)->where('estado', 1)->max('secuencia');
             $secuencia_nueva = $max_seq ? $max_seq + 10 : 10;
@@ -396,6 +407,30 @@ class OrdenProcesoController extends Controller
         }
 
         return response()->json(['success' => true, 'componentes' => $componentes]);
+    }
+
+    public function verificarStock(Request $request)
+    {
+        $productos = $request->input('productos', []);
+        $codigo_almacen = $request->codigo_almacen;
+
+        if (!$codigo_almacen || empty($productos)) {
+            return response()->json(['success' => false, 'message' => 'Parámetros incompletos.']);
+        }
+
+        $stocks = DB::table('inventario')
+            ->where('codigo_almacen', $codigo_almacen)
+            ->whereIn('codigo_producto', $productos)
+            ->selectRaw('codigo_producto, SUM(stock_actual) as stock_total')
+            ->groupBy('codigo_producto')
+            ->pluck('stock_total', 'codigo_producto');
+
+        $result = [];
+        foreach ($productos as $prod) {
+            $result[$prod] = floatval($stocks[$prod] ?? 0);
+        }
+
+        return response()->json(['success' => true, 'data' => $result]);
     }
 
     public function storeComponentes(Request $request, $idop, $id)

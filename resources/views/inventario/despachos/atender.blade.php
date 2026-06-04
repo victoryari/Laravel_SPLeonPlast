@@ -12,6 +12,24 @@
         </x-slot:actions>
     </x-page-header>
 
+    @if ($errors->any())
+    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+        <h3 class="text-red-800 font-bold text-sm mb-2">Se encontraron los siguientes errores:</h3>
+        <ul class="list-disc list-inside text-xs text-red-700">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
+    @if (session('error'))
+    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+        <h3 class="text-red-800 font-bold text-sm mb-2">Error</h3>
+        <p class="text-xs text-red-700">{{ session('error') }}</p>
+    </div>
+    @endif
+
     <form action="{{ route('inventario.despachos.store_atender', $requerimiento->id_requerimiento) }}" method="POST" id="formAtender">
         @csrf
 

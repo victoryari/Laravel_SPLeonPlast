@@ -10,6 +10,28 @@
         </div>
     </div>
 
+    @if (session('success'))
+    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl">
+        <p class="text-sm text-green-700">{{ session('success') }}</p>
+    </div>
+    @endif
+
+    @if (session('error'))
+    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+        <p class="text-sm text-red-700">{{ session('error') }}</p>
+    </div>
+    @endif
+
+    @if ($errors->any())
+    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+        <ul class="list-disc list-inside text-sm text-red-700">
+            @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+    @endif
+
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
         <div class="px-6 py-4 border-b bg-slate-50 flex flex-col sm:flex-row justify-between gap-4 items-center">
             <div>
@@ -254,7 +276,7 @@
                                         <div class="lg:col-span-3">
                                             <label class="block text-xs font-semibold text-blue-600 mb-1">Transferir al Almacén Destino</label>
                                             <div class="relative">
-                                                <select name="items[{{ $detalle->id_detalle_guia_compra }}][codigo_almacen]" class="w-full pl-3 pr-8 py-2 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-800 text-sm focus:ring-2 focus:ring-blue-500" required>
+                                                <select name="items[{{ $detalle->id_detalle_guia }}][codigo_almacen]" class="w-full pl-3 pr-8 py-2 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-800 text-sm focus:ring-2 focus:ring-blue-500" required>
                                                     <option value="ALM04">No transferir (Mantener en ALM04)</option>
                                                     @foreach($almacenes as $almacen)
                                                         @if($almacen->codigo_almacen !== 'ALM04')

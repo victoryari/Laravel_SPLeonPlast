@@ -128,6 +128,9 @@
                             <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
                                 Órdenes de Producción
                             </a>
+                            <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                Rutas de Producción
+                            </a>
                             @endif
                         </div>
                     </div>
