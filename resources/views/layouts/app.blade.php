@@ -53,7 +53,6 @@
                             @if(Auth::user()->hasAccess('operaciones_produccion.index'))<a href="{{ route('operaciones_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('operaciones_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Operaciones</a>@endif
                             @if(Auth::user()->hasAccess('centros_trabajo.index'))<a href="{{ route('centros_trabajo.index') }}" class="block p-2 text-sm {{ request()->routeIs('centros_trabajo.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Centros de trabajo</a>@endif
                             @if(Auth::user()->hasAccess('trabajadores.index'))<a href="{{ route('trabajadores.index') }}" class="block p-2 text-sm {{ request()->routeIs('trabajadores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Trabajadores</a>@endif
-                            @if(Auth::user()->hasAccess('proveedores.index'))<a href="{{ route('proveedores.index') }}" class="block p-2 text-sm {{ request()->routeIs('proveedores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Proveedores</a>@endif
                             @if(Auth::user()->hasAccess('actividades.index'))<a href="{{ route('actividades.index') }}" class="block p-2 text-sm {{ request()->routeIs('actividades.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Actividades</a>@endif
                             @if(Auth::user()->hasAccess('moldes.index'))<a href="{{ route('moldes.index') }}" class="block p-2 text-sm {{ request()->routeIs('moldes.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Moldes</a>@endif
                             @if(Auth::user()->hasAccess('colores.index'))<a href="{{ route('colores.index') }}" class="block p-2 text-sm {{ request()->routeIs('colores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Color</a>@endif
@@ -62,18 +61,33 @@
                     </div>
                     @endif
 
-                    @if(Auth::user()->hasAccess('compras.index'))
-                    <a href="{{ route('guia_compras.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('guia_compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-truck-loading w-6"></i>
-                        <span>Guías de Remisión</span>
-                    </a>
-                    @endif
+                    @if(Auth::user()->hasAnyAccess(['compras.index', 'proveedores.index']))
+                    <div>
+                        <button type="button" id="btnCuentasPagar" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                            <div class="flex items-center">
+                                <i class="fas fa-file-invoice-dollar w-6"></i>
+                                <span>Cuentas por Pagar</span>
+                            </div>
+                            <i id="iconCuentasPagar" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
 
-                    @if(Auth::user()->hasAccess('compras.index'))
-                    <a href="{{ route('compras.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-shopping-cart w-6"></i>
-                        <span>Compras</span>
-                    </a>
+                        <div id="menuCuentasPagar" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                            @if(Auth::user()->hasAccess('proveedores.index'))
+                            <a href="{{ route('proveedores.index') }}" class="block p-2 text-sm {{ request()->routeIs('proveedores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                Proveedores
+                            </a>
+                            @endif
+
+                            @if(Auth::user()->hasAccess('compras.index'))
+                            <a href="{{ route('guia_compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('guia_compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                Guías de Remisión
+                            </a>
+                            <a href="{{ route('compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                Compras
+                            </a>
+                            @endif
+                        </div>
+                    </div>
                     @endif
 
                     @if(Auth::user()->hasAnyAccess(['inventario.index', 'inventario.recepciones', 'inventario.kardex', 'inventario.ajuste', 'inventario.extornos']))
@@ -99,13 +113,31 @@
 
                             @if(Auth::user()->hasAccess('inventario.recepciones'))<a href="{{ route('inventario.recepciones') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.recepciones') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Recepciones Pendientes</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.kardex'))<a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Kardex de Movimientos</a>@endif
-
                             @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Lista de Ajustes</a>@endif
 
                             @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Extornos</a>@endif
                             
                             <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Scrap</a>
+                        </div>
+                    </div>
+                    @endif
+
+                    @if(Auth::user()->hasAnyAccess(['inventario.kardex']))
+                    <div>
+                        <button type="button" id="btnContabilidad" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                            <div class="flex items-center">
+                                <i class="fas fa-book w-6"></i>
+                                <span>Contabilidad</span>
+                            </div>
+                            <i id="iconContabilidad" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
+                        </button>
+
+                        <div id="menuContabilidad" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                            @if(Auth::user()->hasAccess('inventario.kardex'))
+                            <a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                Kardex de Movimientos
+                            </a>
+                            @endif
                         </div>
                     </div>
                     @endif
@@ -295,7 +327,7 @@
         const maestrasSlugs = [
             'unidades-medida', 'tipos-producto', 'productos',
             'procesos-produccion', 'formulas', 'operaciones-produccion',
-            'centros-trabajo', 'trabajadores', 'proveedores',
+            'centros-trabajo', 'trabajadores',
             'actividades', 'moldes', 'colores', 'parametros'
         ];
 
@@ -316,7 +348,7 @@
         const menuInventario = document.getElementById('menuInventario');
         const iconInventario = document.getElementById('iconInventario');
 
-        const inventarioSlugs = ['/inventario', 'recepciones', 'kardex', 'ajuste', 'extornos', 'alertas', 'despachos'];
+        const inventarioSlugs = ['/inventario', 'recepciones', 'ajuste', 'extornos', 'alertas', 'despachos', 'mermas'];
 
         if (inventarioSlugs.some(slug => currentUrl.includes(slug))) {
             menuInventario?.classList.remove('hidden');
@@ -350,6 +382,48 @@
                 menuProduccion.classList.toggle('hidden');
                 menuProduccion.classList.toggle('flex');
                 iconProduccion.classList.toggle('rotate-180');
+            });
+        }
+
+        // Cuentas por Pagar
+        const btnCuentasPagar = document.getElementById('btnCuentasPagar');
+        const menuCuentasPagar = document.getElementById('menuCuentasPagar');
+        const iconCuentasPagar = document.getElementById('iconCuentasPagar');
+
+        const cuentasPagarSlugs = ['proveedores', 'compras', 'guia-compras'];
+
+        if (cuentasPagarSlugs.some(slug => currentUrl.includes(slug))) {
+            menuCuentasPagar?.classList.remove('hidden');
+            menuCuentasPagar?.classList.add('flex');
+            iconCuentasPagar?.classList.add('rotate-180');
+        }
+
+        if (btnCuentasPagar) {
+            btnCuentasPagar.addEventListener('click', () => {
+                menuCuentasPagar.classList.toggle('hidden');
+                menuCuentasPagar.classList.toggle('flex');
+                iconCuentasPagar.classList.toggle('rotate-180');
+            });
+        }
+
+        // Contabilidad
+        const btnContabilidad = document.getElementById('btnContabilidad');
+        const menuContabilidad = document.getElementById('menuContabilidad');
+        const iconContabilidad = document.getElementById('iconContabilidad');
+
+        const contabilidadSlugs = ['kardex'];
+
+        if (contabilidadSlugs.some(slug => currentUrl.includes(slug))) {
+            menuContabilidad?.classList.remove('hidden');
+            menuContabilidad?.classList.add('flex');
+            iconContabilidad?.classList.add('rotate-180');
+        }
+
+        if (btnContabilidad) {
+            btnContabilidad.addEventListener('click', () => {
+                menuContabilidad.classList.toggle('hidden');
+                menuContabilidad.classList.toggle('flex');
+                iconContabilidad.classList.toggle('rotate-180');
             });
         }
 
