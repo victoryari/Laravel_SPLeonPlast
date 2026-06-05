@@ -1,73 +1,34 @@
-# Módulo Independiente de Mermas y Scrap - Plan de Implementación
+# Actualización del Módulo de Mermas y Scrap
 
-Este documento detalla la estructura para el **Módulo Independiente** que maneja las mermas y el reciclado en LeonPlast, adaptado a la realidad de la planta.
+Este plan detalla las modificaciones solicitadas para mejorar el flujo de registro de mermas, dividiendo el trabajo en dos etapas principales.
 
-## Flujograma del Proceso Operativo
+## Etapa 1: Interfaz de Usuario (Visual)
 
-A continuación, se detalla el ciclo de vida del material desde que es requerido en planta, hasta cómo se manejan sus desperdicios dependiendo del proceso.
-
-```mermaid
-flowchart TD
-    %% Estilos
-    classDef almacen fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
-    classDef proceso fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
-    classDef decision fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
-    classDef merma fill:#ffebee,stroke:#d32f2f,stroke-width:2px;
-    classDef recuperado fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
-
-    %% Nodos
-    REQ[Requerimiento de Materiales] --> ALM_PRIN[Almacén Principal<br>(Mat. Virgen + Recuperado)]:::almacen
-    ALM_PRIN -->|Despacho| OP(Orden de Producción):::proceso
-    
-    OP --> PROC{¿Qué proceso se ejecuta?}:::decision
-    
-    %% Rama 1: Inyección / Extrusión
-    PROC -- Inyección / Extrusión --> INY[Inyección de Piezas]:::proceso
-    INY --> OK_INY{¿Es Conforme?}:::decision
-    OK_INY -- Sí --> PT[Pasa al siguiente proceso]:::proceso
-    
-    OK_INY -- No (Colada / Mala Inyección) --> MOLINO[Molino Automático<br>a pie de máquina]:::proceso
-    MOLINO --> REG_REC[Operador registra 'Reciclado']:::recuperado
-    REG_REC -.->|Retorna al almacén<br>(Costo según Parámetro)| ALM_PRIN
-    
-    %% Rama 2: Procesos Posteriores
-    PROC -- Armado / Embolsado / Encartonado --> EMP[Procesos de Empaque]:::proceso
-    EMP --> OK_EMP{¿Se dañó algo?}:::decision
-    OK_EMP -- No --> FINAL[Producto Terminado<br>Listo para Venta]:::almacen
-    
-    OK_EMP -- Sí (Vaso roto / Caja rota) --> REG_MERMA[Operador registra 'Merma Pura']:::merma
-    REG_MERMA --> ALM_REC[ALM-REC<br>Almacén de Mermas y Reciclaje]:::almacen
-    ALM_REC -.-> DESTINO((Disposición Final:<br>Venta como scrap, Destrucción))
-```
+### Formulario de Registro
+- **Filtro por Orden de Producción (OP):** 
+  - Se añadirá un nuevo campo desplegable al inicio del formulario para seleccionar la **Orden de Producción (OP)** en curso.
+- **Filtro Inteligente de Producto Origen:** 
+  - El desplegable actual de "Producto Origen" pasará a estar vacío por defecto.
+  - Al seleccionar una OP, se cargarán dinámicamente mediante una petición interna (AJAX) **únicamente los Productos en Proceso (PEP)** que pertenecen a dicha OP y que actualmente cuentan con stock disponible en piso.
+- **Registro de Múltiples Cantidades (Doble Input):**
+  - Se eliminará el actual desplegable de "Tipo de Merma".
+  - En su lugar, se colocarán dos campos numéricos paralelos:
+    1. **Cantidad Merma Pura (Irrecuperable):** Lo que va a la basura.
+    2. **Cantidad Merma Recuperada (Molido):** Lo que se va a reutilizar.
+  - El sistema validará visualmente mediante JavaScript que la suma de ambas cantidades no exceda el stock disponible del producto seleccionado.
 
 ---
 
-## 1. Tipos de Desperdicio y Comportamiento
-Existen dos tipos principales de desperdicio que el sistema manejará:
+## Etapa 2: Lógica del Sistema (Backend) y Análisis de Consumo
 
-1.  **Merma Pura (No se reprocesa):** 
-    - Desecho que no vuelve a producción (ej. cajas rotas, vasos rotos en encartonado).
-    - Al registrarse, el sistema hace una transferencia automática al **Almacén de Mermas y Reciclado (ALM-REC)** y se queda ahí como merma definitiva.
-2.  **Reciclado / Molido Automático (Solo Inyección/Extrusión con molino a pie de máquina):** 
-    - Las coladas y piezas mal inyectadas se muelen inmediatamente.
-    - Al registrarse, el sistema ingresa este material (con su código de producto recuperado) directamente al **Almacén Original** de la materia prima, dejándolo listo para la siguiente inyección.
+### Lógica de Registro Simultáneo
+- **Base de Datos y Trazabilidad:** La tabla `mermas` ya cuenta con el campo `id_orden_produccion`. Este campo se poblará automáticamente.
+- **Doble Registro:** Al procesar el formulario, el backend separará la lógica:
+  - Si hay cantidad en **Merma Pura**, descontará del stock como salida irrecuperable.
+  - Si hay cantidad en **Merma Recuperada**, realizará la salida original y el ingreso de su versión `_RECICLADO`.
+  - Ambos registros irán al Kardex simultáneamente.
 
-## 2. Nuevo Módulo Independiente centralizado
-Se creará una sección exclusiva en el menú principal llamada **"Mermas y Reciclado"**. 
-
-- **Pantalla de Registro:** Cualquier operador, de cualquier proceso, entra aquí.
-    - Selecciona su OP / Máquina.
-    - Si es Inyección, puede elegir registrar **"Reciclado"** (y el sistema lo manda al almacén original como molido).
-    - Si es de procesos posteriores (Armado, Embolsado, Encartonado), **solo puede registrar "Merma Pura"**, mandando el daño al `ALM-REC` definitivamente.
-
-### **Interacción con la Orden de Producción**
-- **Se elimina el campo/sección de "Registro de Merma"** de la vista de ejecución de actividades de la OP.
-- La OP quedará limpia y enfocada solo en el consumo normal de materiales y tiempos.
-- Dentro de la OP habrá un enlace o etiqueta: *"Mermas asociadas: X Kg (Ver detalle)"* que redireccionará al Módulo de Mermas.
-
-## 3. Costeo del Reciclado (Resolución Contable)
-El costo con el que el material "Reciclado Automático" ingresa de vuelta al Kardex y al Almacén Original **no estará fijo (hardcoded) en el sistema**. 
-Se utilizará el modelo y tabla existente `ParametroSistema` para definir cómo se costea.
-- Se creará un parámetro (ej. `PORCENTAJE_COSTO_RECICLADO` o `COSTO_FIJO_RECICLADO`).
-- El área de contabilidad podrá entrar al "Módulo de Parámetros del Sistema" y decidir si el reciclado cuesta $0, si cuesta un porcentaje del material original, o si tiene un costo fijo predeterminado.
-- Al registrar el reciclado, el controlador leerá este parámetro y registrará el ingreso al Kardex con el valor dictado.
+### Análisis Pendiente: Descuento directo de Materia Prima
+*Este análisis queda pendiente de decisión final por parte de la jefatura de producción antes de ejecutar la Etapa 2.*
+- **El problema del Doble Descuento:** En la ejecución de producción, el sistema ya consume la materia prima para generar el Producto en Proceso (PEP). Si la merma del PEP intenta descontar insumos directamente de la receta, se sacaría del Kardex la materia prima dos veces, y el stock del PEP quedaría irreal.
+- **Decisión requerida:** Definir si se mantiene el descuento a nivel de PEP (recomendado y contablemente cuadrado) o si se implementa un método alterno de explosión de receta para la merma (muy complejo y requiere cambiar cómo se declara la producción inicialmente).
