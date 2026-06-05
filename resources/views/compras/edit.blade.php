@@ -30,8 +30,8 @@
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
                             <x-form-group class="md:col-span-3" label="Tipo Doc." required>
                                 <select name="tipo_documento" class="input-field" required>
-                                    @foreach(['FACTURA' => 'FACTURA', 'BOLETA' => 'BOLETA', 'GUIA_REMISION' => 'GUÍA DE REMISIÓN', 'OTRO' => 'OTRO'] as $val => $label)
-                                        <option value="{{ $val }}" {{ $compra->tipo_documento == $val ? 'selected' : '' }}>{{ $label }}</option>
+                                    @foreach($tipos_comprobante as $tc)
+                                        <option value="{{ $tc->valor }}" {{ $compra->tipo_documento == $tc->valor ? 'selected' : '' }}>{{ $tc->descripcion }}</option>
                                     @endforeach
                                 </select>
                             </x-form-group>
@@ -69,10 +69,16 @@
                 </x-card>
 
                 <x-card>
-                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
                             <i class="fas fa-boxes text-primary"></i> Detalle de Productos
                         </h2>
+                        <div class="bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-lg shadow-sm">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="igv_incluido" id="checkIgv" class="form-checkbox rounded text-indigo-600 h-5 w-5 focus:ring-indigo-500 border-indigo-300 transition-colors" onchange="recalcularTotales()" {{ $compra->igv_incluido ? 'checked' : '' }}>
+                                <span class="ml-2 text-xs text-indigo-800 font-bold tracking-wide uppercase">Precios Incluyen IGV</span>
+                            </label>
+                        </div>
                     </div>
                     <div class="p-4">
                         <div class="rounded-lg border border-slate-200 mb-3 overflow-x-auto">
@@ -132,7 +138,7 @@
                                             <input type="date" name="productos[{{ $index }}][fecha_vencimiento]" value="{{ $det->fecha_vencimiento }}" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px">
                                         </td>
                                         <td class="p-1">
-                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $det->precio_unitario }}" step="any" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
+                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $compra->igv_incluido ? ($det->precio_unitario * 1.18) : $det->precio_unitario }}" step="any" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
                                         </td>
                                         <td class="p-1">
                                             <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="{{ number_format($det->subtotal, 2, '.', '') }}" readonly tabindex="-1" style="height:28px">
@@ -269,9 +275,32 @@
     }
 
     function agregarFila(producto) {
+        const codigo = producto.id;
+        
+        // Verificar si el producto ya existe en la tabla
+        let existe = false;
+        document.querySelectorAll('.input-cod').forEach(input => {
+            if (input.value === codigo) {
+                existe = true;
+                // Incrementar cantidad si ya existe
+                const fila = input.closest('tr');
+                const cantInput = fila.querySelector('.input-cant');
+                if (cantInput) {
+                    cantInput.value = (parseFloat(cantInput.value) + 1).toFixed(2);
+                    // Disparar evento input para recalcular subtotales
+                    cantInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        });
+
+        if (existe) {
+            window.toast('El producto ya estaba en la lista. Se aumentó la cantidad.', 'info');
+            return;
+        }
+
         const idx = filaIdx++;
         const nombre = getProductName(producto.text);
-        const html = generarTemplateHTML(idx, producto.id, nombre);
+        const html = generarTemplateHTML(idx, codigo, nombre);
         tablaBody.insertAdjacentHTML('beforeend', html);
     }
 
@@ -282,14 +311,29 @@
     function recalcularTotales() {
         let st = 0;
         document.querySelectorAll('.out-sub').forEach(el => st += parseFloat(el.value) || 0);
-        const igv = st * 0.18;
-        const total = st + igv;
+        
+        let isIgvIncluido = document.getElementById('checkIgv') && document.getElementById('checkIgv').checked;
+        
+        let subtotal = 0;
+        let igv = 0;
+        let total = 0;
+        
+        if (isIgvIncluido) {
+            total = st; // The sum is the Total
+            subtotal = total / 1.18;
+            igv = total - subtotal;
+        } else {
+            subtotal = st; // The sum is the Subtotal
+            igv = subtotal * 0.18;
+            total = subtotal + igv;
+        }
 
-        document.getElementById('txt_sub').innerText = 'S/ ' + st.toFixed(2);
-        document.getElementById('txt_igv').innerText = 'S/ ' + igv.toFixed(2);
-        document.getElementById('txt_total').innerText = 'S/ ' + total.toFixed(2);
+        let currencySymbol = document.getElementById('selectMoneda').value === 'USD' ? '$ ' : 'S/ ';
+        document.getElementById('txt_sub').innerText = currencySymbol + subtotal.toFixed(2);
+        document.getElementById('txt_igv').innerText = currencySymbol + igv.toFixed(2);
+        document.getElementById('txt_total').innerText = currencySymbol + total.toFixed(2);
 
-        document.getElementById('h_sub').value = st.toFixed(2);
+        document.getElementById('h_sub').value = subtotal.toFixed(2);
         document.getElementById('h_igv').value = igv.toFixed(2);
         document.getElementById('h_total').value = total.toFixed(2);
     }
@@ -324,18 +368,21 @@
 
         $('#btnCerrarProducto').on('click', cerrarModalProducto);
 
+        let tipoCambioActual = "{{ \App\Models\ParametroSistema::where('codigo_parametro', 'TIPO_CAMBIO_USD')->value('valor') ?? '1.000' }}";
+
         $('#selectMoneda').on('change', function() {
             if ($(this).val() === 'USD') {
                 $('#groupTipoCambio').show();
                 $('#inputTipoCambio').attr('required', true);
-                if (parseFloat($('#inputTipoCambio').val()) === 1) {
-                    $('#inputTipoCambio').val('');
+                if (parseFloat($('#inputTipoCambio').val()) === 1 || $('#inputTipoCambio').val() === '') {
+                    $('#inputTipoCambio').val(tipoCambioActual);
                 }
             } else {
                 $('#groupTipoCambio').hide();
                 $('#inputTipoCambio').removeAttr('required');
                 $('#inputTipoCambio').val('1.000');
             }
+            recalcularTotales();
         });
 
         $('#btnAgregarFila').on('click', function () {

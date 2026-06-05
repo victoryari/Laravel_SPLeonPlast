@@ -37,8 +37,9 @@ class CompraController extends Controller
         $guiasPendientes = \App\Models\GuiaRemisionCompra::whereIn('estado', ['RECIBIDA', 'UBICADA'])
             ->whereNull('id_compra')
             ->get();
+        $tipos_comprobante = \App\Models\ParametroSistema::where('categoria', 'TIPO_COMPROBANTE')->get();
 
-        return view('compras.create', compact('proveedores', 'almacenes', 'unidades_medida', 'guiasPendientes'));
+        return view('compras.create', compact('proveedores', 'almacenes', 'unidades_medida', 'guiasPendientes', 'tipos_comprobante'));
     }
 
     public function getGuiaAjax($id) 
@@ -76,7 +77,8 @@ class CompraController extends Controller
                 \Illuminate\Validation\Rule::unique('compras')->where(function ($query) use ($request) {
                     return $query->where('ruc_proveedor', $request->ruc_proveedor)
                                  ->where('serie_documento', strtoupper($request->serie_documento))
-                                 ->where('tipo_documento', $request->tipo_documento);
+                                 ->where('tipo_documento', $request->tipo_documento)
+                                 ->where('estado', '!=', 'CANCELADA');
                 })
             ],
             'fecha_compra' => 'required|date',
@@ -114,6 +116,7 @@ class CompraController extends Controller
                 'moneda'           => $request->moneda,
                 'tipo_cambio'      => $request->moneda === 'USD' ? $request->tipo_cambio : 1.000,
                 'estado'           => $estadoCompra,
+                'igv_incluido'     => $request->has('igv_incluido') ? 1 : 0,
                 'usuario_creacion' => Auth::id()
             ]);
 
@@ -125,9 +128,13 @@ class CompraController extends Controller
                     ]);
             }
 
+            $igv_incluido = $request->has('igv_incluido');
+
             foreach ($request->productos as $item) {
                 $prod = Producto::where('codigo', $item['codigo'])->first();
-                $sub = $item['cantidad'] * $item['precio'];
+                
+                $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
+                $sub = $item['cantidad'] * $precio_unitario;
                 $igv_item = $sub * 0.18;
                 
                 DetalleCompra::create([
@@ -135,7 +142,7 @@ class CompraController extends Controller
                     'codigo_producto' => $item['codigo'],
                     'descripcion_producto' => $prod->descripcion ?? '',
                     'cantidad' => $item['cantidad'],
-                    'precio_unitario' => $item['precio'],
+                    'precio_unitario' => $precio_unitario,
                     'codigo_unidad_medida' => $item['codigo_unidad_medida'] ?? null,
                     'subtotal' => $sub,
                     'igv' => $igv_item,
@@ -152,12 +159,16 @@ class CompraController extends Controller
                 $guiasToUpdate = \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)->get();
                 foreach ($guiasToUpdate as $guia) {
                     foreach ($request->productos as $item) {
+                        $precio_unitario = $request->has('igv_incluido') ? ($item['precio'] / 1.18) : $item['precio'];
+                        $tc = $request->moneda === 'USD' ? $request->tipo_cambio : 1.000;
+                        $costo_kardex_pen = $precio_unitario * $tc;
+                        
                         DB::table('kardex')
                             ->where('numero_documento', $guia->numero_guia)
                             ->where('tipo_movimiento', 'INGRESO')
                             ->where('codigo_producto', $item['codigo'])
                             ->update([
-                                'costo_entrada' => $item['precio']
+                                'costo_entrada' => $costo_kardex_pen
                             ]);
                             
                         $almacenesAfectados = DB::table('kardex')
@@ -185,7 +196,8 @@ class CompraController extends Controller
         $proveedores = Proveedor::where('activo', 1)->get();
         $almacenes = Almacen::where('activo', 1)->get();
         $unidades_medida = UnidadMedida::where('estado', 1)->get();
-        return view('compras.edit', compact('compra', 'proveedores', 'almacenes', 'unidades_medida'));
+        $tipos_comprobante = \App\Models\ParametroSistema::where('categoria', 'TIPO_COMPROBANTE')->get();
+        return view('compras.edit', compact('compra', 'proveedores', 'almacenes', 'unidades_medida', 'tipos_comprobante'));
     }
 
     public function update(Request $request, $id) {
@@ -199,7 +211,8 @@ class CompraController extends Controller
                 \Illuminate\Validation\Rule::unique('compras')->where(function ($query) use ($request) {
                     return $query->where('ruc_proveedor', $request->ruc_proveedor)
                                  ->where('serie_documento', strtoupper($request->serie_documento))
-                                 ->where('tipo_documento', $request->tipo_documento);
+                                 ->where('tipo_documento', $request->tipo_documento)
+                                 ->where('estado', '!=', 'CANCELADA');
                 })->ignore($id, 'id_compra')
             ],
             'fecha_compra' => 'required|date',
@@ -238,23 +251,27 @@ class CompraController extends Controller
                 'total' => $request->total_general,
                 'moneda' => $request->moneda,
                 'tipo_cambio' => $request->moneda === 'USD' ? $request->tipo_cambio : 1.000,
+                'igv_incluido' => $request->has('igv_incluido') ? 1 : 0,
                 'usuario_aprobacion' => Auth::id(),
             ]);
 
             DetalleCompra::where('id_compra', $id)->delete();
+            $igv_incluido = $request->has('igv_incluido');
             foreach ($request->productos as $item) {
                 $prod = Producto::where('codigo', $item['codigo'])->first();
-                $sub = $item['cantidad'] * $item['precio'];
+                $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
+                $sub = $item['cantidad'] * $precio_unitario;
+                $igv_item = $sub * 0.18;
                 DetalleCompra::create([
                     'id_compra' => $id,
                     'codigo_producto' => $item['codigo'],
                     'descripcion_producto' => $prod->descripcion ?? '',
                     'cantidad' => $item['cantidad'],
-                    'precio_unitario' => $item['precio'],
+                    'precio_unitario' => $precio_unitario,
                     'codigo_unidad_medida' => $item['codigo_unidad_medida'] ?? null,
                     'subtotal' => $sub,
-                    'igv' => $sub * 0.18,
-                    'total' => $sub * 1.18,
+                    'igv' => $igv_item,
+                    'total' => $sub + $igv_item,
                     'codigo_almacen' => $item['codigo_almacen'],
                     'lote' => $item['lote'] ?? null,
                     'fecha_vencimiento' => $item['fecha_vencimiento'] ?? null
@@ -266,12 +283,16 @@ class CompraController extends Controller
                 $kardexService = app(\App\Services\KardexService::class);
                 foreach ($compra->guias as $guia) {
                     foreach ($request->productos as $item) {
+                        $precio_unitario = $request->has('igv_incluido') ? ($item['precio'] / 1.18) : $item['precio'];
+                        $tc = $request->moneda === 'USD' ? $request->tipo_cambio : 1.000;
+                        $costo_kardex_pen = $precio_unitario * $tc;
+
                         DB::table('kardex')
                             ->where('numero_documento', $guia->numero_guia)
                             ->where('tipo_movimiento', 'INGRESO')
                             ->where('codigo_producto', $item['codigo'])
                             ->update([
-                                'costo_entrada' => $item['precio']
+                                'costo_entrada' => $costo_kardex_pen
                             ]);
                             
                         $almacenesAfectados = DB::table('kardex')

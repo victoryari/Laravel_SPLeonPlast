@@ -17,6 +17,29 @@ class ParametroSistemaController extends Controller
         return view('parametros.index', compact('categorias', 'parametros'));
     }
 
+    public function store(Request $request)
+    {
+        $request->validate([
+            'codigo_parametro' => 'required|string|unique:parametros_sistema,codigo_parametro|max:50',
+            'descripcion' => 'required|string|max:255',
+            'valor' => 'required|string',
+            'categoria' => 'required|string|max:50',
+            'tipo' => 'required|in:TEXTO,NUMERICO,BOOLEANO',
+        ]);
+
+        ParametroSistema::create([
+            'codigo_parametro' => strtoupper(str_replace(' ', '_', $request->codigo_parametro)),
+            'descripcion' => $request->descripcion,
+            'valor' => $request->valor,
+            'categoria' => strtoupper($request->categoria),
+            'tipo' => $request->tipo,
+            'editable' => 1,
+            'fecha_actualizacion' => now()
+        ]);
+
+        return redirect()->route('parametros.index')->with('success', 'Parámetro agregado exitosamente.');
+    }
+
     public function updateBulk(Request $request)
     {
         $data = $request->except('_token', '_method');

@@ -27,8 +27,7 @@ class InventarioController extends Controller
                 'inventario.stock_minimo',
                 'inventario.stock_maximo',
                 'inventario.fecha_ultimo_movimiento'
-            )
-            ->where('inventario.stock_actual', '!=', 0);
+            );
 
         if ($request->search) {
             $query->where(function($q) use ($request) {

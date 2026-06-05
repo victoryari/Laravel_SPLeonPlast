@@ -161,6 +161,25 @@ class GuiaRemisionCompraController extends Controller
                     'lote'                 => $item['lote'] ?? null,
                     'usuario_registro'     => Auth::id()
                 ]);
+
+                // 7. Registrar en movimientos_inventario para trazabilidad
+                DB::table('movimientos_inventario')->insert([
+                    'codigo_almacen'       => $almacen_destino,
+                    'codigo_producto'      => $item['codigo_producto'],
+                    'codigo_unidad_medida' => $unidad_medida,
+                    'lote'                 => $item['lote'] ?? null,
+                    'fecha_vencimiento'    => $item['fecha_vencimiento'] ?? null,
+                    'tipo_movimiento'      => 'INGRESO',
+                    'cantidad'             => $item['cantidad'],
+                    'costo_unitario'       => $costoPromedioActual,
+                    'total'                => $item['cantidad'] * $costoPromedioActual,
+                    'documento_referencia' => 'GUIA REMISION COMPRA',
+                    'numero_referencia'    => $guia->numero_guia,
+                    'observaciones'        => 'Recepción de Guía',
+                    'usuario_movimiento'   => Auth::id(),
+                    'tiene_kardex'         => 1,
+                    'fecha_movimiento'     => now(),
+                ]);
             }
 
             DB::commit();

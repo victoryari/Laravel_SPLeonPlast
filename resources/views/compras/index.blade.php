@@ -60,7 +60,7 @@
                                 <div class="text-xs text-gray-500">RUC: {{ $compra->ruc_proveedor ?? '-' }}</div>
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-right font-bold text-primary">
-                                S/ {{ number_format($compra->total, 2) }}
+                                {{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->total, 2) }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
                                 {{ $compra->creador->nombre_usuario ?? 'Sistema' }}

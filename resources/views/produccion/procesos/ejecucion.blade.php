@@ -132,6 +132,11 @@
     </div>
 
     <!-- Detalle de Componentes -->
+    <!-- Hidden input for stock check when the form block is hidden -->
+    @if(!($es_mezclado || $es_inyectado) || $estado_proceso_actual === 'COMPLETADO')
+        <input type="hidden" id="codigo_almacen_consumo" value="{{ $proceso_produccion_almacen ?? '' }}">
+    @endif
+
     <div class="bg-white rounded-xl shadow-md border-t-4 border-primary overflow-hidden mb-6">
         <div class="bg-slate-50 border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 class="text-lg font-bold text-slate-800">
@@ -239,12 +244,6 @@
                     
                     <div class="flex flex-wrap items-center justify-end gap-4">
                         @if($estado_proceso_actual !== 'COMPLETADO')
-                        <div class="bg-orange-50 px-4 py-2 rounded-lg border border-orange-200 flex items-center shadow-sm">
-                            <label class="text-orange-700 font-bold text-sm mr-3">
-                                Merma (KG):
-                            </label>
-                            <input type="number" name="merma_kg" id="merma_kg" class="w-24 text-center font-bold text-gray-900 border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500" value="0.00" step="0.01">
-                        </div>
                         <button type="button" id="btnGuardar" onclick="enviarGuardado()" class="px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition shadow-sm transform hover:-translate-y-0.5">
                             💾 Guardar Componentes
                         </button>
@@ -352,7 +351,9 @@
     }
 
     function verificarStock() {
-        const almacen = document.getElementById('codigo_almacen_consumo').value;
+        const almacenEl = document.getElementById('codigo_almacen_consumo');
+        if (!almacenEl) return;
+        const almacen = almacenEl.value;
         if (!almacen) return;
 
         const productos = [...document.querySelectorAll('#tbody_items .nueva-fila .c-prod')]
@@ -414,6 +415,7 @@
         if (almacenSelect) {
             almacenSelect.addEventListener('change', verificarStock);
         }
+        verificarStock();
     });
 
     function setupSearchableDropdown(rowId) {
@@ -578,7 +580,7 @@
             
             ${moldesHtml}
             
-            <td class="px-2 py-2"><input type="number" class="text-xs py-1 border border-gray-300 rounded c-cant" style="width: 70px;" value="${item.cantidad||''}" step="0.01"></td>
+            <td class="px-2 py-2"><input type="number" class="text-xs py-1 border border-gray-300 rounded c-cant" style="width: 70px;" value="${item.cantidad||''}" step="0.01" oninput="verificarStock()"></td>
             
             <td class="px-2 py-2"><select class="text-xs py-1 border border-gray-300 rounded c-um" style="width: 60px;">${unitsHtml}</select></td>
             

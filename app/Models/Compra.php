@@ -22,10 +22,13 @@ class Compra extends Model
     'subtotal',
     'igv',            // Corregido: En la BD es 'igv', no 'impuestos'
     'total',
+    'moneda',
+    'tipo_cambio',
     'estado',
     'usuario_creacion',
     'usuario_aprobacion',
-    'id_guia_remision_compra'
+    'id_guia_remision_compra',
+    'igv_incluido'
 ];
 
     public function datosProveedor()

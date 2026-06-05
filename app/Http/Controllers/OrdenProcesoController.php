@@ -436,7 +436,6 @@ class OrdenProcesoController extends Controller
     public function storeComponentes(Request $request, $idop, $id)
     {
         $componentes = json_decode($request->componentes_json ?? '[]', true);
-        $merma_kg = floatval($request->merma_kg ?? 0);
         
         if (empty($componentes)) {
             return back()->with('error', 'No hay datos para guardar.');
@@ -505,10 +504,6 @@ class OrdenProcesoController extends Controller
                 if (!isset($cantidades_agrupadas[$cod])) { $cantidades_agrupadas[$cod] = 0; }
                 $cantidades_agrupadas[$cod] += $cant;
                 $total_insumos_ingresados += $cant;
-            }
-
-            if ($merma_kg > $total_insumos_ingresados) {
-                throw new \Exception("La merma ($merma_kg KG) no puede ser mayor a la cantidad de materiales ingresados ($total_insumos_ingresados KG).");
             }
 
             $codigo_almacen_consumo = $request->input('codigo_almacen_consumo');
@@ -737,20 +732,6 @@ class OrdenProcesoController extends Controller
                 ->where('documento_referencia', 'PRODUCCION')
                 ->update(['tiene_kardex' => true]);
 
-            if ($merma_kg > 0) {
-                $merma_restante = $merma_kg;
-                foreach ($grupos_pep as &$g) {
-                    if ($merma_restante <= 0) break;
-                    if ($g['cant'] >= $merma_restante) {
-                        $g['cant'] -= $merma_restante;
-                        $merma_restante = 0;
-                    } else {
-                        $merma_restante -= $g['cant'];
-                        $g['cant'] = 0;
-                    }
-                }
-            }
-
             $ingresos_creados = 0;
             foreach ($grupos_pep as $g) {
                 if ($g['cant'] > 0) {
@@ -798,63 +779,12 @@ class OrdenProcesoController extends Controller
                     $ingresos_creados++;
                 }
             }
-             
-             $merma_registrada = false;
-            if ($merma_kg > 0) {
-                $codigo_merma = 'MERMA-001';
-                
-                DB::table('producto')->insertOrIgnore([
-                    'codigo' => $codigo_merma, 'descripcion' => 'MERMA / RECUPERABLE DE PRODUCCION', 'codigo_tipo_producto' => 'SUM', 'estado' => 1
-                ]);
-                DB::table('almacen')->insertOrIgnore([
-                    'codigo_almacen' => 'ALM-REC', 'descripcion' => 'ALMACEN DE RECICLAJE Y MERMA', 'activo' => 1
-                ]);
-
-                $lote_merma = 'MERMA-P' . $id . '-' . date('Ymd');
-                
-                $inv_m = DB::table('inventario')->where('codigo_producto', $codigo_merma)->where('codigo_almacen', 'ALM-REC')->where('lote', $lote_merma)->first();
-                if ($inv_m) {
-                    DB::table('inventario')->where('id_inventario', $inv_m->id_inventario)->increment('stock_actual', $merma_kg);
-                } else {
-                    DB::table('inventario')->insert([
-                        'codigo_almacen' => 'ALM-REC', 'codigo_producto' => $codigo_merma, 'lote' => $lote_merma, 'stock_actual' => $merma_kg, 'costo_promedio' => 0, 'estado' => 1
-                    ]);
-                }
-
-                $movMermaId = DB::table('movimientos_inventario')->insertGetId([
-                    'codigo_almacen' => 'ALM-REC', 'codigo_producto' => $codigo_merma, 'lote' => $lote_merma, 'tipo_movimiento' => 'INGRESO', 'cantidad' => $merma_kg, 'costo_unitario' => 0, 'total' => 0, 'documento_referencia' => 'PRODUCCION', 'numero_referencia' => $numero_referencia, 'idop' => $idop, 'observaciones' => 'Ingreso por merma de proceso', 'usuario_movimiento' => $usuario_id, 'fecha_movimiento' => now(), 'estado' => 1, 'tiene_kardex' => true
-                ]);
-
-                $stockMerma = DB::table('inventario')
-                    ->where('codigo_producto', $codigo_merma)
-                    ->where('codigo_almacen', 'ALM-REC')
-                    ->where('lote', $lote_merma)
-                    ->value('stock_actual') ?? $merma_kg;
-
-                DB::table('kardex')->insert([
-                    'codigo_almacen'       => 'ALM-REC',
-                    'codigo_producto'      => $codigo_merma,
-                    'fecha_movimiento'     => now(),
-                    'tipo_movimiento'      => 'INGRESO',
-                    'documento'            => 'PRODUCCION',
-                    'numero_documento'     => $numero_referencia,
-                    'cantidad_entrada'     => $merma_kg,
-                    'cantidad_salida'      => 0,
-                    'cantidad_saldo'       => $stockMerma,
-                    'codigo_referencia_movimiento' => $movMermaId,
-                    'observaciones'        => 'Ingreso por merma de proceso',
-                    'usuario_registro'     => $usuario_id
-                ]);
-                
-                $merma_registrada = true;
-            }
-
             OrdenProceso::where('id', $id)->where(function($q) {
                 $q->where('estado_avance', 'PENDIENTE')->orWhereNull('estado_avance');
             })->update(['estado_avance' => 'EN_PROCESO']);
 
             DB::commit();
-            return back()->with('success', "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados, Merma: " . ($merma_registrada ? "$merma_kg KG" : "0 KG"));
+            return back()->with('success', "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados.");
             
         } catch (\Exception $e) {
             \Log::error('Error en storeComponentes: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());

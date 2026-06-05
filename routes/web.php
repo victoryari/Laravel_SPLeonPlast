@@ -11,7 +11,7 @@ use App\Http\Controllers\{
     OrdenProduccionController, OrdenProcesoController, ReporteController,
     ParametroSistemaController, GuiaRemisionCompraController,
     RequerimientoMaterialController, DespachoRequerimientoController,
-    RutasProduccionController
+    RutasProduccionController, TrazabilidadController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
         
         // Rutas de Parámetros del Sistema
         Route::get('/parametros', [ParametroSistemaController::class, 'index'])->name('parametros.index');
+        Route::post('/parametros', [ParametroSistemaController::class, 'store'])->name('parametros.store');
         Route::post('/parametros/update', [ParametroSistemaController::class, 'updateBulk'])->name('parametros.updateBulk');
         Route::post('/parametros/fetch-tipo-cambio', [ParametroSistemaController::class, 'fetchTipoCambio'])->name('parametros.fetchTipoCambio');
 
@@ -189,6 +190,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/despachos/{id}/atender', [DespachoRequerimientoController::class, 'atender'])->name('inventario.despachos.atender');
             Route::post('/despachos/{id}/store-atender', [DespachoRequerimientoController::class, 'storeAtender'])->name('inventario.despachos.store_atender');
         });
+
+        // 6. Mermas y Scrap
+        Route::get('mermas/ajax/productos-por-op', [\App\Http\Controllers\MermaController::class, 'getProductosPorOP'])->name('mermas.productos_por_op');
+        Route::resource('mermas', \App\Http\Controllers\MermaController::class)->only(['index', 'create', 'store']);
     });
 
     // =========================================================
@@ -255,6 +260,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ReporteController::class, 'index'])->name('index');
         Route::get('/produccion', [ReporteController::class, 'produccion'])->name('produccion');
         Route::get('/inventario', [ReporteController::class, 'inventario'])->name('inventario');
+        Route::get('/trazabilidad', [TrazabilidadController::class, 'index'])->name('trazabilidad');
     });
 
 });

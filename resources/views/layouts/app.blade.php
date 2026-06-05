@@ -104,6 +104,8 @@
                             @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Lista de Ajustes</a>@endif
 
                             @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Extornos</a>@endif
+                            
+                            <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Scrap</a>
                         </div>
                     </div>
                     @endif
@@ -144,9 +146,13 @@
                     @endif
 
                     @if(Auth::user()->hasAccess('reportes.index'))
-                    <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.index') || request()->routeIs('reportes.produccion') || request()->routeIs('reportes.inventario') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-file-invoice-dollar w-6"></i>
                         <span>Reportes</span>
+                    </a>
+                    <a href="{{ route('reportes.trazabilidad') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.trazabilidad') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-project-diagram w-6"></i>
+                        <span>Trazabilidad</span>
                     </a>
                     @endif
 
@@ -310,7 +316,7 @@
         const menuInventario = document.getElementById('menuInventario');
         const iconInventario = document.getElementById('iconInventario');
 
-        const inventarioSlugs = ['existencias', 'recepciones', 'kardex', 'ajuste', 'extornos', 'alertas', 'despachos'];
+        const inventarioSlugs = ['/inventario', 'recepciones', 'kardex', 'ajuste', 'extornos', 'alertas', 'despachos'];
 
         if (inventarioSlugs.some(slug => currentUrl.includes(slug))) {
             menuInventario?.classList.remove('hidden');
@@ -331,7 +337,7 @@
         const menuProduccion = document.getElementById('menuProduccion');
         const iconProduccion = document.getElementById('iconProduccion');
 
-        const produccionSlugs = ['ordenes', 'requerimientos_materiales'];
+        const produccionSlugs = ['ordenes', 'requerimientos-materiales', 'rutas-produccion'];
 
         if (produccionSlugs.some(slug => currentUrl.includes(slug))) {
             menuProduccion?.classList.remove('hidden');
@@ -346,6 +352,29 @@
                 iconProduccion.classList.toggle('rotate-180');
             });
         }
+
+        // Global Uppercase Converter
+        document.addEventListener('input', function(e) {
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') {
+                const type = e.target.type ? e.target.type.toLowerCase() : '';
+                // Exclude fields where uppercase might cause issues
+                if (['password', 'email', 'hidden', 'number', 'date', 'time', 'color', 'file'].includes(type)) return;
+                
+                // Allow bypassing with a class if needed
+                if (e.target.classList.contains('no-uppercase')) return;
+
+                // Save cursor position
+                let start = e.target.selectionStart;
+                let end = e.target.selectionEnd;
+                
+                e.target.value = e.target.value.toUpperCase();
+                
+                // Restore cursor position to avoid jumping to the end
+                if (start !== null && end !== null) {
+                    try { e.target.setSelectionRange(start, end); } catch (err) {}
+                }
+            }
+        });
     </script>
 </body>
 </html>

@@ -113,7 +113,7 @@
                                     {{ number_format($detalle->precio_unitario, 2) }}
                                 </td>
                                 <td class="p-2 text-right font-semibold text-slate-900">
-                                    S/ {{ number_format($detalle->total, 2) }}
+                                    {{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($detalle->total, 2) }}
                                 </td>
                             </tr>
                             @endforeach
@@ -132,15 +132,15 @@
                     <div class="space-y-4">
                         <div class="flex justify-between text-slate-300 text-sm">
                             <span>Subtotal:</span> 
-                            <span class="font-medium text-white">S/ {{ number_format($compra->subtotal, 2) }}</span>
+                            <span class="font-medium text-white">{{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->subtotal, 2) }}</span>
                         </div>
                         <div class="flex justify-between text-slate-300 text-sm">
                             <span>IGV (18%):</span> 
-                            <span class="font-medium text-white">S/ {{ number_format($compra->igv, 2) }}</span>
+                            <span class="font-medium text-white">{{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->igv, 2) }}</span>
                         </div>
                         <div class="pt-4 mt-4 border-t border-slate-600 flex justify-between items-center">
                             <span class="text-slate-200 font-bold">TOTAL:</span> 
-                            <span class="text-2xl font-black text-primary">S/ {{ number_format($compra->total, 2) }}</span>
+                            <span class="text-2xl font-black text-primary">{{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->total, 2) }}</span>
                         </div>
                     </div>
                 </div>
