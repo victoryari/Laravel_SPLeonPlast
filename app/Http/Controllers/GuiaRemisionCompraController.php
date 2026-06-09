@@ -179,6 +179,7 @@ class GuiaRemisionCompraController extends Controller
                     'usuario_movimiento'   => Auth::id(),
                     'tiene_kardex'         => 1,
                     'fecha_movimiento'     => now(),
+                    'estado'               => 1,
                 ]);
             }
 

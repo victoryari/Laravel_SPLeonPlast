@@ -90,7 +90,7 @@
                                 <th class="p-3 font-semibold text-right">Solicitado</th>
                                 <th class="p-3 font-semibold text-right">Atendido</th>
                                 <th class="p-3 font-semibold text-center">Progreso</th>
-                                <th class="p-3 font-semibold text-center">Lote Pref.</th>
+                                <th class="p-3 font-semibold text-center">Lote(s)</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
@@ -98,6 +98,7 @@
                             @php
                                 $pct = $det->cantidad_solicitada > 0 ? min(100, round(($det->cantidad_atendida / $det->cantidad_solicitada) * 100)) : 0;
                                 $completa = $det->cantidad_atendida >= $det->cantidad_solicitada;
+                                $lotesDespachados = $requerimiento->despachosLotes ? $requerimiento->despachosLotes->where('id_detalle', $det->id_detalle) : collect();
                             @endphp
                             <tr class="{{ $completa ? 'bg-green-50/30' : '' }}">
                                 <td class="p-3 font-semibold text-slate-800">{{ $det->producto->descripcion ?? $det->codigo_producto }}</td>
@@ -113,7 +114,21 @@
                                         <span class="text-[10px] font-semibold {{ $pct == 100 ? 'text-green-600' : 'text-slate-500' }}">{{ $pct }}%</span>
                                     </div>
                                 </td>
-                                <td class="p-3 text-center text-slate-500">{{ $det->lote_preferente ?? '-' }}</td>
+                                <td class="p-3 text-center">
+                                    @if($lotesDespachados->count() > 0)
+                                        <div class="flex flex-col gap-1 items-center">
+                                        @foreach($lotesDespachados as $ld)
+                                            <div class="text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 rounded px-1.5 py-0.5 inline-block whitespace-nowrap" title="Despachado: {{ number_format($ld->cantidad, 2) }} kg">{{ $ld->lote }}</div>
+                                        @endforeach
+                                        </div>
+                                    @else
+                                        @if($det->lote_preferente)
+                                            <div class="text-[10px] text-slate-400" title="Lote Preferente Solicitado">Pref: {{ $det->lote_preferente }}</div>
+                                        @else
+                                            <span class="text-slate-400">-</span>
+                                        @endif
+                                    @endif
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>

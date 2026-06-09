@@ -11,8 +11,15 @@ class DespachoRequerimientoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = RequerimientoMaterial::with(['detalles', 'creador'])
-            ->whereIn('estado', ['APROBADO', 'ATENDIDO_PARCIAL']);
+        $tab = $request->get('tab', 'pendientes');
+        
+        $query = RequerimientoMaterial::with(['detalles', 'creador']);
+            
+        if ($tab === 'atendidos') {
+            $query->whereIn('estado', ['ATENDIDO_TOTAL']);
+        } else {
+            $query->whereIn('estado', ['APROBADO', 'ATENDIDO_PARCIAL']);
+        }
 
         if ($request->codigo) {
             $query->where('codigo', 'LIKE', "%{$request->codigo}%");
@@ -21,7 +28,7 @@ class DespachoRequerimientoController extends Controller
         $requerimientos = $query->orderBy('fecha_aprobacion', 'desc')->paginate(15);
         $requerimientos->appends($request->all());
 
-        return view('inventario.despachos.index', compact('requerimientos'));
+        return view('inventario.despachos.index', compact('requerimientos', 'tab'));
     }
 
     public function atender($id)
@@ -100,7 +107,10 @@ class DespachoRequerimientoController extends Controller
             $todasCompletas = true;
 
             foreach ($request->lotes as $item) {
-                $detalle = DetalleRequerimientoMaterial::findOrFail($item['id_detalle']);
+                if ($item['codigo_almacen_origen'] === $item['codigo_almacen_destino']) {
+                    throw new \Exception("El almacén de origen y destino deben ser diferentes.");
+                }
+                $detalle = DetalleRequerimientoMaterial::where('id_detalle', $item['id_detalle'])->lockForUpdate()->firstOrFail();
                 $saldo = $detalle->cantidad_solicitada - $detalle->cantidad_atendida;
                 $cantidad = min($item['cantidad'] ?? 0, $saldo);
 

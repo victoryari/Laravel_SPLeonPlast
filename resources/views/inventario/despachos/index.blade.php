@@ -8,6 +8,7 @@
 
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
         <form action="{{ route('inventario.despachos.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
+            <input type="hidden" name="tab" value="{{ $tab }}">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fas fa-search text-gray-400"></i>
@@ -18,6 +19,21 @@
                 Buscar
             </button>
         </form>
+    </div>
+
+    <div class="mb-4 border-b border-gray-200">
+        <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+            <li class="mr-2" role="presentation">
+                <a href="{{ route('inventario.despachos.index', ['tab' => 'pendientes', 'codigo' => request('codigo')]) }}" class="inline-block p-4 border-b-2 rounded-t-lg transition-colors {{ $tab === 'pendientes' ? 'border-primary text-primary font-bold' : 'border-transparent hover:text-gray-600 hover:border-gray-300 text-gray-500' }}">
+                    <i class="fas fa-clock mr-2"></i>Pendientes de Atención
+                </a>
+            </li>
+            <li class="mr-2" role="presentation">
+                <a href="{{ route('inventario.despachos.index', ['tab' => 'atendidos', 'codigo' => request('codigo')]) }}" class="inline-block p-4 border-b-2 rounded-t-lg transition-colors {{ $tab === 'atendidos' ? 'border-emerald-500 text-emerald-600 font-bold' : 'border-transparent hover:text-gray-600 hover:border-gray-300 text-gray-500' }}">
+                    <i class="fas fa-check-circle mr-2"></i>Atendidos (Historial)
+                </a>
+            </li>
+        </ul>
     </div>
 
     <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
@@ -64,15 +80,21 @@
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                 <div class="flex items-center justify-center gap-3">
-                                    <a href="{{ route('inventario.despachos.atender', $req->id_requerimiento) }}" class="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition-colors font-semibold shadow-sm" title="Despachar Materiales">
-                                        <i class="fas fa-boxes mr-1"></i> Despachar
-                                    </a>
+                                    @if($tab === 'pendientes')
+                                        <a href="{{ route('inventario.despachos.atender', $req->id_requerimiento) }}" class="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition-colors font-semibold shadow-sm" title="Despachar Materiales">
+                                            <i class="fas fa-boxes mr-1"></i> Despachar
+                                        </a>
+                                    @else
+                                        <a href="{{ route('requerimientos_materiales.show', $req->id_requerimiento) }}" class="text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1 rounded-md transition-colors font-semibold shadow-sm" title="Ver Detalle">
+                                            <i class="fas fa-eye mr-1"></i> Ver Detalle
+                                        </a>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron requerimientos pendientes de atención.</td>
+                            <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron requerimientos en esta bandeja.</td>
                         </tr>
                     @endforelse
                 </tbody>

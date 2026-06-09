@@ -176,6 +176,7 @@ class InventarioController extends Controller
                         'usuario_movimiento'   => Auth::id(),
                         'tiene_kardex'         => 1,
                         'fecha_movimiento'     => now(),
+                        'estado'               => 1,
                     ]);
                 }
             }
@@ -282,6 +283,7 @@ class InventarioController extends Controller
             $registroInventario = DB::table('inventario')
                 ->where('codigo_producto', $codigo_prod)
                 ->where('codigo_almacen', $almacen_destino)
+                ->where('lote', $lote)
                 ->lockForUpdate()
                 ->first();
 
@@ -298,6 +300,7 @@ class InventarioController extends Controller
                 DB::table('inventario')->insert([
                     'codigo_producto' => $codigo_prod,
                     'codigo_almacen' => $almacen_destino,
+                    'lote' => $lote,
                     'stock_actual' => $cantidad_real,
                     'stock_minimo' => 0,
                     'stock_maximo' => 0,
@@ -618,6 +621,8 @@ class InventarioController extends Controller
         $updates = [];
         if ($request->has('stock_minimo')) $updates['stock_minimo'] = $request->stock_minimo;
         if ($request->has('stock_maximo')) $updates['stock_maximo'] = $request->stock_maximo;
+        $updates['fecha_ultimo_movimiento'] = now();
+        $updates['usuario_ultimo_movimiento'] = Auth::id();
 
         DB::table('inventario')->where('id_inventario', $request->id_inventario)->update($updates);
 
@@ -737,6 +742,16 @@ class InventarioController extends Controller
 
             $nuevo_saldo = $request->tipo === 'INGRESO' ? $saldo_anterior + $request->cantidad : $saldo_anterior - $request->cantidad;
 
+            // G17: Advertir si se superan stocks mín/máx configurados
+            if ($registroInventario) {
+                if (($registroInventario->stock_minimo ?? 0) > 0 && $nuevo_saldo < $registroInventario->stock_minimo) {
+                    session()->flash('warning', "Advertencia: Stock ({$nuevo_saldo}) debajo del mínimo ({$registroInventario->stock_minimo}).");
+                }
+                if (($registroInventario->stock_maximo ?? 0) > 0 && $nuevo_saldo > $registroInventario->stock_maximo) {
+                    session()->flash('warning', "Advertencia: Stock ({$nuevo_saldo}) supera el máximo ({$registroInventario->stock_maximo}).");
+                }
+            }
+
             // Calcular costos con promedio ponderado
             $kardexService = app(KardexService::class);
             $cantidadEntrada = $request->tipo === 'INGRESO' ? $request->cantidad : 0;
@@ -747,6 +762,7 @@ class InventarioController extends Controller
                 ->where('codigo_almacen', $request->codigo_almacen)
                 ->orderBy('fecha_movimiento', 'desc')
                 ->orderBy('id_kardex', 'desc')
+                ->lockForUpdate()
                 ->first();
             $costoPromedioActual = $ultimoKardex?->costo_promedio ?? 0;
 
@@ -1081,17 +1097,21 @@ class InventarioController extends Controller
         if ($request->confirmacion !== 'ANULAR') return back()->with('error', 'Palabra incorrecta.');
         try {
             DB::beginTransaction();
-            $mov = MovimientoInventario::findOrFail($id);
+            $mov = MovimientoInventario::where('id_movimiento', $id)->lockForUpdate()->firstOrFail();
             
             $stock = Inventario::where('codigo_producto', $mov->codigo_producto)
                                ->where('codigo_almacen', $mov->codigo_almacen)
-                               ->first(); 
+                               ->lockForUpdate()
+                               ->first();
             
-            $nuevo_stock = $stock->stock_actual - $mov->cantidad;
+            // Revertir el efecto del movimiento original
+            $nuevo_stock = $mov->tipo_movimiento === 'INGRESO'
+                ? $stock->stock_actual - $mov->cantidad
+                : $stock->stock_actual + $mov->cantidad;
             if ($nuevo_stock < 0) throw new \Exception("El stock no puede quedar en negativo.");
             
             $stock->update(['stock_actual' => $nuevo_stock]);
-            $mov->update(['estado' => 0, 'observaciones' => $mov->observaciones . ' [EXTORNADO]']);
+            $mov->update(['estado' => 0, 'observaciones' => ($mov->observaciones ?? '') . ' [EXTORNADO]']);
             
             DB::commit();
             return back()->with('success', 'Extorno realizado.');
@@ -1251,5 +1271,102 @@ class InventarioController extends Controller
             DB::rollBack();
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function kardexDesgloseCosto($id)
+    {
+        $kardex = DB::table('kardex')->where('id_kardex', $id)->first();
+        if (!$kardex) {
+            return response()->json(['error' => 'Movimiento no encontrado.'], 404);
+        }
+
+        if ($kardex->documento !== 'RECEPCION_PEP' && $kardex->documento !== 'PRODUCCION') {
+            return response()->json(['error' => 'El desglose de costos solo está disponible para ingresos de producción (RECEPCION_PEP) o consumo de proceso (PRODUCCION).'], 400);
+        }
+
+        $html = '<div class="space-y-4">';
+        
+        if (preg_match('/OP-(\d+)-PROC-(\d+)/', $kardex->numero_documento, $matches)) {
+            $idop = $matches[1];
+            $idproceso = $matches[2];
+            
+            $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+            $proceso = DB::table('orden_proceso')->where('id', $idproceso)->first();
+            
+            $html .= '<div class="bg-slate-50 p-3 rounded-lg border border-slate-200">';
+            $html .= '<p class="text-sm"><strong>Orden de Producción:</strong> ' . ($op->codigo_op ?? 'OP#' . $idop) . '</p>';
+            $html .= '<p class="text-sm"><strong>Proceso:</strong> ' . ($proceso->proceso ?? 'Desconocido') . '</p>';
+            $html .= '</div>';
+
+            $consumos = DB::table('kardex as k')
+                ->join('producto as p', 'k.codigo_producto', '=', 'p.codigo')
+                ->where('k.documento', 'PRODUCCION')
+                ->where('k.numero_documento', 'LIKE', $kardex->numero_documento . '%')
+                ->where('k.tipo_movimiento', 'SALIDA')
+                ->select('p.descripcion', 'k.lote', 'k.cantidad_salida as cantidad', 'k.costo_salida as costo_unitario', 'k.total_salida as total')
+                ->get();
+
+            $costosAdicionales = DB::table('produccion_costos')
+                ->where('idop', $idop)
+                ->get();
+
+            $totalSuma = 0;
+
+            if ($consumos->count() > 0) {
+                $html .= '<h4 class="font-bold text-sm text-slate-700 mt-4 mb-2">Materia Prima y Componentes Consumidos:</h4>';
+                $html .= '<div class="overflow-x-auto"><table class="w-full text-xs text-left border">';
+                $html .= '<thead class="bg-slate-100 uppercase text-slate-500"><tr><th class="p-2 border">Material</th><th class="p-2 border">Lote</th><th class="p-2 border text-right">Cant.</th><th class="p-2 border text-right">Costo Unit.</th><th class="p-2 border text-right">Subtotal</th></tr></thead><tbody>';
+                
+                foreach ($consumos as $c) {
+                    $html .= '<tr>';
+                    $html .= '<td class="p-2 border">' . $c->descripcion . '</td>';
+                    $html .= '<td class="p-2 border">' . ($c->lote ?: '-') . '</td>';
+                    $html .= '<td class="p-2 border text-right">' . number_format($c->cantidad, 2) . '</td>';
+                    $html .= '<td class="p-2 border text-right">' . number_format($c->costo_unitario, 6) . '</td>';
+                    $html .= '<td class="p-2 border text-right font-medium">' . number_format($c->total, 2) . '</td>';
+                    $html .= '</tr>';
+                    $totalSuma += $c->total;
+                }
+                $html .= '</tbody></table></div>';
+            } else {
+                $html .= '<p class="text-sm text-slate-500 italic mt-2">No se encontraron consumos de materiales registrados para este proceso.</p>';
+            }
+
+            if ($costosAdicionales->count() > 0) {
+                $html .= '<h4 class="font-bold text-sm text-slate-700 mt-4 mb-2">Costos Operativos (Horas Hombre, Máquina, etc.):</h4>';
+                $html .= '<div class="overflow-x-auto"><table class="w-full text-xs text-left border">';
+                $html .= '<thead class="bg-slate-100 uppercase text-slate-500"><tr><th class="p-2 border">Tipo</th><th class="p-2 border">Descripción</th><th class="p-2 border text-right">Cant. (Hrs)</th><th class="p-2 border text-right">Costo x Hr</th><th class="p-2 border text-right">Subtotal</th></tr></thead><tbody>';
+                
+                foreach ($costosAdicionales as $ca) {
+                    $html .= '<tr>';
+                    $html .= '<td class="p-2 border">' . $ca->tipo_costo . '</td>';
+                    $html .= '<td class="p-2 border">' . $ca->descripcion . '</td>';
+                    $html .= '<td class="p-2 border text-right">' . number_format($ca->cantidad, 2) . '</td>';
+                    $html .= '<td class="p-2 border text-right">' . number_format($ca->costo_unitario, 2) . '</td>';
+                    $html .= '<td class="p-2 border text-right font-medium">' . number_format($ca->costo_total, 2) . '</td>';
+                    $html .= '</tr>';
+                    $totalSuma += $ca->costo_total;
+                }
+                $html .= '</tbody></table></div>';
+            } else {
+                $html .= '<p class="text-sm text-slate-500 italic mt-2">Aún no se han registrado horas hombre ni horas máquina para esta Orden de Producción.</p>';
+            }
+
+            if ($consumos->count() > 0 || $costosAdicionales->count() > 0) {
+                $html .= '<div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold text-lg text-slate-800">';
+                $html .= 'Costo Total de Producción: <span class="text-red-600 ml-2">' . number_format($totalSuma, 2) . '</span>';
+                $html .= '</div>';
+                
+                $html .= '<div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">';
+                $html .= '<p>Este costo total determina el costo de ingreso del Producto en Proceso o Terminado.</p>';
+                $html .= '</div>';
+            }
+        } else {
+            $html .= '<p class="text-sm text-slate-500">Formato de documento no reconocido para buscar consumos.</p>';
+        }
+
+        $html .= '</div>';
+
+        return response()->json(['html' => $html]);
     }
 }

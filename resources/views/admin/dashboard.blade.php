@@ -1,120 +1,252 @@
 @extends('layouts.app')
 
-@section('title', 'Panel de Control')
+@section('title', 'Dashboard de Producción')
 
 @section('content')
 <div class="container mx-auto">
-    <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-800">Panel General de Producción</h1>
-        <p class="text-gray-600">Bienvenido al sistema de gestión de <strong>Leon Plast</strong>. Aquí tienes un resumen de la actividad hoy.</p>
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Dashboard de Producción</h1>
+            <p class="text-gray-600">Indicadores Clave de Rendimiento (KPIs) y control de planta.</p>
+        </div>
+        <div>
+            <form id="filtroRangoForm" method="GET" action="{{ route('dashboard') }}" class="flex items-center space-x-2">
+                <label for="rango" class="text-sm font-semibold text-gray-700">Rango Temporal:</label>
+                <select name="rango" id="rango" onchange="document.getElementById('filtroRangoForm').submit()" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary py-2 text-sm font-medium">
+                    <option value="hoy" {{ $rango == 'hoy' ? 'selected' : '' }}>Hoy</option>
+                    <option value="semana" {{ $rango == 'semana' ? 'selected' : '' }}>Esta Semana</option>
+                    <option value="mes" {{ $rango == 'mes' ? 'selected' : '' }}>Este Mes</option>
+                </select>
+            </form>
+        </div>
     </div>
 
+    <!-- Widgets (Tarjetas de Resumen) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase">Producción Hoy</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ number_format($stats['produccion_hoy']) }} Unid.</p>
-                </div>
-                <div class="bg-primary-50 p-3 rounded-lg">
-                    <i class="fas fa-industry text-primary text-xl"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500 hover:shadow-lg transition">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-500 uppercase">Órdenes Activas</p>
                     <p class="text-2xl font-bold text-gray-800">{{ $stats['ordenes_activas'] }}</p>
                 </div>
-                <div class="bg-green-100 p-3 rounded-lg">
-                    <i class="fas fa-tasks text-green-500 text-xl"></i>
+                <div class="bg-blue-100 p-3 rounded-lg">
+                    <i class="fas fa-tasks text-blue-500 text-xl"></i>
                 </div>
             </div>
         </div>
 
-        <a href="{{ route('inventario.alertas_stock') }}" class="block bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500 hover:shadow-lg hover:bg-yellow-50/50 transition">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500 hover:shadow-lg transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase">Alertas Almacén</p>
-                    <p class="text-2xl font-bold {{ $stats['alertas_almacen'] > 0 ? 'text-red-600' : 'text-gray-800' }}">{{ $stats['alertas_almacen'] }}</p>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Nivel de Merma Pura</p>
+                    <p class="text-2xl font-bold {{ $stats['porcentaje_merma'] > 5 ? 'text-red-600' : 'text-gray-800' }}">
+                        {{ $stats['porcentaje_merma'] }}%
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">Total: {{ number_format($stats['total_merma'], 2) }} kg</p>
                 </div>
-                <div class="bg-yellow-100 p-3 rounded-lg">
-                    <i class="fas fa-exclamation-triangle text-yellow-500 text-xl"></i>
+                <div class="bg-red-100 p-3 rounded-lg">
+                    <i class="fas fa-trash text-red-500 text-xl"></i>
                 </div>
             </div>
-        </a>
+        </div>
 
-        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500 hover:shadow-lg transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase">Eficiencia Total</p>
-                    <p class="text-2xl font-bold text-gray-800">{{ $stats['eficiencia'] }}</p>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Horas Hombre</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $stats['horas_hombre'] }} h</p>
+                </div>
+                <div class="bg-green-100 p-3 rounded-lg">
+                    <i class="fas fa-users text-green-500 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500 hover:shadow-lg transition">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Horas Máquina</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ $stats['horas_maquina'] }} h</p>
+                    <p class="text-xs text-gray-500 mt-1">Costo: S/ {{ number_format($stats['costo_maquina'], 2) }}</p>
                 </div>
                 <div class="bg-purple-100 p-3 rounded-lg">
-                    <i class="fas fa-chart-pie text-purple-500 text-xl"></i>
+                    <i class="fas fa-cogs text-purple-500 text-xl"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
-                <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide">Últimos Procesos de Mezclado</h3>
-                <a href="#" class="text-xs text-primary hover:underline">Ver todo</a>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Gráfico Dona: Estados OP -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 border-b pb-2">Estado de Producción</h3>
+            <div class="relative h-64">
+                <canvas id="chartEstados"></canvas>
             </div>
-            <div class="p-0 overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead>
-                        <tr class="bg-gray-50 text-gray-600 uppercase text-xs">
-                            <th class="px-6 py-3 font-semibold">Operario</th>
-                            <th class="px-6 py-3 font-semibold">Máquina</th>
-                            <th class="px-6 py-3 font-semibold">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">Carlos Mendoza</td>
-                            <td class="px-6 py-4 font-medium text-gray-700">Inyectora #04</td>
-                            <td class="px-6 py-4">
-                                <x-badge color="green">Operando</x-badge>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-4">Luis Montero</td>
-                            <td class="px-6 py-4 font-medium text-gray-700">Mezcladora #01</td>
-                            <td class="px-6 py-4">
-                                <x-badge color="yellow">Mantenimiento</x-badge>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            @if(empty($chartEstados['data']))
+                <p class="text-center text-gray-400 text-sm mt-4">No hay datos en este rango.</p>
+            @endif
         </div>
 
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4">Acceso Rápido</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <button class="flex flex-col items-center justify-center p-4 bg-primary-50 border border-primary-50 rounded-lg text-primary hover:bg-primary-50 transition">
-                    <i class="fas fa-plus-circle text-2xl mb-2"></i>
-                    <span class="text-xs font-semibold">Nueva Orden</span>
-                </button>
-                <button class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-100 rounded-lg text-slate-700 hover:bg-slate-100 transition">
-                    <i class="fas fa-truck-loading text-2xl mb-2"></i>
-                    <span class="text-xs font-semibold">Ingreso Stock</span>
-                </button>
-                <button class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-100 rounded-lg text-slate-700 hover:bg-slate-100 transition">
-                    <i class="fas fa-file-pdf text-2xl mb-2"></i>
-                    <span class="text-xs font-semibold">Generar Reporte</span>
-                </button>
-                <button class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-100 rounded-lg text-slate-700 hover:bg-slate-100 transition">
-                    <i class="fas fa-user-plus text-2xl mb-2"></i>
-                    <span class="text-xs font-semibold">Nuevo Usuario</span>
-                </button>
+        <!-- Gráfico Barras Horizontal: Centros de Trabajo -->
+        <div class="bg-white rounded-xl shadow-md p-6 lg:col-span-2">
+            <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 border-b pb-2">Volumen Producido por Centro de Trabajo</h3>
+            <div class="relative h-64">
+                <canvas id="chartCentros"></canvas>
+            </div>
+            @if(empty($chartCentros['data']))
+                <p class="text-center text-gray-400 text-sm mt-4">No hay datos en este rango.</p>
+            @endif
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Gráfico Líneas: Tendencia Mermas -->
+        <div class="bg-white rounded-xl shadow-md p-6 lg:col-span-2">
+            <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 border-b pb-2">Tendencia de Mermas Pura (Últimos 30 días)</h3>
+            <div class="relative h-64">
+                <canvas id="chartMermas"></canvas>
+            </div>
+            @if(empty($chartMermas['data']))
+                <p class="text-center text-gray-400 text-sm mt-4">No hay reportes de merma recientes.</p>
+            @endif
+        </div>
+
+        <!-- Tabla: OPs Demoradas -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-gray-100 bg-red-50 flex justify-between items-center">
+                <h3 class="font-bold text-red-700 uppercase text-sm tracking-wide"><i class="fas fa-exclamation-circle mr-2"></i>Alertas de Retraso</h3>
+            </div>
+            <div class="p-0 flex-1 overflow-y-auto max-h-72">
+                @if($ordenesDemoradas->count() > 0)
+                <table class="w-full text-left text-sm">
+                    <tbody class="divide-y divide-gray-100">
+                        @foreach($ordenesDemoradas as $od)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-red-600">{{ $od->codigo_op }}</div>
+                                <div class="text-xs text-gray-500">{{ $od->descripcion_producto_proceso }}</div>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="text-xs font-semibold text-gray-700">Prog: {{ \Carbon\Carbon::parse($od->fecha)->format('d/m/Y') }}</div>
+                                <div class="mt-1"><span class="px-2 py-1 text-[10px] font-bold rounded-full bg-red-100 text-red-700">{{ $od->estado }}</span></div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @else
+                <div class="flex flex-col items-center justify-center h-full p-6 text-gray-400">
+                    <i class="fas fa-check-circle text-4xl text-green-300 mb-3"></i>
+                    <p class="text-sm font-medium">No hay órdenes demoradas</p>
+                </div>
+                @endif
             </div>
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#6b7280';
+    
+    // 1. Gráfico Dona: Estados
+    const ctxEstados = document.getElementById('chartEstados');
+    if (ctxEstados && @json(!empty($chartEstados['data']))) {
+        new Chart(ctxEstados, {
+            type: 'doughnut',
+            data: {
+                labels: @json($chartEstados['labels']),
+                datasets: [{
+                    data: @json($chartEstados['data']),
+                    backgroundColor: [
+                        '#3b82f6', // blue
+                        '#10b981', // green
+                        '#f59e0b', // amber
+                        '#ef4444', // red
+                        '#8b5cf6'  // violet
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                },
+                cutout: '70%'
+            }
+        });
+    }
+
+    // 2. Gráfico Barras: Centros de Trabajo
+    const ctxCentros = document.getElementById('chartCentros');
+    if (ctxCentros && @json(!empty($chartCentros['data']))) {
+        new Chart(ctxCentros, {
+            type: 'bar',
+            data: {
+                labels: @json($chartCentros['labels']),
+                datasets: [{
+                    label: 'Volumen (Unidades/Kg)',
+                    data: @json($chartCentros['data']),
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y', // Barra horizontal
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { borderDash: [2, 4], color: '#f3f4f6' } }
+                }
+            }
+        });
+    }
+
+    // 3. Gráfico Líneas: Tendencia Mermas
+    const ctxMermas = document.getElementById('chartMermas');
+    if (ctxMermas && @json(!empty($chartMermas['data']))) {
+        new Chart(ctxMermas, {
+            type: 'line',
+            data: {
+                labels: @json($chartMermas['labels']),
+                datasets: [{
+                    label: 'Merma Pura (Kg)',
+                    data: @json($chartMermas['data']),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#ef4444',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#ef4444'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { mode: 'index', intersect: false }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { borderDash: [2, 4], color: '#f3f4f6' }, beginAtZero: true }
+                }
+            }
+        });
+    }
+});
+</script>
 @endsection

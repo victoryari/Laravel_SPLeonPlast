@@ -104,37 +104,38 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
-                    <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold">
-                        <th class="p-3 border-r border-slate-700">Fecha</th>
-                        <th class="p-3 border-r border-slate-700">Producto</th>
-                        <th class="p-3 border-r border-slate-700 text-center">Tipo</th>
-                        <th class="p-3 border-r border-slate-700">Documento</th>
-                        <th class="p-3 border-r border-slate-700 text-right" colspan="2">Entrada</th>
-                        <th class="p-3 border-r border-slate-700 text-right" colspan="2">Salida</th>
-                        <th class="p-3 text-right" colspan="3">Saldo Final</th>
+                    <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold text-center">
+                        <th class="p-3 border border-slate-700 align-middle" rowspan="2">Fecha</th>
+                        <th class="p-3 border border-slate-700 align-middle" rowspan="2">Producto / Almacén</th>
+                        <th class="p-3 border border-slate-700 align-middle" rowspan="2">Tipo Operac.</th>
+                        <th class="p-3 border border-slate-700 align-middle" rowspan="2">Documento</th>
+                        <th class="p-2 border border-slate-700" colspan="3">Entradas</th>
+                        <th class="p-2 border border-slate-700" colspan="3">Salidas</th>
+                        <th class="p-2 border border-slate-700" colspan="3">Saldo Final</th>
                     </tr>
-                    <tr class="bg-slate-700 text-slate-400 text-[10px] uppercase tracking-wider">
-                        <th colspan="4" class="p-2 border-r border-slate-600"></th>
-                        <th class="p-2 border-r border-slate-600 text-right">Cant.</th>
-                        <th class="p-2 border-r border-slate-600 text-right">Valor S/</th>
-                        <th class="p-2 border-r border-slate-600 text-right">Cant.</th>
-                        <th class="p-2 border-r border-slate-600 text-right">Valor S/</th>
-                        <th class="p-2 border-r border-slate-600 text-right">Cant.</th>
-                        <th class="p-2 border-r border-slate-600 text-right">Costo Prom.</th>
-                        <th class="p-2 text-right">Total S/</th>
+                    <tr class="bg-slate-700 text-slate-400 text-[10px] uppercase tracking-wider text-center">
+                        <th class="p-2 border border-slate-600">Cantidad</th>
+                        <th class="p-2 border border-slate-600">C. Unitario</th>
+                        <th class="p-2 border border-slate-600">Costo Total</th>
+                        <th class="p-2 border border-slate-600">Cantidad</th>
+                        <th class="p-2 border border-slate-600">C. Unitario</th>
+                        <th class="p-2 border border-slate-600">Costo Total</th>
+                        <th class="p-2 border border-slate-600">Cantidad</th>
+                        <th class="p-2 border border-slate-600">C. Unitario</th>
+                        <th class="p-2 border border-slate-600">Costo Total</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($movimientos as $mov)
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="p-3 text-slate-500 whitespace-nowrap text-[11px]">
+                        <td class="p-3 border-r border-slate-100 text-slate-500 whitespace-nowrap text-[11px] text-center">
                             {{ \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/Y H:i') }}
                         </td>
-                        <td class="p-3 font-semibold text-slate-800">
+                        <td class="p-3 border-r border-slate-100 font-semibold text-slate-800">
                             {{ $mov->producto }}
                             <p class="text-[10px] text-slate-400">{{ $mov->almacen }}</p>
                         </td>
-                        <td class="p-3 text-center">
+                        <td class="p-3 border-r border-slate-100 text-center">
                             @php
                                 $badgeColor = [
                                     'INGRESO' => 'green',
@@ -145,35 +146,63 @@
                             @endphp
                             <x-badge color="{{ $badgeColor }}">{{ $mov->tipo_movimiento }}</x-badge>
                         </td>
-                        <td class="p-3">
-                            <span class="text-slate-600 font-medium text-[11px]">{{ $mov->documento }}</span>
-                            <p class="text-[10px] text-slate-400">{{ $mov->numero_documento }}</p>
+                        <td class="p-3 border-r border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <div>
+                                    <span class="text-slate-600 font-medium text-[11px]">{{ $mov->documento }}</span>
+                                    <p class="text-[10px] text-slate-400">{{ $mov->numero_documento }}</p>
+                                </div>
+                                @if($mov->documento === 'RECEPCION_PEP' || $mov->documento === 'PRODUCCION')
+                                <button type="button" onclick="verDesgloseCosto({{ $mov->id_kardex }})" class="text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 p-1 rounded transition-colors" title="Ver desglose de costo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </button>
+                                @endif
+                            </div>
                         </td>
-                        <td class="p-3 text-right font-semibold text-green-700 bg-green-50/30">
-                            {{ $mov->cantidad_entrada ? number_format($mov->cantidad_entrada, 2) : '-' }}
+                        <!-- ENTRADAS -->
+                        <td class="p-3 border-r border-slate-100 text-right font-semibold text-green-700 bg-green-50/30">
+                            {{ $mov->cantidad_entrada > 0 ? number_format($mov->cantidad_entrada, 2) : '-' }}
                         </td>
-                        <td class="p-3 text-right text-green-600 bg-green-50/30">
-                            {{ $mov->total_entrada ? 'S/ ' . number_format($mov->total_entrada, 2) : '-' }}
+                        <td class="p-3 border-r border-slate-100 text-right text-slate-500 bg-green-50/30">
+                            @if($mov->cantidad_entrada > 0 && $mov->total_entrada > 0)
+                                {{ number_format($mov->total_entrada / $mov->cantidad_entrada, 6) }}
+                            @else
+                                -
+                            @endif
                         </td>
-                        <td class="p-3 text-right font-semibold text-red-700 bg-red-50/30">
-                            {{ $mov->cantidad_salida ? number_format($mov->cantidad_salida, 2) : '-' }}
+                        <td class="p-3 border-r border-slate-200 text-right font-medium text-green-700 bg-green-50/30">
+                            {{ $mov->total_entrada > 0 ? number_format($mov->total_entrada, 2) : '-' }}
                         </td>
-                        <td class="p-3 text-right text-red-600 bg-red-50/30">
-                            {{ $mov->total_salida ? 'S/ ' . number_format($mov->total_salida, 2) : '-' }}
+                        
+                        <!-- SALIDAS -->
+                        <td class="p-3 border-r border-slate-100 text-right font-semibold text-red-700 bg-red-50/30">
+                            {{ $mov->cantidad_salida > 0 ? number_format($mov->cantidad_salida, 2) : '-' }}
                         </td>
-                        <td class="p-3 text-right font-bold text-slate-800">
+                        <td class="p-3 border-r border-slate-100 text-right text-slate-500 bg-red-50/30">
+                            @if($mov->cantidad_salida > 0 && $mov->total_salida > 0)
+                                {{ number_format($mov->total_salida / $mov->cantidad_salida, 6) }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td class="p-3 border-r border-slate-200 text-right font-medium text-red-700 bg-red-50/30">
+                            {{ $mov->total_salida > 0 ? number_format($mov->total_salida, 2) : '-' }}
+                        </td>
+                        
+                        <!-- SALDO FINAL -->
+                        <td class="p-3 border-r border-slate-100 text-right font-bold text-slate-800">
                             {{ number_format($mov->cantidad_saldo, 2) }}
                         </td>
-                        <td class="p-3 text-right text-slate-500">
-                            {{ $mov->costo_promedio ? 'S/ ' . number_format($mov->costo_promedio, 9) : '-' }}
+                        <td class="p-3 border-r border-slate-100 text-right text-slate-500">
+                            {{ $mov->costo_promedio > 0 ? number_format($mov->costo_promedio, 6) : '0.000000' }}
                         </td>
                         <td class="p-3 text-right font-bold text-primary">
-                            {{ $mov->total_saldo ? 'S/ ' . number_format($mov->total_saldo, 9) : 'S/ 0.000000000' }}
+                            {{ $mov->total_saldo > 0 ? number_format($mov->total_saldo, 2) : '0.00' }}
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="11" class="p-12 text-center text-slate-400">
+                        <td colspan="13" class="p-12 text-center text-slate-400">
                             <i class="fas fa-history text-4xl mb-3 opacity-20"></i>
                             <p class="font-semibold">No hay movimientos registrados en el historial.</p>
                         </td>
@@ -255,7 +284,59 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+window.verDesgloseCosto = function(id) {
+    const modal = document.getElementById('modalDesgloseCosto');
+    const content = document.getElementById('modalDesgloseContent');
+    modal.classList.remove('hidden');
+    content.innerHTML = '<div class="flex justify-center p-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>';
+
+    fetch(`/admin/inventario/kardex/${id}/desglose-costo`)
+        .then(res => {
+            if (!res.ok) throw new Error('Error en red o servidor');
+            return res.json();
+        })
+        .then(data => {
+            if (data.html) {
+                content.innerHTML = data.html;
+            } else if (data.error) {
+                content.innerHTML = `<p class="text-red-500 text-sm p-4">${data.error}</p>`;
+            }
+        })
+        .catch(err => {
+            content.innerHTML = `<p class="text-red-500 text-sm p-4">Error al cargar el desglose. Es posible que el registro ya no exista o el servidor esté fallando.</p>`;
+            console.error(err);
+        });
+};
+
+window.cerrarModalDesglose = function() {
+    document.getElementById('modalDesgloseCosto').classList.add('hidden');
+};
 </script>
+
+<!-- Modal Desglose de Costo -->
+<div id="modalDesgloseCosto" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+    <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                <h3 class="text-lg font-bold text-slate-800">Desglose de Costo de Producción</h3>
+                <button onclick="cerrarModalDesglose()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modalDesgloseContent" class="p-6">
+                <!-- Contenido cargado por AJAX -->
+            </div>
+            <div class="bg-slate-50 px-6 py-4 flex justify-end">
+                <button onclick="cerrarModalDesglose()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg text-sm font-medium transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style>
     @media print {

@@ -150,6 +150,7 @@ Route::middleware('auth')->group(function () {
 
         // 2. Kardex / Historial de Movimientos
         Route::get('/kardex', [InventarioController::class, 'kardex'])->name('inventario.kardex');
+        Route::get('/kardex/{id}/desglose-costo', [InventarioController::class, 'kardexDesgloseCosto'])->name('inventario.kardex.desgloseCosto');
         Route::get('/kardex/exportar/excel', [InventarioController::class, 'exportarKardexExcel'])->name('inventario.kardex.exportar.excel');
         Route::get('/kardex/exportar/pdf', [InventarioController::class, 'exportarKardexPdf'])->name('inventario.kardex.exportar.pdf');
 
@@ -176,6 +177,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/ajuste/{kardex}/editar', [InventarioController::class, 'editAjuste'])->name('inventario.ajuste.edit');
             Route::put('/ajuste/{kardex}', [InventarioController::class, 'updateAjuste'])->name('inventario.ajuste.update');
             Route::delete('/ajuste/{kardex}', [InventarioController::class, 'destroyAjuste'])->name('inventario.ajuste.destroy');
+
+            // TRANSFERENCIAS ENTRE ALMACENES
+            Route::get('/transferencias', [\App\Http\Controllers\TransferenciaAlmacenController::class, 'index'])->name('inventario.transferencias.index');
+            Route::get('/transferencias/create', [\App\Http\Controllers\TransferenciaAlmacenController::class, 'create'])->name('inventario.transferencias.create');
+            Route::post('/transferencias', [\App\Http\Controllers\TransferenciaAlmacenController::class, 'store'])->name('inventario.transferencias.store');
+            Route::get('/transferencias/{id}', [\App\Http\Controllers\TransferenciaAlmacenController::class, 'show'])->name('inventario.transferencias.show');
+            Route::post('/transferencias/{id}/anular', [\App\Http\Controllers\TransferenciaAlmacenController::class, 'anular'])->name('inventario.transferencias.anular');
+            Route::get('/transferencias-api/lotes', [\App\Http\Controllers\TransferenciaAlmacenController::class, 'buscarLotes'])->name('inventario.transferencias.buscar_lotes');
         });
 
         // 4. Extornos y Auditoría (SOLO Administrador)

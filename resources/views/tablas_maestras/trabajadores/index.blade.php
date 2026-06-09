@@ -63,7 +63,8 @@
                                     <x-empty-state icon="fa-users" message="No se encontraron trabajadores registrados." />
                                 </td>
                             </tr>
-                        </tbody>
+                        @endforelse
+                    </tbody>
                 </table>
             </div>
             @if ($trabajadores->hasPages())

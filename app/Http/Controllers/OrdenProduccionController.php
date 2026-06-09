@@ -69,12 +69,20 @@ class OrdenProduccionController extends Controller
     public function destroy($id)
     {
         try {
-            $orden = OrdenProduccion::findOrFail($id);
-            // Baja lógica
+            DB::beginTransaction();
+            $orden = OrdenProduccion::where('idop', $id)->lockForUpdate()->firstOrFail();
+
+            $procesosActivos = \App\Models\OrdenProceso::where('idop', $id)->where('estado', 1)->count();
+            if ($procesosActivos > 0) {
+                throw new \Exception("No se puede anular la orden porque tiene {$procesosActivos} proceso(s) activo(s). Anule los procesos primero.");
+            }
+
             $orden->update(['activo' => 0]);
-            
+
+            DB::commit();
             return redirect()->route('produccion.ordenes.index')->with('success', 'Orden de producción anulada correctamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return back()->with('error', 'Error al anular: ' . $e->getMessage());
         }
     }

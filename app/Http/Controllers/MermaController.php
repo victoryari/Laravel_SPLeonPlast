@@ -67,15 +67,20 @@ class MermaController extends Controller
             'motivo' => 'nullable|string|max:255'
         ]);
 
+        if (str_starts_with($request->codigo_producto, 'REC-')) {
+            return back()->with('error', 'No se puede registrar merma de un producto ya recuperado (REC-).');
+        }
+
         try {
             DB::beginTransaction();
 
             $productoOrigen = Producto::findOrFail($request->codigo_producto);
             
-            // Obtener stock y costo actual
+            // Obtener stock y costo actual CON LOCK
             $inv = DB::table('inventario')
                 ->where('codigo_producto', $request->codigo_producto)
                 ->where('codigo_almacen', $request->codigo_almacen)
+                ->lockForUpdate()
                 ->first();
 
             if (!$inv || $inv->stock_actual < $request->cantidad) {
@@ -101,33 +106,45 @@ class MermaController extends Controller
 
             // 1. SALIDA del producto origen
             $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+            $nuevoStock = $inv->stock_actual - $request->cantidad;
             DB::table('kardex')->insert([
                 'codigo_producto' => $request->codigo_producto,
                 'codigo_almacen' => $request->codigo_almacen,
-                'tipo_movimiento' => 'SALIDA',
-                'numero_documento' => $numeroDoc,
                 'fecha_movimiento' => now(),
-                'cantidad_salida' => $request->cantidad,
-                'costo_salida' => $costoUnitario,
-                'total_salida' => $costoTotal,
-                'motivo' => 'AJUSTE POR MERMA',
-                'usuario_registro' => Auth::id(),
+                'tipo_movimiento' => 'SALIDA',
+                'documento' => 'MERMA',
+                'numero_documento' => $numeroDoc,
                 'cantidad_entrada' => 0,
                 'costo_entrada' => 0,
                 'total_entrada' => 0,
-                'cantidad_saldo' => 0,
-                'costo_promedio' => 0,
-                'total_saldo' => 0
+                'cantidad_salida' => $request->cantidad,
+                'costo_salida' => $costoUnitario,
+                'total_salida' => $costoTotal,
+                'cantidad_saldo' => $nuevoStock,
+                'costo_promedio' => $inv->costo_promedio,
+                'total_saldo' => $nuevoStock * $inv->costo_promedio,
+                'observaciones' => 'AJUSTE POR MERMA',
+                'usuario_registro' => Auth::id()
             ]);
-            $kardexService->recalcular($request->codigo_producto, $request->codigo_almacen);
+
+            // Actualizar inventario origen
+            DB::table('inventario')
+                ->where('id_inventario', $inv->id_inventario)
+                ->update([
+                    'stock_actual' => $nuevoStock,
+                    'fecha_ultimo_movimiento' => now(),
+                    'usuario_ultimo_movimiento' => Auth::id()
+                ]);
 
             // 2. ENTRADA del producto recuperado si aplica
             if (in_array($request->tipo_merma, ['RECUPERABLE', 'MOLIDO'])) {
-                $param = ParametroSistema::where('codigo_parametro', 'PORCENTAJE_COSTO_RECICLADO')->first();
+                $param = ParametroSistema::where('codigo_parametro', 'PORCENTAJE_COSTO_RECICLADO')->lockForUpdate()->first();
                 $porcentaje = $param ? (float) $param->valor : 0.8;
                 $costoReciclado = $costoUnitario * $porcentaje;
 
                 $codRecuperado = 'REC-' . $request->codigo_producto;
+
+                // Crear producto recuperado si no existe (con lock for update previene duplicados)
                 $prodRecuperado = Producto::firstOrCreate(
                     ['codigo' => $codRecuperado],
                     [
@@ -139,35 +156,66 @@ class MermaController extends Controller
                 );
                 
                 // Asegurar que exista inventario para el producto recuperado
-                DB::table('inventario')->insertOrIgnore([
-                    'codigo_producto' => $codRecuperado,
-                    'codigo_almacen' => $request->codigo_almacen,
-                    'stock_actual' => 0,
-                    'stock_minimo' => 0,
-                    'stock_maximo' => 0,
-                    'costo_promedio' => 0
-                ]);
+                DB::table('inventario')->updateOrInsert(
+                    ['codigo_producto' => $codRecuperado, 'codigo_almacen' => $request->codigo_almacen],
+                    [
+                        'stock_actual' => 0,
+                        'stock_minimo' => 0,
+                        'stock_maximo' => 0,
+                        'costo_promedio' => 0
+                    ]
+                );
+
+                // Obtener último Kardex para calcular saldos correctos
+                $ultimoKardexRec = DB::table('kardex')
+                    ->where('codigo_producto', $codRecuperado)
+                    ->where('codigo_almacen', $request->codigo_almacen)
+                    ->orderBy('fecha_movimiento', 'desc')
+                    ->orderBy('id_kardex', 'desc')
+                    ->lockForUpdate()
+                    ->first();
+
+                $saldoAnteriorRec = $ultimoKardexRec->cantidad_saldo ?? 0;
+                $costoPromAnteriorRec = $ultimoKardexRec->costo_promedio ?? 0;
+                $nuevoSaldoRec = $saldoAnteriorRec + $request->cantidad;
+                $totalEntradaRec = round($request->cantidad * $costoReciclado, 2);
+                $nuevoTotalSaldoRec = $saldoAnteriorRec * $costoPromAnteriorRec + $totalEntradaRec;
+                $nuevoCostoPromRec = $nuevoSaldoRec > 0 ? round($nuevoTotalSaldoRec / $nuevoSaldoRec, 9) : 0;
 
                 DB::table('kardex')->insert([
                     'codigo_producto' => $codRecuperado,
                     'codigo_almacen' => $request->codigo_almacen,
-                    'tipo_movimiento' => 'INGRESO',
-                    'numero_documento' => $numeroDoc,
                     'fecha_movimiento' => now(),
+                    'tipo_movimiento' => 'INGRESO',
+                    'documento' => 'MERMA',
+                    'numero_documento' => $numeroDoc,
                     'cantidad_entrada' => $request->cantidad,
                     'costo_entrada' => $costoReciclado,
-                    'total_entrada' => $request->cantidad * $costoReciclado,
-                    'motivo' => 'INGRESO POR MOLIENDA',
-                    'usuario_registro' => Auth::id(),
+                    'total_entrada' => $totalEntradaRec,
                     'cantidad_salida' => 0,
                     'costo_salida' => 0,
                     'total_salida' => 0,
-                    'cantidad_saldo' => 0,
-                    'costo_promedio' => 0,
-                    'total_saldo' => 0
+                    'cantidad_saldo' => $nuevoSaldoRec,
+                    'costo_promedio' => $nuevoCostoPromRec,
+                    'total_saldo' => round($nuevoSaldoRec * $nuevoCostoPromRec, 9),
+                    'observaciones' => 'INGRESO POR MOLIENDA',
+                    'usuario_registro' => Auth::id()
                 ]);
-                $kardexService->recalcular($codRecuperado, $request->codigo_almacen);
+
+                // Actualizar inventario recuperado
+                DB::table('inventario')
+                    ->where('codigo_producto', $codRecuperado)
+                    ->where('codigo_almacen', $request->codigo_almacen)
+                    ->update([
+                        'stock_actual' => DB::raw("stock_actual + {$request->cantidad}"),
+                        'costo_promedio' => $nuevoCostoPromRec,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]);
             }
+
+            // Recalcular saldos y costos del producto origen
+            $kardexService->recalcular($request->codigo_producto, $request->codigo_almacen);
 
             DB::commit();
             return redirect()->route('mermas.index')->with('success', 'Merma registrada correctamente y Kardex actualizado.');

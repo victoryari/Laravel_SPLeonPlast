@@ -60,7 +60,7 @@ class RequerimientoMaterialController extends Controller
 
         DB::beginTransaction();
         try {
-            $ultimo = RequerimientoMaterial::max('id_requerimiento') ?? 0;
+            $ultimo = RequerimientoMaterial::lockForUpdate()->max('id_requerimiento') ?? 0;
             $codigo = 'REQ-' . str_pad($ultimo + 1, 6, '0', STR_PAD_LEFT);
 
             $requerimiento = RequerimientoMaterial::create([
@@ -125,12 +125,6 @@ class RequerimientoMaterialController extends Controller
 
     public function update(Request $request, $id)
     {
-        $requerimiento = RequerimientoMaterial::findOrFail($id);
-
-        if ($requerimiento->estado !== 'BORRADOR') {
-            return back()->with('error', 'Solo se pueden editar requerimientos en estado BORRADOR.');
-        }
-
         $request->validate([
             'idop' => 'nullable|exists:orden_produccion_global,idop',
             'id_proceso' => 'nullable|exists:orden_proceso,id',
@@ -142,8 +136,14 @@ class RequerimientoMaterialController extends Controller
             'productos.*.observaciones' => 'nullable|string',
         ]);
 
-        DB::beginTransaction();
         try {
+            DB::beginTransaction();
+            $requerimiento = RequerimientoMaterial::where('id_requerimiento', $id)->lockForUpdate()->firstOrFail();
+
+            if ($requerimiento->estado !== 'BORRADOR') {
+                throw new \Exception('Solo se pueden editar requerimientos en estado BORRADOR.');
+            }
+
             $requerimiento->update([
                 'idop' => $request->idop,
                 'id_proceso' => $request->id_proceso,
@@ -176,74 +176,107 @@ class RequerimientoMaterialController extends Controller
 
     public function enviar($id)
     {
-        $requerimiento = RequerimientoMaterial::with('detalles')->findOrFail($id);
+        try {
+            DB::beginTransaction();
+            $requerimiento = RequerimientoMaterial::where('id_requerimiento', $id)->lockForUpdate()->firstOrFail();
 
-        if ($requerimiento->estado !== 'BORRADOR') {
-            return back()->with('error', 'Solo se pueden enviar requerimientos en estado BORRADOR.');
+            if ($requerimiento->estado !== 'BORRADOR') {
+                throw new \Exception('Solo se pueden enviar requerimientos en estado BORRADOR.');
+            }
+
+            $totalCantidad = DB::table('detalle_requerimientos_materiales')
+                ->where('id_requerimiento', $id)
+                ->sum('cantidad_solicitada');
+
+            if ($totalCantidad <= 0) {
+                throw new \Exception('El requerimiento debe tener al menos una línea con cantidad mayor a 0.');
+            }
+
+            $requerimiento->update(['estado' => 'PENDIENTE']);
+
+            DB::commit();
+            return redirect()->route('requerimientos_materiales.show', $id)
+                ->with('success', 'Requerimiento enviado a aprobación.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
         }
-
-        if ($requerimiento->detalles->sum('cantidad_solicitada') <= 0) {
-            return back()->with('error', 'El requerimiento debe tener al menos una línea con cantidad mayor a 0.');
-        }
-
-        $requerimiento->update(['estado' => 'PENDIENTE']);
-
-        return redirect()->route('requerimientos_materiales.show', $id)
-            ->with('success', 'Requerimiento enviado a aprobación.');
     }
 
     public function aprobar($id)
     {
-        $requerimiento = RequerimientoMaterial::findOrFail($id);
+        try {
+            DB::beginTransaction();
+            $requerimiento = RequerimientoMaterial::where('id_requerimiento', $id)->lockForUpdate()->firstOrFail();
 
-        if ($requerimiento->estado !== 'PENDIENTE') {
-            return back()->with('error', 'Solo se pueden aprobar requerimientos en estado PENDIENTE.');
+            if ($requerimiento->estado !== 'PENDIENTE') {
+                throw new \Exception('Solo se pueden aprobar requerimientos en estado PENDIENTE.');
+            }
+
+            $requerimiento->update([
+                'estado' => 'APROBADO',
+                'usuario_aprobacion' => Auth::id(),
+                'fecha_aprobacion' => now(),
+            ]);
+
+            DB::commit();
+            return redirect()->route('requerimientos_materiales.show', $id)
+                ->with('success', 'Requerimiento aprobado.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
         }
-
-        $requerimiento->update([
-            'estado' => 'APROBADO',
-            'usuario_aprobacion' => Auth::id(),
-            'fecha_aprobacion' => now(),
-        ]);
-
-        return redirect()->route('requerimientos_materiales.show', $id)
-            ->with('success', 'Requerimiento aprobado.');
     }
 
     public function rechazar(Request $request, $id)
     {
-        $requerimiento = RequerimientoMaterial::findOrFail($id);
-
-        if ($requerimiento->estado !== 'PENDIENTE') {
-            return back()->with('error', 'Solo se pueden rechazar requerimientos en estado PENDIENTE.');
-        }
-
         $request->validate([
             'observaciones' => 'required|string|min:10',
         ]);
 
-        $requerimiento->update([
-            'estado' => 'RECHAZADO',
-            'usuario_aprobacion' => Auth::id(),
-            'fecha_aprobacion' => now(),
-            'observaciones' => $request->observaciones,
-        ]);
+        try {
+            DB::beginTransaction();
+            $requerimiento = RequerimientoMaterial::where('id_requerimiento', $id)->lockForUpdate()->firstOrFail();
 
-        return redirect()->route('requerimientos_materiales.show', $id)
-            ->with('success', 'Requerimiento rechazado.');
+            if (!in_array($requerimiento->estado, ['PENDIENTE', 'APROBADO'])) {
+                throw new \Exception('Solo se pueden rechazar requerimientos en estado PENDIENTE o APROBADO.');
+            }
+
+            $requerimiento->update([
+                'estado' => 'RECHAZADO',
+                'usuario_aprobacion' => Auth::id(),
+                'fecha_aprobacion' => now(),
+                'observaciones' => $request->observaciones,
+            ]);
+
+            DB::commit();
+            return redirect()->route('requerimientos_materiales.show', $id)
+                ->with('success', 'Requerimiento rechazado.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function anular($id)
     {
-        $requerimiento = RequerimientoMaterial::findOrFail($id);
+        try {
+            DB::beginTransaction();
 
-        if (in_array($requerimiento->estado, ['ATENDIDO_TOTAL', 'ANULADO'])) {
-            return back()->with('error', 'No se puede anular un requerimiento en este estado.');
+            $requerimiento = RequerimientoMaterial::where('id_requerimiento', $id)->lockForUpdate()->firstOrFail();
+
+            if (in_array($requerimiento->estado, ['ATENDIDO_TOTAL', 'ATENDIDO_PARCIAL', 'ANULADO'])) {
+                throw new \Exception('No se puede anular un requerimiento en estado ' . $requerimiento->estado . '.');
+            }
+
+            $requerimiento->update(['estado' => 'ANULADO']);
+
+            DB::commit();
+            return redirect()->route('requerimientos_materiales.show', $id)
+                ->with('success', 'Requerimiento anulado.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', $e->getMessage());
         }
-
-        $requerimiento->update(['estado' => 'ANULADO']);
-
-        return redirect()->route('requerimientos_materiales.show', $id)
-            ->with('success', 'Requerimiento anulado.');
     }
 }

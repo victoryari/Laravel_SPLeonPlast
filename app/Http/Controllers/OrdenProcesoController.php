@@ -93,7 +93,7 @@ class OrdenProcesoController extends Controller
         try {
             DB::beginTransaction();
             
-            $proceso = OrdenProceso::findOrFail($id);
+            $proceso = OrdenProceso::where('id', $id)->lockForUpdate()->firstOrFail();
             if ($proceso->estado_avance === 'COMPLETADO') {
                 throw new \Exception("No se puede anular un proceso que ya está COMPLETADO.");
             }
@@ -209,7 +209,11 @@ class OrdenProcesoController extends Controller
                     ->where('lote', $s->lote)
                     ->where('codigo_almacen', $s->codigo_almacen)
                     ->where('stock_actual', '>', 0)
-                    ->update(['estado' => 1]);
+                    ->update([
+                        'estado' => 1,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => $usuario_id
+                    ]);
 
                 $stockDevuelto = DB::table('inventario')
                     ->where('codigo_producto', $s->codigo_producto)
@@ -453,6 +457,9 @@ class OrdenProcesoController extends Controller
             $consumosResumen = []; // [key => ['producto','almacen','cantidad','primer_mov_id']]
 
             $proceso = OrdenProceso::findOrFail($id);
+            if ($proceso->estado_avance === 'COMPLETADO') {
+                throw new \Exception("No se pueden registrar componentes en un proceso COMPLETADO.");
+            }
             $es_actividad = ($proceso->codigo_proceso == '1');
 
             if ($es_actividad) {
@@ -486,6 +493,10 @@ class OrdenProcesoController extends Controller
                         'fecha_fin' => $comp['fecha_fin'],
                         'hora_inicio' => $comp['hora_inicio'],
                         'hora_fin' => $comp['hora_fin'],
+                        'fecha_inicio_maquina' => $comp['fecha_inicio_maquina'] ?? $comp['fecha_inicio'],
+                        'hora_inicio_maquina' => $comp['hora_inicio_maquina'] ?? $comp['hora_inicio'],
+                        'fecha_fin_maquina' => $comp['fecha_fin_maquina'] ?? $comp['fecha_fin'],
+                        'hora_fin_maquina' => $comp['hora_fin_maquina'] ?? $comp['hora_fin'],
                         'estado' => 1
                     ]);
                 }
@@ -631,6 +642,10 @@ class OrdenProcesoController extends Controller
                     'fecha_fin' => $comp['fecha_fin'],
                     'hora_inicio' => $comp['hora_inicio'],
                     'hora_fin' => $comp['hora_fin'],
+                    'fecha_inicio_maquina' => $comp['fecha_inicio_maquina'] ?? $comp['fecha_inicio'],
+                    'hora_inicio_maquina' => $comp['hora_inicio_maquina'] ?? $comp['hora_inicio'],
+                    'fecha_fin_maquina' => $comp['fecha_fin_maquina'] ?? $comp['fecha_fin'],
+                    'hora_fin_maquina' => $comp['hora_fin_maquina'] ?? $comp['hora_fin'],
                     'estado' => 1
                 ]);
                 $idComponente = $componente->id_op_componentes;
@@ -674,23 +689,28 @@ class OrdenProcesoController extends Controller
                         'estado' => 1
                     ]);
                     
+                    $costoConsumo = $consumo * ($lote->costo_promedio ?? 0);
                     $key = $codigo_producto . '|' . $lote->codigo_almacen;
                     if (!isset($consumosResumen[$key])) {
                         $consumosResumen[$key] = [
                             'producto' => $codigo_producto,
                             'almacen' => $lote->codigo_almacen,
                             'cantidad' => 0,
+                            'total_costo' => 0,
                             'primer_mov_id' => $movId
                         ];
                     }
                     $consumosResumen[$key]['cantidad'] += $consumo;
+                    $consumosResumen[$key]['total_costo'] += $costoConsumo;
                     
                     $trace_movimientos++;
                     $nuevo_stock = $lote->stock_actual - $consumo;
                     
                     DB::table('inventario')->where('id_inventario', $lote->id_inventario)->update([
                         'stock_actual' => $nuevo_stock,
-                        'estado' => ($nuevo_stock > 0 ? 1 : 0)
+                        'estado' => ($nuevo_stock > 0 ? 1 : 0),
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => $usuario_id
                     ]);
                     
                     $cantidad_restante -= $consumo;
@@ -711,6 +731,11 @@ class OrdenProcesoController extends Controller
                     ->where('codigo_almacen', $resumen['almacen'])
                     ->sum('stock_actual') ?? 0;
 
+                $costoSalidaProm = $resumen['cantidad'] > 0
+                    ? round($resumen['total_costo'] / $resumen['cantidad'], 9)
+                    : 0;
+                $totalSaldo = $stockActual * $costoSalidaProm;
+
                 DB::table('kardex')->insert([
                     'codigo_almacen'       => $resumen['almacen'],
                     'codigo_producto'      => $resumen['producto'],
@@ -719,8 +744,14 @@ class OrdenProcesoController extends Controller
                     'documento'            => 'PRODUCCION',
                     'numero_documento'     => $numero_referencia,
                     'cantidad_entrada'     => 0,
+                    'costo_entrada'        => 0,
+                    'total_entrada'        => 0,
                     'cantidad_salida'      => $resumen['cantidad'],
-                    'cantidad_saldo'       => $stockActual,
+                    'costo_salida'         => $costoSalidaProm,
+                    'total_salida'         => round($resumen['total_costo'], 2),
+                    'cantidad_saldo'       => max(0, $stockActual),
+                    'costo_promedio'       => $costoSalidaProm,
+                    'total_saldo'          => round($totalSaldo, 9),
                     'codigo_referencia_movimiento' => $resumen['primer_mov_id'],
                     'observaciones'        => 'Consumo de producción',
                     'usuario_registro'     => $usuario_id
@@ -802,6 +833,10 @@ class OrdenProcesoController extends Controller
             'fecha_fin'       => 'nullable|date',
             'hora_inicio'     => 'nullable',
             'hora_fin'        => 'nullable',
+            'fecha_inicio_maquina' => 'nullable|date',
+            'fecha_fin_maquina'    => 'nullable|date',
+            'hora_inicio_maquina'  => 'nullable',
+            'hora_fin_maquina'     => 'nullable',
         ]);
 
         try {
@@ -828,6 +863,10 @@ class OrdenProcesoController extends Controller
                     'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
                     'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
                     'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
+                    'fecha_inicio_maquina' => $request->fecha_inicio_maquina ?? $componente->fecha_inicio_maquina,
+                    'fecha_fin_maquina'    => $request->fecha_fin_maquina ?? $componente->fecha_fin_maquina,
+                    'hora_inicio_maquina'  => $request->hora_inicio_maquina ?? $componente->hora_inicio_maquina,
+                    'hora_fin_maquina'     => $request->hora_fin_maquina ?? $componente->hora_fin_maquina,
                 ]);
                 DB::commit();
                 return back()->with('success', 'Actividad actualizada correctamente.');
@@ -854,6 +893,10 @@ class OrdenProcesoController extends Controller
                     'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
                     'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
                     'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
+                    'fecha_inicio_maquina' => $request->fecha_inicio_maquina ?? $componente->fecha_inicio_maquina,
+                    'fecha_fin_maquina'    => $request->fecha_fin_maquina ?? $componente->fecha_fin_maquina,
+                    'hora_inicio_maquina'  => $request->hora_inicio_maquina ?? $componente->hora_inicio_maquina,
+                    'hora_fin_maquina'     => $request->hora_fin_maquina ?? $componente->hora_fin_maquina,
                     'cantidad'     => $nuevaCantidad,
                 ]);
                 DB::commit();
@@ -961,6 +1004,8 @@ class OrdenProcesoController extends Controller
                         ->update([
                             'stock_actual' => $nuevo_stock_lote,
                             'estado'       => ($nuevo_stock_lote > 0 ? 1 : 0),
+                            'fecha_ultimo_movimiento' => now(),
+                            'usuario_ultimo_movimiento' => $usuario_id
                         ]);
 
                     $cantidad_restante -= $consumo;
@@ -1103,6 +1148,10 @@ class OrdenProcesoController extends Controller
                 'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
                 'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
                 'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
+                'fecha_inicio_maquina' => $request->fecha_inicio_maquina ?? $componente->fecha_inicio_maquina,
+                'fecha_fin_maquina'    => $request->fecha_fin_maquina ?? $componente->fecha_fin_maquina,
+                'hora_inicio_maquina'  => $request->hora_inicio_maquina ?? $componente->hora_inicio_maquina,
+                'hora_fin_maquina'     => $request->hora_fin_maquina ?? $componente->hora_fin_maquina,
                 'cantidad'     => $nuevaCantidad,
             ]);
 
@@ -1118,13 +1167,119 @@ class OrdenProcesoController extends Controller
     public function finalizar(Request $request, $idop, $id)
     {
         try {
+            DB::beginTransaction();
+
+            $proceso = OrdenProceso::where('id', $id)->lockForUpdate()->firstOrFail();
+            if ($proceso->estado_avance === 'COMPLETADO') {
+                throw new \Exception("El proceso ya está COMPLETADO.");
+            }
+
             $count = ComponenteOrdenProduccion::where('id_proceso', $id)->where('estado', 1)->count();
             if ($count == 0) {
+                DB::rollBack();
                 return back()->with('error', 'Debe registrar al menos un material o actividad para finalizar.');
             }
+
+            // 1. Calcular Costo Total de Materiales Consumidos
+            $costo_materiales = DB::table('movimientos_inventario')
+                ->join('componentes_orden_produccion_global as c', function($join) use ($id) {
+                    $join->on('movimientos_inventario.componente_origen_id', '=', 'c.id_op_componentes')
+                         ->where('c.id_proceso', '=', $id)
+                         ->where('c.estado', '=', 1);
+                })
+                ->where('movimientos_inventario.documento_referencia', 'PRODUCCION')
+                ->where('movimientos_inventario.tipo_movimiento', 'SALIDA')
+                ->where('movimientos_inventario.estado', 1)
+                ->sum('movimientos_inventario.total');
+
+            // 2. Calcular Costo Mano de Obra y Máquina
+            $costo_hora_hombre = DB::table('parametros_sistema')->where('codigo_parametro', 'COSTO_HORA_HOMBRE')->value('valor') ?? 0;
+            $costo_hora_maquina = DB::table('parametros_sistema')->where('codigo_parametro', 'COSTO_HORA_MAQUINA')->value('valor') ?? 0;
+
+            $componentes = DB::table('componentes_orden_produccion_global')
+                ->where('id_proceso', $id)
+                ->where('estado', 1)
+                ->get();
+
+            $costo_mano_obra = 0;
+            $costo_maquina = 0;
+
+            foreach ($componentes as $comp) {
+                if ($comp->codigo_tipo_producto === 'ACT') {
+                    if ($comp->fecha_inicio && $comp->hora_inicio && $comp->fecha_fin && $comp->hora_fin) {
+                        $inicio = \Carbon\Carbon::parse($comp->fecha_inicio . ' ' . $comp->hora_inicio);
+                        $fin = \Carbon\Carbon::parse($comp->fecha_fin . ' ' . $comp->hora_fin);
+                        $horas = $inicio->diffInMinutes($fin) / 60;
+                        if ($horas > 0) {
+                            $costo_mano_obra += ($horas * $costo_hora_hombre);
+                        }
+                    }
+                }
+                
+                if ($comp->fecha_inicio_maquina && $comp->hora_inicio_maquina && $comp->fecha_fin_maquina && $comp->hora_fin_maquina) {
+                    $inicio = \Carbon\Carbon::parse($comp->fecha_inicio_maquina . ' ' . $comp->hora_inicio_maquina);
+                    $fin = \Carbon\Carbon::parse($comp->fecha_fin_maquina . ' ' . $comp->hora_fin_maquina);
+                    $horas = $inicio->diffInMinutes($fin) / 60;
+                    if ($horas > 0) {
+                        $costo_maquina += ($horas * $costo_hora_maquina);
+                    }
+                }
+            }
+
+            $costo_total = $costo_materiales + $costo_mano_obra + $costo_maquina;
+
+            // 3. Distribuir Costos y Actualizar Inventario
+            $pep_movimientos = DB::table('movimientos_inventario')
+                ->where('documento_referencia', 'PRODUCCION_PEP')
+                ->where('numero_referencia', "OP-{$idop}-PROC-{$id}")
+                ->where('tipo_movimiento', 'INGRESO')
+                ->where('estado', 1)
+                ->get();
+
+            $cantidad_producida = $pep_movimientos->sum('cantidad');
+
+            if ($cantidad_producida > 0) {
+                $costo_unitario_real = round($costo_total / $cantidad_producida, 9);
+                
+                $productos_almacenes_afectados = [];
+
+                foreach ($pep_movimientos as $mov) {
+                    $nuevo_total = round($mov->cantidad * $costo_unitario_real, 2);
+
+                    DB::table('movimientos_inventario')
+                        ->where('id_movimiento', $mov->id_movimiento)
+                        ->update([
+                            'costo_unitario' => $costo_unitario_real,
+                            'total' => $nuevo_total
+                        ]);
+
+                    DB::table('kardex')
+                        ->where('codigo_referencia_movimiento', $mov->id_movimiento)
+                        ->where('documento', 'RECEPCION_PEP')
+                        ->update([
+                            'costo_entrada' => $costo_unitario_real,
+                            'total_entrada' => $nuevo_total
+                        ]);
+                    
+                    $clave_recalculo = $mov->codigo_producto . '|' . $mov->codigo_almacen;
+                    $productos_almacenes_afectados[$clave_recalculo] = [
+                        'producto' => $mov->codigo_producto,
+                        'almacen'  => $mov->codigo_almacen
+                    ];
+                }
+
+                $kardexService = app(\App\Services\KardexService::class);
+                foreach ($productos_almacenes_afectados as $afectado) {
+                    $kardexService->recalcular($afectado['producto'], $afectado['almacen']);
+                }
+            }
+
             OrdenProceso::where('id', $id)->update(['estado_avance' => 'COMPLETADO', 'fecha_fin' => now()]);
-            return back()->with('success', 'Proceso finalizado y cerrado correctamente.');
+            
+            DB::commit();
+            return back()->with('success', 'Proceso finalizado y cerrado correctamente. Costos de producción asignados y Kardex actualizado.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return back()->with('error', 'Error: ' . $e->getMessage());
         }
     }
@@ -1173,7 +1328,11 @@ class OrdenProcesoController extends Controller
                         ->where('codigo_almacen', $mov->codigo_almacen)
                         ->where('stock_actual', '>', 0)
                         ->where('estado', 0)
-                        ->update(['estado' => 1]);
+                        ->update([
+                            'estado' => 1,
+                            'fecha_ultimo_movimiento' => now(),
+                            'usuario_ultimo_movimiento' => $usuario_id
+                        ]);
 
                     $stockActual = DB::table('inventario')
                         ->where('codigo_producto', $mov->codigo_producto)

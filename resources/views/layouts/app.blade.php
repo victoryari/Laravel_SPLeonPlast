@@ -73,16 +73,16 @@
 
                         <div id="menuCuentasPagar" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
                             @if(Auth::user()->hasAccess('proveedores.index'))
-                            <a href="{{ route('proveedores.index') }}" class="block p-2 text-sm {{ request()->routeIs('proveedores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                            <a href="{{ route('proveedores.index') }}" class="block p-2 text-sm {{ request()->routeIs('proveedores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-truck w-5"></i>
                                 Proveedores
                             </a>
                             @endif
 
                             @if(Auth::user()->hasAccess('compras.index'))
-                            <a href="{{ route('guia_compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('guia_compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                            <a href="{{ route('guia_compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('guia_compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-shipping-fast w-5"></i>
                                 Guías de Remisión
                             </a>
-                            <a href="{{ route('compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                            <a href="{{ route('compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-shopping-cart w-5"></i>
                                 Compras
                             </a>
                             @endif
@@ -107,15 +107,21 @@
                             </a>
                             @endif
 
-                            @if(Auth::user()->hasAccess('inventario.index'))<a href="{{ route('inventario.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.index') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Existencias</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.index'))<a href="{{ route('inventario.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.index') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-boxes mr-1.5"></i>Existencias</a>@endif
 
                             @if(Auth::user()->hasAccess('inventario.alertas_stock'))<a href="{{ route('inventario.alertas_stock') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.alertas*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exclamation-triangle text-yellow-400 mr-1.5"></i>Alertas de Stock</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.recepciones'))<a href="{{ route('inventario.recepciones') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.recepciones') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Recepciones Pendientes</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.recepciones'))<a href="{{ route('inventario.recepciones') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.recepciones') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-box mr-1.5"></i>Recepciones Pendientes</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Lista de Ajustes</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-edit mr-1.5"></i>Lista de Ajustes</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Extornos</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exchange-alt mr-1.5"></i>Extornos</a>@endif
+
+                            @if(in_array(Auth::user()->rol, ['Administrador', 'Supervisor']))
+                            <a href="{{ route('inventario.transferencias.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.transferencias*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                                <i class="fas fa-exchange-alt mr-1 text-blue-300"></i> Transferencias
+                            </a>
+                            @endif
                             
                             <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Scrap</a>
                         </div>
@@ -134,7 +140,7 @@
 
                         <div id="menuContabilidad" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
                             @if(Auth::user()->hasAccess('inventario.kardex'))
-                            <a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                            <a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-book-open mr-1 text-green-400"></i>
                                 Kardex de Movimientos
                             </a>
                             @endif
@@ -159,10 +165,10 @@
                             </a>
                             @endif
                             @if(Auth::user()->hasAccess('produccion.ordenes.index'))
-                            <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                            <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-tasks w-5"></i>
                                 Órdenes de Producción
                             </a>
-                            <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
+                            <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-route w-5"></i>
                                 Rutas de Producción
                             </a>
                             @endif
@@ -348,7 +354,7 @@
         const menuInventario = document.getElementById('menuInventario');
         const iconInventario = document.getElementById('iconInventario');
 
-        const inventarioSlugs = ['/inventario', 'recepciones', 'ajuste', 'extornos', 'alertas', 'despachos', 'mermas'];
+        const inventarioSlugs = ['/inventario', 'recepciones', 'ajuste', 'extornos', 'alertas', 'despachos', 'mermas', 'transferencias'];
 
         if (inventarioSlugs.some(slug => currentUrl.includes(slug))) {
             menuInventario?.classList.remove('hidden');

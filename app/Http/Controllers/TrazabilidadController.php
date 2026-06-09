@@ -115,21 +115,44 @@ class TrazabilidadController extends Controller
             ->where('documento_referencia', 'PRODUCCION')
             ->get();
 
-        foreach ($consumos as $consumo) {
-            $resultados['consumos'][] = [
-                'op' => $consumo->idop,
-                'fecha' => $consumo->fecha_movimiento,
-                'cantidad' => $consumo->cantidad
-            ];
+        // Agrupar los consumos por Orden de Producción y Proceso
+        $consumosAgrupados = [];
+        foreach ($consumos as $c) {
+            $id_proceso = null;
+            if (preg_match('/OP-\d+-PROC-(\d+)/', $c->numero_referencia, $matches)) {
+                $id_proceso = $matches[1];
+            }
+            
+            $key = $c->idop . '_' . ($id_proceso ?? '0');
 
-            // 3. PRODUCTOS FINALES: Qué productos se generaron de esa OP
-            $productosGenerados = DB::table('produccion_ingresos_proceso')
-                ->where('idop', $consumo->idop)
-                ->get();
+            if (!isset($consumosAgrupados[$key])) {
+                $consumosAgrupados[$key] = [
+                    'op' => $c->idop,
+                    'id_proceso' => $id_proceso,
+                    'fecha' => $c->fecha_movimiento,
+                    'cantidad' => 0
+                ];
+            }
+            $consumosAgrupados[$key]['cantidad'] += $c->cantidad;
+        }
+
+        foreach ($consumosAgrupados as $key => $consumo) {
+            $resultados['consumos'][] = $consumo;
+
+            // 3. PRODUCTOS FINALES: Qué productos se generaron en esa OP y Proceso específico
+            $query = DB::table('produccion_ingresos_proceso')
+                ->where('idop', $consumo['op']);
+            
+            if ($consumo['id_proceso']) {
+                $query->where('id_proceso', $consumo['id_proceso']);
+            }
+
+            $productosGenerados = $query->get();
 
             foreach ($productosGenerados as $prod) {
                 $resultados['destinos'][] = [
                     'op' => $prod->idop,
+                    'id_proceso' => $prod->id_proceso,
                     'producto' => $prod->descripcion_producto_proceso,
                     'lote_generado' => $prod->lote_produccion,
                     'cantidad' => $prod->cantidad,
@@ -144,6 +167,7 @@ class TrazabilidadController extends Controller
             ->where('tipo_movimiento', 'SALIDA')
             ->where('documento_referencia', '!=', 'PRODUCCION')
             ->where('documento_referencia', '!=', 'TRANSFERENCIA')
+            ->where('documento_referencia', '!=', 'TRANSFERENCIA_SALIDA')
             ->where('documento_referencia', '!=', 'REQUERIMIENTO')
             ->get();
 

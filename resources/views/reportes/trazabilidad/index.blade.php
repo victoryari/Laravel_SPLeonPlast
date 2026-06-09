@@ -160,6 +160,9 @@
                                 <h5 class="text-xs font-bold text-emerald-600 uppercase mb-3"><i class="fas fa-box-open mr-1"></i> Productos generados en esta OP:</h5>
                                 @php
                                     $destinosDeEstaOP = collect($resultados['destinos'])->where('op', $consumo['op']);
+                                    if(isset($consumo['id_proceso']) && $consumo['id_proceso']) {
+                                        $destinosDeEstaOP = $destinosDeEstaOP->where('id_proceso', $consumo['id_proceso']);
+                                    }
                                 @endphp
 
                                 @if($destinosDeEstaOP->count() > 0)

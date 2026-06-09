@@ -84,7 +84,7 @@ class CompraController extends Controller
             'fecha_compra' => 'required|date',
             'ruc_proveedor' => 'required|string|max:20|exists:proveedores,ruc',
             'productos' => 'required|array|min:1',
-            'productos.*.codigo' => 'required|string|max:50',
+            'productos.*.codigo' => 'required|string|max:50|exists:producto,codigo',
             'productos.*.cantidad' => 'required|numeric|min:0.01',
             'productos.*.precio' => 'required|numeric|decimal:0,9|min:0',
             'productos.*.codigo_almacen' => 'required|string|max:20',
@@ -99,6 +99,19 @@ class CompraController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // G1: Validación unique dentro de la transacción para evitar race condition
+            $dup = Compra::where('ruc_proveedor', $request->ruc_proveedor)
+                ->where('serie_documento', strtoupper($request->serie_documento))
+                ->where('tipo_documento', $request->tipo_documento)
+                ->where('numero_documento', $request->numero_documento)
+                ->where('estado', '!=', 'CANCELADA')
+                ->lockForUpdate()
+                ->exists();
+            if ($dup) {
+                throw new \Exception("Ya existe una compra con el documento {$request->tipo_documento} {$request->serie_documento}-{$request->numero_documento} para este proveedor.");
+            }
+
             $prov = Proveedor::where('ruc', $request->ruc_proveedor)->firstOrFail();
 
             $estadoCompra = !empty($request->ids_guias) ? 'RECIBIDA' : 'PENDIENTE';
@@ -152,14 +165,13 @@ class CompraController extends Controller
                     'fecha_vencimiento' => $item['fecha_vencimiento'] ?? null
                 ]);
             }
-            DB::commit();
 
             if (!empty($request->ids_guias)) {
                 $kardexService = app(\App\Services\KardexService::class);
                 $guiasToUpdate = \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)->get();
                 foreach ($guiasToUpdate as $guia) {
                     foreach ($request->productos as $item) {
-                        $precio_unitario = $request->has('igv_incluido') ? ($item['precio'] / 1.18) : $item['precio'];
+                        $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
                         $tc = $request->moneda === 'USD' ? $request->tipo_cambio : 1.000;
                         $costo_kardex_pen = $precio_unitario * $tc;
                         
@@ -183,6 +195,8 @@ class CompraController extends Controller
                     }
                 }
             }
+
+            DB::commit();
 
             return redirect()->route('compras.index')->with('success', 'Compra registrada y Kardex actualizado.');
         } catch (\Exception $e) {
@@ -277,13 +291,12 @@ class CompraController extends Controller
                     'fecha_vencimiento' => $item['fecha_vencimiento'] ?? null
                 ]);
             }
-            DB::commit();
 
             if ($compra->guias && $compra->guias->count() > 0) {
                 $kardexService = app(\App\Services\KardexService::class);
                 foreach ($compra->guias as $guia) {
                     foreach ($request->productos as $item) {
-                        $precio_unitario = $request->has('igv_incluido') ? ($item['precio'] / 1.18) : $item['precio'];
+                        $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
                         $tc = $request->moneda === 'USD' ? $request->tipo_cambio : 1.000;
                         $costo_kardex_pen = $precio_unitario * $tc;
 
@@ -308,6 +321,8 @@ class CompraController extends Controller
                 }
             }
 
+            DB::commit();
+
             return redirect()->route('compras.index')->with('success', 'Actualizado y Kardex recalculado.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -318,10 +333,16 @@ class CompraController extends Controller
     public function anular(Request $request, $id) {
         try {
             DB::beginTransaction();
-            $compra = Compra::findOrFail($id);
+            $compra = Compra::with('guias')->where('id_compra', $id)->lockForUpdate()->firstOrFail();
 
             if ($compra->estado !== 'PENDIENTE') {
-                return back()->with('error', 'Solo se pueden anular compras en estado PENDIENTE.');
+                throw new \Exception('Solo se pueden anular compras en estado PENDIENTE.');
+            }
+
+            $guiasFacturadas = $compra->guias->whereIn('estado', ['FACTURADA', 'UBICADA']);
+            if ($guiasFacturadas->count() > 0) {
+                $nums = $guiasFacturadas->pluck('numero_guia')->implode(', ');
+                throw new \Exception("No se puede anular la compra porque tiene guías vinculadas: {$nums}. Anule las guías primero.");
             }
 
             $compra->update([
