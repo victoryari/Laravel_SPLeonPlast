@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\{DB, Auth};
 class CompraController extends Controller
 {
     public function index(Request $request) {
-        $query = Compra::with(['datosProveedor', 'creador']);
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
+
+        $query = Compra::with(['datosProveedor', 'creador'])
+            ->whereDate('fecha_compra', '>=', $fecha_desde)
+            ->whereDate('fecha_compra', '<=', $fecha_hasta);
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -19,14 +24,12 @@ class CompraController extends Controller
             });
         }
 
-        if ($request->estado) {
-            $query->where('estado', $request->estado);
-        }
 
-        $compras = $query->orderBy('fecha_creacion', 'desc')->paginate(15);
-        $compras->appends(['search' => $request->search, 'estado' => $request->estado]);
 
-        return view('compras.index', compact('compras'));
+        $compras = $query->orderBy('fecha_compra', 'desc')->paginate(15);
+        $compras->appends($request->all());
+
+        return view('compras.index', compact('compras', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function create() 

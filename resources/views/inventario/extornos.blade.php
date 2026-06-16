@@ -9,22 +9,40 @@
         <p class="text-xs sm:text-sm text-gray-600">Reversión de movimientos de almacén. Uso exclusivo de Administrador.</p>
     </div>
 
-    <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 border border-red-100">
-        <div class="flex items-center gap-3 w-full sm:w-auto">
-            <div class="bg-red-100 text-red-600 p-2.5 rounded-lg"><i class="fas fa-undo-alt text-lg"></i></div>
-            <div>
-                <h3 class="font-bold text-gray-800">Movimientos Disponibles</h3>
-                <p class="text-xs text-gray-500">Busque el documento o producto a revertir.</p>
+    <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border border-red-100">
+        <form method="GET" action="{{ route('inventario.extornos') }}" class="w-full flex flex-col md:flex-row gap-4">
+            
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 outline-none">
+                </div>
             </div>
-        </div>
-        
-        <div class="relative w-full sm:w-80">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+
+            <div class="flex-1 flex flex-col">
+                <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Búsqueda</label>
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="searchInput" name="search" value="{{ request('search') }}" placeholder="Buscar recibo, ticket o producto..." 
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm outline-none">
+                </div>
             </div>
-            <input type="text" id="searchInput" name="search" value="{{ request('search') }}" placeholder="Buscar recibo, ticket o producto..." 
-                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-sm outline-none">
-        </div>
+
+            <div class="flex items-end gap-2">
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">
+                    <i class="fas fa-filter mr-1"></i> Filtrar
+                </button>
+                <a href="{{ route('inventario.extornos') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-300">
+                    Limpiar
+                </a>
+            </div>
+        </form>
     </div>
 
     <div id="table-container" class="transition-opacity duration-300">

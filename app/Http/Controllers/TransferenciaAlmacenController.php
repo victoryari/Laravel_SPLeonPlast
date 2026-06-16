@@ -12,18 +12,26 @@ class TransferenciaAlmacenController extends Controller
 {
     public function index(Request $request)
     {
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
+
         $query = TransferenciaAlmacen::with(['almacenOrigen', 'almacenDestino', 'usuario'])
+            ->whereDate('fecha_transferencia', '>=', $fecha_desde)
+            ->whereDate('fecha_transferencia', '<=', $fecha_hasta)
             ->orderBy('fecha_transferencia', 'desc')
             ->orderBy('id_transferencia', 'desc');
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('numero_transferencia', 'like', "%$search%")
+            $query->where(function($q) use ($search) {
+                $q->where('numero_transferencia', 'like', "%$search%")
                   ->orWhere('observaciones', 'like', "%$search%");
+            });
         }
 
-        $transferencias = $query->paginate(15);
-        return view('inventario.transferencias.index', compact('transferencias'));
+        $transferencias = $query->paginate(15)->appends($request->all());
+        
+        return view('inventario.transferencias.index', compact('transferencias', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function create()

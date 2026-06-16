@@ -690,11 +690,12 @@ class OrdenProcesoController extends Controller
                     ]);
                     
                     $costoConsumo = $consumo * ($lote->costo_promedio ?? 0);
-                    $key = $codigo_producto . '|' . $lote->codigo_almacen;
+                    $key = $codigo_producto . '|' . $lote->codigo_almacen . '|' . $lote->lote;
                     if (!isset($consumosResumen[$key])) {
                         $consumosResumen[$key] = [
                             'producto' => $codigo_producto,
                             'almacen' => $lote->codigo_almacen,
+                            'lote' => $lote->lote,
                             'cantidad' => 0,
                             'total_costo' => 0,
                             'primer_mov_id' => $movId
@@ -739,6 +740,7 @@ class OrdenProcesoController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_almacen'       => $resumen['almacen'],
                     'codigo_producto'      => $resumen['producto'],
+                    'lote'                 => $resumen['lote'],
                     'fecha_movimiento'     => now(),
                     'tipo_movimiento'      => 'SALIDA',
                     'documento'            => 'PRODUCCION',
@@ -763,9 +765,17 @@ class OrdenProcesoController extends Controller
                 ->where('documento_referencia', 'PRODUCCION')
                 ->update(['tiene_kardex' => true]);
 
+            $productos_resultantes = json_decode($request->productos_resultantes_json ?? '[]', true);
+            $productos_manuales = [];
+            foreach ($productos_resultantes as $pr) {
+                if (floatval($pr['cantidad']) > 0) {
+                    $productos_manuales[$pr['codigo_producto']] = true;
+                }
+            }
+
             $ingresos_creados = 0;
             foreach ($grupos_pep as $g) {
-                if ($g['cant'] > 0) {
+                if ($g['cant'] > 0 && !isset($productos_manuales[$g['codigo_pep']])) {
                     $lote_pep = $this->generarCodigoPEP($g['codigo_pep'], $g['color'], $id);
                     DB::table('produccion_ingresos_proceso')->insert([
                         'idop' => $idop,
@@ -987,11 +997,12 @@ class OrdenProcesoController extends Controller
                         'tiene_kardex'            => true,
                     ]);
 
-                    $key = $codigo_producto . '|' . $lote->codigo_almacen;
+                    $key = $codigo_producto . '|' . $lote->codigo_almacen . '|' . $lote->lote;
                     if (!isset($consumosResumen[$key])) {
                         $consumosResumen[$key] = [
                             'producto' => $codigo_producto,
                             'almacen'  => $lote->codigo_almacen,
+                            'lote'     => $lote->lote,
                             'cantidad' => 0,
                             'primer_mov_id' => $movId,
                         ];
@@ -1027,6 +1038,7 @@ class OrdenProcesoController extends Controller
                     DB::table('kardex')->insert([
                         'codigo_almacen'              => $resumen['almacen'],
                         'codigo_producto'             => $resumen['producto'],
+                        'lote'                        => $resumen['lote'],
                         'fecha_movimiento'            => now(),
                         'tipo_movimiento'             => 'SALIDA',
                         'documento'                   => 'PRODUCCION',
@@ -1203,30 +1215,70 @@ class OrdenProcesoController extends Controller
 
             $costo_mano_obra = 0;
             $costo_maquina = 0;
+            
+            $horas_hombre_total = 0;
+            $horas_maquina_total = 0;
+
+            $min_inicio_maq = null;
+            $max_fin_maq = null;
 
             foreach ($componentes as $comp) {
-                if ($comp->codigo_tipo_producto === 'ACT') {
-                    if ($comp->fecha_inicio && $comp->hora_inicio && $comp->fecha_fin && $comp->hora_fin) {
-                        $inicio = \Carbon\Carbon::parse($comp->fecha_inicio . ' ' . $comp->hora_inicio);
-                        $fin = \Carbon\Carbon::parse($comp->fecha_fin . ' ' . $comp->hora_fin);
-                        $horas = $inicio->diffInMinutes($fin) / 60;
-                        if ($horas > 0) {
-                            $costo_mano_obra += ($horas * $costo_hora_hombre);
-                        }
+                if ($comp->fecha_inicio && $comp->hora_inicio && $comp->fecha_fin && $comp->hora_fin) {
+                    $inicio = \Carbon\Carbon::parse($comp->fecha_inicio . ' ' . $comp->hora_inicio);
+                    $fin = \Carbon\Carbon::parse($comp->fecha_fin . ' ' . $comp->hora_fin);
+                    $horas = $inicio->diffInMinutes($fin) / 60;
+                    if ($horas > 0) {
+                        $horas_hombre_total += $horas;
+                        $costo_mano_obra += ($horas * $costo_hora_hombre);
                     }
                 }
                 
                 if ($comp->fecha_inicio_maquina && $comp->hora_inicio_maquina && $comp->fecha_fin_maquina && $comp->hora_fin_maquina) {
                     $inicio = \Carbon\Carbon::parse($comp->fecha_inicio_maquina . ' ' . $comp->hora_inicio_maquina);
                     $fin = \Carbon\Carbon::parse($comp->fecha_fin_maquina . ' ' . $comp->hora_fin_maquina);
-                    $horas = $inicio->diffInMinutes($fin) / 60;
-                    if ($horas > 0) {
-                        $costo_maquina += ($horas * $costo_hora_maquina);
-                    }
+                    
+                    if (!$min_inicio_maq || $inicio < $min_inicio_maq) $min_inicio_maq = $inicio;
+                    if (!$max_fin_maq || $fin > $max_fin_maq) $max_fin_maq = $fin;
+                }
+            }
+            
+            if ($min_inicio_maq && $max_fin_maq) {
+                $horas_maquina_total = $min_inicio_maq->diffInMinutes($max_fin_maq) / 60;
+                if ($horas_maquina_total > 0) {
+                    $costo_maquina = $horas_maquina_total * $costo_hora_maquina;
                 }
             }
 
             $costo_total = $costo_materiales + $costo_mano_obra + $costo_maquina;
+
+            if ($costo_mano_obra > 0) {
+                DB::table('produccion_costos')->insert([
+                    'idop' => $idop,
+                    'tipo_costo' => 'MANO_OBRA',
+                    'descripcion' => 'Horas Hombre Calculadas',
+                    'cantidad' => $horas_hombre_total,
+                    'costo_unitario' => $costo_hora_hombre,
+                    'costo_total' => $costo_mano_obra,
+                    'moneda' => 'PEN',
+                    'fecha_costo' => now()->toDateString(),
+                    'usuario_registro' => auth()->id() ?? null
+                ]);
+            }
+            
+            if ($costo_maquina > 0) {
+                DB::table('produccion_costos')->insert([
+                    'idop' => $idop,
+                    'tipo_costo' => 'EQUIPOS',
+                    'descripcion' => 'Horas Máquina Calculadas',
+                    'cantidad' => $horas_maquina_total,
+                    'costo_unitario' => $costo_hora_maquina,
+                    'costo_total' => $costo_maquina,
+                    'moneda' => 'PEN',
+                    'fecha_costo' => now()->toDateString(),
+                    'usuario_registro' => auth()->id() ?? null
+                ]);
+            }
+
 
             // 3. Distribuir Costos y Actualizar Inventario
             $pep_movimientos = DB::table('movimientos_inventario')

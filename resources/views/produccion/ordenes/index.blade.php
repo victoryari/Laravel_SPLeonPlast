@@ -15,6 +15,43 @@
         </a>
     </div>
 
+    {{-- Filtros --}}
+    <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <form method="GET" action="{{ route('produccion.ordenes.index') }}" class="w-full flex flex-col md:flex-row gap-4">
+            
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col">
+                <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Búsqueda</label>
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por OP o producto..." 
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm outline-none">
+                </div>
+            </div>
+
+            <div class="flex items-end gap-2">
+                <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">
+                    <i class="fas fa-filter mr-1"></i> Filtrar
+                </button>
+                <a href="{{ route('produccion.ordenes.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-300">
+                    Limpiar
+                </a>
+            </div>
+        </form>
+    </div>
+
     {{-- Tabla de Órdenes --}}
     <div id="table-container" class="transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">

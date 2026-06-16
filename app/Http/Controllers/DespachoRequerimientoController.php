@@ -13,7 +13,12 @@ class DespachoRequerimientoController extends Controller
     {
         $tab = $request->get('tab', 'pendientes');
         
-        $query = RequerimientoMaterial::with(['detalles', 'creador']);
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
+
+        $query = RequerimientoMaterial::with(['detalles', 'creador'])
+            ->whereDate('fecha_creacion', '>=', $fecha_desde)
+            ->whereDate('fecha_creacion', '<=', $fecha_hasta);
             
         if ($tab === 'atendidos') {
             $query->whereIn('estado', ['ATENDIDO_TOTAL']);
@@ -21,14 +26,14 @@ class DespachoRequerimientoController extends Controller
             $query->whereIn('estado', ['APROBADO', 'ATENDIDO_PARCIAL']);
         }
 
-        if ($request->codigo) {
-            $query->where('codigo', 'LIKE', "%{$request->codigo}%");
+        if ($request->filled('search')) {
+            $query->where('codigo', 'LIKE', "%{$request->search}%");
         }
 
-        $requerimientos = $query->orderBy('fecha_aprobacion', 'desc')->paginate(15);
+        $requerimientos = $query->orderBy('fecha_creacion', 'desc')->paginate(15);
         $requerimientos->appends($request->all());
 
-        return view('inventario.despachos.index', compact('requerimientos', 'tab'));
+        return view('inventario.despachos.index', compact('requerimientos', 'tab', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function atender($id)

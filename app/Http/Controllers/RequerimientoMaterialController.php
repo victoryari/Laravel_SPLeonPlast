@@ -17,24 +17,20 @@ class RequerimientoMaterialController extends Controller
             $query->where('codigo', 'LIKE', "%{$request->codigo}%");
         }
 
-        if ($request->estado) {
-            $query->where('estado', $request->estado);
-        }
 
-        if ($request->fecha_desde) {
-            $query->where('fecha_creacion', '>=', $request->fecha_desde . ' 00:00:00');
-        }
 
-        if ($request->fecha_hasta) {
-            $query->where('fecha_creacion', '<=', $request->fecha_hasta . ' 23:59:59');
-        }
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
+
+        $query->where('fecha_creacion', '>=', $fecha_desde . ' 00:00:00');
+        $query->where('fecha_creacion', '<=', $fecha_hasta . ' 23:59:59');
 
         $requerimientos = $query->orderBy('fecha_creacion', 'desc')->paginate(15);
         $requerimientos->appends($request->all());
 
         $estados = ['BORRADOR', 'PENDIENTE', 'APROBADO', 'RECHAZADO', 'ATENDIDO_PARCIAL', 'ATENDIDO_TOTAL', 'ANULADO'];
 
-        return view('requerimientos_materiales.index', compact('requerimientos', 'estados'));
+        return view('requerimientos_materiales.index', compact('requerimientos', 'estados', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function create()

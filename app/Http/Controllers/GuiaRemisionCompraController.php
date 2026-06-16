@@ -13,13 +13,29 @@ use Illuminate\Support\Facades\Auth;
 
 class GuiaRemisionCompraController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $guias = GuiaRemisionCompra::with('datosProveedor', 'creador')
-            ->orderBy('fecha_registro', 'desc')
-            ->paginate(15);
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
 
-        return view('guia_compras.index', compact('guias'));
+        $query = GuiaRemisionCompra::with('datosProveedor', 'creador')
+            ->whereDate('fecha_registro', '>=', $fecha_desde)
+            ->whereDate('fecha_registro', '<=', $fecha_hasta);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('numero_guia', 'like', "%$search%")
+                  ->orWhere('proveedor', 'like', "%$search%")
+                  ->orWhere('ruc_proveedor', 'like', "%$search%");
+            });
+        }
+
+        $guias = $query->orderBy('fecha_registro', 'desc')
+            ->paginate(15)
+            ->appends($request->all());
+
+        return view('guia_compras.index', compact('guias', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function create()

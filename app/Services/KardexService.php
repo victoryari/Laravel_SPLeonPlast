@@ -76,7 +76,7 @@ class KardexService
         $costoPromedio = 0;
 
         foreach ($movimientos as $mov) {
-            if ($mov->tipo_movimiento === 'SALIDA') {
+            if ($mov->tipo_movimiento === 'SALIDA' || ($mov->tipo_movimiento === 'EXTORNO' && $mov->cantidad_salida > 0)) {
                 $costoSalidaEfectivo = ($costoPromedio > 0) ? $costoPromedio : ($mov->costo_salida ?? 0);
                 $totalSalida = $mov->cantidad_salida * $costoSalidaEfectivo;
                 $cantidadAcumulada -= $mov->cantidad_salida;

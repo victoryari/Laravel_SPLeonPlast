@@ -12,6 +12,13 @@
         </x-slot:actions>
     </x-page-header>
 
+    @if(session('error'))
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded shadow-sm" role="alert">
+            <p class="font-bold">No se pudo registrar la Merma:</p>
+            <p>{{ session('error') }}</p>
+        </div>
+    @endif
+
     <form action="{{ route('mermas.store') }}" method="POST">
         @csrf
         <x-card>
@@ -146,13 +153,9 @@
             
             $('#totalMermar').text(total.toFixed(2));
 
-            if (maxStockDisponible > 0 && total > maxStockDisponible) {
-                $('#totalMermar').removeClass('text-indigo-800').addClass('text-red-600 font-bold');
-                $('.cantidad-input').get(0).setCustomValidity('La suma excede el stock disponible');
-            } else if (total <= 0) {
+            if (total <= 0) {
                 $('.cantidad-input').get(0).setCustomValidity('Debe ingresar al menos una cantidad mayor a 0');
             } else {
-                $('#totalMermar').removeClass('text-red-600 font-bold').addClass('text-indigo-800');
                 $('.cantidad-input').get(0).setCustomValidity('');
             }
         }

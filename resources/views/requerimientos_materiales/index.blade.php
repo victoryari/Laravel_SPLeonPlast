@@ -12,20 +12,41 @@
         </x-slot:actions>
     </x-page-header>
 
-    <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
-        <form action="{{ route('requerimientos_materiales.index') }}" method="GET" class="flex flex-col sm:flex-row gap-3">
-            <div class="relative flex-1">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
+    <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <form method="GET" action="{{ route('requerimientos_materiales.index') }}" class="w-full flex flex-col md:flex-row gap-4">
+            
+            <div class="flex items-center gap-2">
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
                 </div>
-                <input type="text" name="codigo" value="{{ request('codigo') }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base outline-none" placeholder="Buscar por código...">
+                <div class="flex flex-col">
+                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
             </div>
-            <select name="estado" onchange="this.form.submit()" class="py-2 md:py-2.5 px-4 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white">
-                <option value="">Todos los estados</option>
-                @foreach($estados as $est)
-                    <option value="{{ $est }}" {{ request('estado') === $est ? 'selected' : '' }}>{{ $est }}</option>
-                @endforeach
-            </select>
+
+
+
+            <div class="flex-1 flex flex-col">
+                <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Búsqueda</label>
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" name="codigo" value="{{ request('codigo') }}" placeholder="Buscar por código..." 
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm outline-none">
+                </div>
+            </div>
+
+            <div class="flex items-end gap-2">
+                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">
+                    <i class="fas fa-filter mr-1"></i> Filtrar
+                </button>
+                <a href="{{ route('requerimientos_materiales.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-300">
+                    Limpiar
+                </a>
+            </div>
         </form>
     </div>
 

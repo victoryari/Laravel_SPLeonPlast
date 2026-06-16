@@ -540,18 +540,22 @@ class InventarioController extends Controller
         $resumen->total_salidas_val = $queryClone2->sum('kardex.total_salida');
 
         // Ultimo saldo valorizado de cada producto en el filtro
-        $ultimosSaldos = DB::table('kardex')
-            ->whereIn('id_kardex', function ($sub) {
-                $sub->select(DB::raw('MAX(k2.id_kardex)'))
-                    ->from('kardex as k2')
-                    ->whereColumn('k2.codigo_producto', 'kardex.codigo_producto')
-                    ->whereColumn('k2.codigo_almacen', 'kardex.codigo_almacen');
-            })
-            ->select(DB::raw('SUM(cantidad_saldo) as total_cantidad'), DB::raw('SUM(total_saldo) as total_valorizado'))
-            ->first();
+        $subQuery = clone $query;
+        $lastIds = $subQuery->select(DB::raw('MAX(kardex.id_kardex) as last_id'))
+                 ->groupBy('kardex.codigo_producto', 'kardex.codigo_almacen')
+                 ->pluck('last_id')->toArray();
 
-        $resumen->saldo_final_cantidad = $ultimosSaldos?->total_cantidad ?? 0;
-        $resumen->saldo_final_valor    = $ultimosSaldos?->total_valorizado ?? 0;
+        if (count($lastIds) > 0) {
+            $ultimosSaldos = DB::table('kardex')
+                ->whereIn('id_kardex', $lastIds)
+                ->select(DB::raw('SUM(cantidad_saldo) as total_cantidad'), DB::raw('SUM(total_saldo) as total_valorizado'))
+                ->first();
+            $resumen->saldo_final_cantidad = $ultimosSaldos?->total_cantidad ?? 0;
+            $resumen->saldo_final_valor = $ultimosSaldos?->total_valorizado ?? 0;
+        } else {
+            $resumen->saldo_final_cantidad = 0;
+            $resumen->saldo_final_valor = 0;
+        }
 
         $movimientos = $query->orderBy('kardex.fecha_movimiento', 'asc')
             ->orderBy('kardex.id_kardex', 'asc')
@@ -1126,13 +1130,16 @@ class InventarioController extends Controller
     // =========================================================
 
     public function extornos(Request $request) {
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
+
         $query = DB::table('kardex')
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
             ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen')
-            // Criterio 1: No mostrar movimientos que ya son extornos
+            ->whereDate('kardex.fecha_movimiento', '>=', $fecha_desde)
+            ->whereDate('kardex.fecha_movimiento', '<=', $fecha_hasta)
             ->where('kardex.tipo_movimiento', '!=', 'EXTORNO')
-            // Criterio 2: No mostrar movimientos que ya fueron extornados
             ->where(function($q) {
                 $q->whereNull('kardex.observaciones')
                   ->orWhere('kardex.observaciones', 'NOT LIKE', '%[EXTORNADO]%');
@@ -1140,12 +1147,15 @@ class InventarioController extends Controller
             ->orderBy('kardex.fecha_movimiento', 'desc');
 
         if ($request->search) {
-            $query->where('kardex.numero_documento', 'LIKE', "%{$request->search}%")
-                  ->orWhere('producto.descripcion', 'LIKE', "%{$request->search}%");
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('kardex.numero_documento', 'LIKE', "%{$search}%")
+                  ->orWhere('producto.descripcion', 'LIKE', "%{$search}%");
+            });
         }
 
-        $movimientos = $query->paginate(10);
-        return view('inventario.extornos', compact('movimientos'));
+        $movimientos = $query->paginate(10)->appends($request->all());
+        return view('inventario.extornos', compact('movimientos', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function procesarExtorno(Request $request, $id) {
@@ -1280,8 +1290,8 @@ class InventarioController extends Controller
             return response()->json(['error' => 'Movimiento no encontrado.'], 404);
         }
 
-        if ($kardex->documento !== 'RECEPCION_PEP' && $kardex->documento !== 'PRODUCCION') {
-            return response()->json(['error' => 'El desglose de costos solo está disponible para ingresos de producción (RECEPCION_PEP) o consumo de proceso (PRODUCCION).'], 400);
+        if ($kardex->documento !== 'RECEPCION_PEP' && $kardex->documento !== 'PRODUCCION' && $kardex->documento !== 'MERMA') {
+            return response()->json(['error' => 'El desglose de costos solo está disponible para ingresos de producción, consumos de proceso o ingresos por mermas.'], 400);
         }
 
         $html = '<div class="space-y-4">';
@@ -1309,6 +1319,68 @@ class InventarioController extends Controller
             $costosAdicionales = DB::table('produccion_costos')
                 ->where('idop', $idop)
                 ->get();
+
+            // Si aún no hay costos consolidados, calcularlos dinámicamente "en vivo"
+            if ($costosAdicionales->isEmpty()) {
+                $costosAdicionales = collect();
+                
+                $costo_hora_hombre = DB::table('parametros_sistema')->where('codigo_parametro', 'COSTO_HORA_HOMBRE')->value('valor') ?? 0;
+                $costo_hora_maquina = DB::table('parametros_sistema')->where('codigo_parametro', 'COSTO_HORA_MAQUINA')->value('valor') ?? 0;
+
+                $componentes_op = DB::table('componentes_orden_produccion_global')
+                    ->where('id_proceso', $idproceso) // Filtramos por el proceso actual para mayor exactitud
+                    ->where('estado', 1)
+                    ->get();
+
+                $horas_hombre_total = 0;
+                $costo_mano_obra = 0;
+                $min_inicio_maq = null;
+                $max_fin_maq = null;
+
+                foreach ($componentes_op as $comp) {
+                    if ($comp->fecha_inicio && $comp->hora_inicio && $comp->fecha_fin && $comp->hora_fin) {
+                        $inicio = \Carbon\Carbon::parse($comp->fecha_inicio . ' ' . $comp->hora_inicio);
+                        $fin = \Carbon\Carbon::parse($comp->fecha_fin . ' ' . $comp->hora_fin);
+                        $horas = $inicio->diffInMinutes($fin) / 60;
+                        if ($horas > 0) {
+                            $horas_hombre_total += $horas;
+                            $costo_mano_obra += ($horas * $costo_hora_hombre);
+                        }
+                    }
+                    
+                    if ($comp->fecha_inicio_maquina && $comp->hora_inicio_maquina && $comp->fecha_fin_maquina && $comp->hora_fin_maquina) {
+                        $inicio = \Carbon\Carbon::parse($comp->fecha_inicio_maquina . ' ' . $comp->hora_inicio_maquina);
+                        $fin = \Carbon\Carbon::parse($comp->fecha_fin_maquina . ' ' . $comp->hora_fin_maquina);
+                        
+                        if (!$min_inicio_maq || $inicio < $min_inicio_maq) $min_inicio_maq = $inicio;
+                        if (!$max_fin_maq || $fin > $max_fin_maq) $max_fin_maq = $fin;
+                    }
+                }
+
+                if ($costo_mano_obra > 0) {
+                    $costosAdicionales->push((object)[
+                        'tipo_costo' => 'MANO_OBRA',
+                        'descripcion' => 'Horas Hombre (Pre-calculado)',
+                        'cantidad' => $horas_hombre_total,
+                        'costo_unitario' => $costo_hora_hombre,
+                        'costo_total' => $costo_mano_obra
+                    ]);
+                }
+
+                if ($min_inicio_maq && $max_fin_maq) {
+                    $horas_maquina_total = $min_inicio_maq->diffInMinutes($max_fin_maq) / 60;
+                    if ($horas_maquina_total > 0) {
+                        $costo_maquina = $horas_maquina_total * $costo_hora_maquina;
+                        $costosAdicionales->push((object)[
+                            'tipo_costo' => 'EQUIPOS',
+                            'descripcion' => 'Horas Máquina (Pre-calculado)',
+                            'cantidad' => $horas_maquina_total,
+                            'costo_unitario' => $costo_hora_maquina,
+                            'costo_total' => $costo_maquina
+                        ]);
+                    }
+                }
+            }
 
             $totalSuma = 0;
 
@@ -1360,6 +1432,48 @@ class InventarioController extends Controller
                 $html .= '<div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">';
                 $html .= '<p>Este costo total determina el costo de ingreso del Producto en Proceso o Terminado.</p>';
                 $html .= '</div>';
+            }
+        } elseif ($kardex->documento === 'MERMA' && str_starts_with($kardex->numero_documento, 'MERMA-')) {
+            $html .= '<div class="bg-slate-50 p-3 rounded-lg border border-slate-200">';
+            $html .= '<p class="text-sm"><strong>Documento de Merma:</strong> ' . $kardex->numero_documento . '</p>';
+            $html .= '</div>';
+
+            $consumos = DB::table('kardex as k')
+                ->join('producto as p', 'k.codigo_producto', '=', 'p.codigo')
+                ->where('k.documento', 'MERMA')
+                ->where('k.numero_documento', $kardex->numero_documento)
+                ->where('k.tipo_movimiento', 'SALIDA')
+                ->select('p.descripcion', 'k.lote', 'k.cantidad_salida as cantidad', 'k.costo_salida as costo_unitario', 'k.total_salida as total')
+                ->get();
+
+            $totalSuma = 0;
+
+            if ($consumos->count() > 0) {
+                $html .= '<h4 class="font-bold text-sm text-slate-700 mt-4 mb-2">Materias Primas Consumidas por la Merma:</h4>';
+                $html .= '<div class="overflow-x-auto"><table class="w-full text-xs text-left border">';
+                $html .= '<thead class="bg-slate-100 uppercase text-slate-500"><tr><th class="p-2 border">Material</th><th class="p-2 border">Lote</th><th class="p-2 border text-right">Cant.</th><th class="p-2 border text-right">Costo Unit.</th><th class="p-2 border text-right">Subtotal</th></tr></thead><tbody>';
+                
+                foreach ($consumos as $c) {
+                    $html .= '<tr>';
+                    $html .= '<td class="p-2 border">' . $c->descripcion . '</td>';
+                    $html .= '<td class="p-2 border">' . ($c->lote ?: '-') . '</td>';
+                    $html .= '<td class="p-2 border text-right">' . number_format($c->cantidad, 2) . '</td>';
+                    $html .= '<td class="p-2 border text-right">' . number_format($c->costo_unitario, 6) . '</td>';
+                    $html .= '<td class="p-2 border text-right font-medium">' . number_format($c->total, 2) . '</td>';
+                    $html .= '</tr>';
+                    $totalSuma += $c->total;
+                }
+                $html .= '</tbody></table></div>';
+                
+                $html .= '<div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-right font-bold text-lg text-slate-800">';
+                $html .= 'Costo Total de Merma Pura: <span class="text-red-600 ml-2">' . number_format($totalSuma, 2) . '</span>';
+                $html .= '</div>';
+                
+                $html .= '<div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">';
+                $html .= '<p>El costo de ingreso del producto recuperado se calcula a partir de este costo total de merma pura.</p>';
+                $html .= '</div>';
+            } else {
+                $html .= '<p class="text-sm text-slate-500 italic mt-2">No se encontraron materias primas descontadas para este registro de merma.</p>';
             }
         } else {
             $html .= '<p class="text-sm text-slate-500">Formato de documento no reconocido para buscar consumos.</p>';

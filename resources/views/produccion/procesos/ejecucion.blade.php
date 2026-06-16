@@ -152,8 +152,10 @@
                 @csrf
                 <input type="hidden" name="componentes_json" id="componentes_json">
                 <input type="hidden" name="codigo_almacen_consumo" id="codigo_almacen_consumo_hidden">
+                <input type="hidden" name="productos_resultantes_json" id="productos_resultantes_json">
+            </form>
                 
-                <div class="overflow-x-auto min-h-87.5 pb-10">
+            <div class="overflow-x-auto min-h-87.5 pb-10">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-slate-800 text-white">
                             <tr>
@@ -205,22 +207,19 @@
 
                             <tr id="row_edit_{{ $r->id_op_componentes }}" class="hidden">
                                 <td colspan="11" class="p-0 border-b border-gray-200">
-                                    <form action="{{ route('ordenes.procesos.componentes.update', [$orden->idop, $proceso->id, $r->id_op_componentes]) }}" method="POST" class="flex flex-wrap items-end gap-3 p-4 bg-primary-50">
-                                        @csrf
-                                        @method('PUT')
-
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 p-4 bg-primary-50 rounded-b-lg component-edit-container" data-id="{{ $r->id_op_componentes }}">
                                         <div>
                                             <label class="block text-xs font-semibold text-gray-600 mb-1">Cantidad</label>
                                             <input type="number" name="cantidad" step="0.01" min="0.01"
                                                 value="{{ $r->cantidad }}"
-                                                class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary"
+                                                class="w-full border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary"
                                                 {{ $r->codigo_tipo_producto === 'ACT' ? 'readonly' : '' }}>
                                         </div>
 
                                         <div>
                                             <label class="block text-xs font-semibold text-gray-600 mb-1">Trabajador</label>
                                             <select name="codigo_trabajador"
-                                                class="border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                class="w-full border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                                                 <option value="">--</option>
                                                 @foreach($trabajadores as $t)
                                                     <option value="{{ $t->codigo }}" {{ $r->codigo_trabajador == $t->codigo ? 'selected' : '' }}>
@@ -234,9 +233,9 @@
                                             <label class="block text-[10px] font-semibold text-gray-600 mb-1">F. In/Fin (Hombre)</label>
                                             <div class="flex gap-1">
                                                 <input type="date" name="fecha_inicio" value="{{ $r->fecha_inicio ?? '' }}"
-                                                    class="w-32 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="date" name="fecha_fin" value="{{ $r->fecha_fin ?? '' }}"
-                                                    class="w-32 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
@@ -244,9 +243,9 @@
                                             <label class="block text-[10px] font-semibold text-gray-600 mb-1">H. In/Fin (Hombre)</label>
                                             <div class="flex gap-1">
                                                 <input type="time" name="hora_inicio" value="{{ $r->hora_inicio ?? '' }}"
-                                                    class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="time" name="hora_fin" value="{{ $r->hora_fin ?? '' }}"
-                                                    class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
@@ -254,9 +253,9 @@
                                             <label class="block text-[10px] font-semibold text-gray-600 mb-1">F. In/Fin (Máquina)</label>
                                             <div class="flex gap-1">
                                                 <input type="date" name="fecha_inicio_maquina" value="{{ $r->fecha_inicio_maquina ?? '' }}"
-                                                    class="w-32 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="date" name="fecha_fin_maquina" value="{{ $r->fecha_fin_maquina ?? '' }}"
-                                                    class="w-32 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
@@ -264,23 +263,23 @@
                                             <label class="block text-[10px] font-semibold text-gray-600 mb-1">H. In/Fin (Máquina)</label>
                                             <div class="flex gap-1">
                                                 <input type="time" name="hora_inicio_maquina" value="{{ $r->hora_inicio_maquina ?? '' }}"
-                                                    class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="time" name="hora_fin_maquina" value="{{ $r->hora_fin_maquina ?? '' }}"
-                                                    class="w-24 border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
-                                        <div class="flex gap-2 items-center ml-auto">
-                                            <button type="submit"
+                                        <div class="flex gap-2 items-end justify-start xl:justify-end pb-0.5 sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-1">
+                                            <button type="button" onclick="submitUpdateComponente({{ $r->id_op_componentes }}, this)"
                                                 class="px-4 py-1.5 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-lg shadow transition">
-                                                <i class="fas fa-save mr-1"></i> Actualizar
+                                                Guardar Cambios
                                             </button>
                                             <button type="button" onclick="cancelarEdicion({{ $r->id_op_componentes }})"
                                                 class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold rounded-lg transition">
                                                 Cancelar
                                             </button>
                                         </div>
-                                    </form>
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
@@ -312,7 +311,6 @@
                             <tbody id="tbody_resultantes" class="bg-white divide-y divide-gray-200"></tbody>
                         </table>
                     </div>
-                    <input type="hidden" name="productos_resultantes_json" id="productos_resultantes_json">
                 </div>
                 @endif
 
@@ -334,7 +332,6 @@
                         @endif
                     </div>
                 </div>
-            </form>
 
         </div>
     </div>
@@ -349,7 +346,41 @@
     @method('DELETE')
 </form>
 
+<form id="form_update_componente" action="" method="POST">
+    @csrf
+    @method('PUT')
+    <input type="hidden" name="cantidad" id="upd_cantidad">
+    <input type="hidden" name="codigo_trabajador" id="upd_trabajador">
+    <input type="hidden" name="fecha_inicio" id="upd_fecha_inicio">
+    <input type="hidden" name="fecha_fin" id="upd_fecha_fin">
+    <input type="hidden" name="hora_inicio" id="upd_hora_inicio">
+    <input type="hidden" name="hora_fin" id="upd_hora_fin">
+    <input type="hidden" name="fecha_inicio_maquina" id="upd_fecha_inicio_maquina">
+    <input type="hidden" name="fecha_fin_maquina" id="upd_fecha_fin_maquina">
+    <input type="hidden" name="hora_inicio_maquina" id="upd_hora_inicio_maquina">
+    <input type="hidden" name="hora_fin_maquina" id="upd_hora_fin_maquina">
+</form>
+
 <script>
+    function submitUpdateComponente(id, btn) {
+        const container = btn.closest('.component-edit-container');
+        
+        document.getElementById('upd_cantidad').value = container.querySelector('input[name="cantidad"]').value;
+        document.getElementById('upd_trabajador').value = container.querySelector('select[name="codigo_trabajador"]').value;
+        document.getElementById('upd_fecha_inicio').value = container.querySelector('input[name="fecha_inicio"]').value;
+        document.getElementById('upd_fecha_fin').value = container.querySelector('input[name="fecha_fin"]').value;
+        document.getElementById('upd_hora_inicio').value = container.querySelector('input[name="hora_inicio"]').value;
+        document.getElementById('upd_hora_fin').value = container.querySelector('input[name="hora_fin"]').value;
+        document.getElementById('upd_fecha_inicio_maquina').value = container.querySelector('input[name="fecha_inicio_maquina"]').value;
+        document.getElementById('upd_fecha_fin_maquina').value = container.querySelector('input[name="fecha_fin_maquina"]').value;
+        document.getElementById('upd_hora_inicio_maquina').value = container.querySelector('input[name="hora_inicio_maquina"]').value;
+        document.getElementById('upd_hora_fin_maquina').value = container.querySelector('input[name="hora_fin_maquina"]').value;
+        
+        const form = document.getElementById('form_update_componente');
+        form.action = `/produccion/ordenes/{{ $orden->idop }}/procesos/{{ $proceso->id }}/componentes/${id}`;
+        form.submit();
+    }
+
     const urlApiFormula = '/produccion/api/formulas/composicion';
     const urlVerificarStock = '/produccion/api/verificar-stock';
     const urlDeleteBase = "{{ url("produccion/ordenes/{$orden->idop}/procesos/{$proceso->id}/componentes") }}";

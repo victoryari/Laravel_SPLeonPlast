@@ -9,16 +9,30 @@ use Illuminate\Support\Facades\DB;
 
 class OrdenProduccionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Traer órdenes activas ordenadas por fecha descendente
-        $ordenes = OrdenProduccion::with('productoProceso')
-            ->where('activo', 1)
-            ->orderBy('fecha', 'desc')
-            ->orderBy('idop', 'desc')
-            ->paginate(15);
+        $fecha_desde = $request->input('fecha_desde', now()->startOfMonth()->toDateString());
+        $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
 
-        return view('produccion.ordenes.index', compact('ordenes'));
+        $query = OrdenProduccion::with('productoProceso')
+            ->where('activo', 1)
+            ->whereDate('fecha', '>=', $fecha_desde)
+            ->whereDate('fecha', '<=', $fecha_hasta);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('codigo_op', 'like', "%$search%")
+                  ->orWhere('descripcion_producto_proceso', 'like', "%$search%");
+            });
+        }
+
+        $ordenes = $query->orderBy('fecha', 'desc')
+            ->orderBy('idop', 'desc')
+            ->paginate(15)
+            ->appends($request->all());
+
+        return view('produccion.ordenes.index', compact('ordenes', 'fecha_desde', 'fecha_hasta'));
     }
 
     public function create()
