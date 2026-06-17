@@ -15,8 +15,21 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
-        $search = $request->input('search');
-        $tipoFiltro = $request->input('codigo_tipo_producto');
+        // Limpiar filtro si el usuario lo solicita explícitamente
+        if ($request->has('clear_filter')) {
+            session()->forget(['producto_search', 'producto_tipo']);
+            return redirect()->route('productos.index');
+        }
+
+        // Si hay una búsqueda o filtro enviada desde el formulario, se guarda en sesión
+        if ($request->has('search') || $request->has('codigo_tipo_producto')) {
+            session(['producto_search' => $request->input('search')]);
+            session(['producto_tipo' => $request->input('codigo_tipo_producto')]);
+        }
+
+        // Leer los valores desde la sesión (o serán nulos si están limpios)
+        $search = session('producto_search');
+        $tipoFiltro = session('producto_tipo');
 
         // Inicializamos la consulta base
         $query = Producto::with(['tipo', 'unidad'])->where('estado', 1);

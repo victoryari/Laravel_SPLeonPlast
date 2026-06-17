@@ -35,7 +35,7 @@
                         <label for="codigo_op" class="block text-sm font-medium text-gray-700 mb-1">
                             📌 Número de OP <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="codigo_op" id="codigo_op" required placeholder="Ej: OP-2024-001" value="{{ old('codigo_op') }}"
+                        <input type="text" name="codigo_op" id="codigo_op" required placeholder="Ej: OP-2024-001" value="{{ old('codigo_op', $codigo_op_sugerido ?? '') }}"
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
                         <p class="mt-1 text-xs text-gray-500">Identificador único de la orden</p>
                     </div>

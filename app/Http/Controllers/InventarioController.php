@@ -40,7 +40,7 @@ class InventarioController extends Controller
             $query->where('inventario.codigo_almacen', $request->almacen);
         }
 
-        $stocks = $query->orderBy('producto.descripcion')->paginate(15);
+        $stocks = $query->orderBy('producto.descripcion')->paginate(15)->appends(request()->all());
         $almacenes = Almacen::where('activo', 1)->get();
         return view('inventario.index', compact('stocks', 'almacenes'));
     }
@@ -331,6 +331,7 @@ class InventarioController extends Controller
                 'costo_promedio'       => $costos['costo_promedio'],
                 'total_saldo'          => $costos['total_saldo'],
                 'codigo_referencia_movimiento' => $movId,
+                'lote'                 => $lote,
                 'observaciones'        => $observacion_kardex,
                 'usuario_registro'     => $usuario_movimiento
             ]);
@@ -559,7 +560,7 @@ class InventarioController extends Controller
 
         $movimientos = $query->orderBy('kardex.fecha_movimiento', 'asc')
             ->orderBy('kardex.id_kardex', 'asc')
-            ->paginate(15);
+            ->paginate(15)->appends(request()->all());
 
         $tiposDocumento = DB::table('kardex')->select('documento')->distinct()->orderBy('documento')->pluck('documento');
         $almacenes = \App\Models\Almacen::where('activo', 1)->get();
@@ -851,7 +852,7 @@ class InventarioController extends Controller
             $query->where('kardex.fecha_movimiento', '<=', $request->fecha_hasta . ' 23:59:59');
         }
 
-        $ajustes = $query->orderBy('kardex.fecha_movimiento', 'desc')->paginate(15);
+        $ajustes = $query->orderBy('kardex.fecha_movimiento', 'desc')->paginate(15)->appends(request()->all());
         $almacenes = Almacen::where('activo', 1)->get();
 
         return view('inventario.ajuste_lista', compact('ajustes', 'almacenes'));
@@ -1260,22 +1261,41 @@ class InventarioController extends Controller
                 ->update(['observaciones' => DB::raw("CONCAT(COALESCE(observaciones, ''), ' [EXTORNADO]')")]);
 
             // =========================================================
-            // 7. VINCULACIÓN: DEVOLVER COMPRA A ESTADO PENDIENTE
+            // 7. VINCULACIÓN: DEVOLVER COMPRA/PEP A ESTADO PENDIENTE
             // =========================================================
-            // Buscamos la compra que coincida con el número de documento del Kardex
-            // numero_documento en Kardex es 'SERIE-CORRELATIVO' (Ej: F001-123)
-            $docKardex = $movimientoOriginal->numero_documento;
+            $mensaje = 'Movimiento extornado correctamente.';
 
-            $compraAfectada = Compra::whereRaw("CONCAT(serie_documento, '-', numero_documento) = ?", [$docKardex])
-                ->first();
+            if ($movimientoOriginal->documento === 'RECEPCION_PEP') {
+                // Mejora: Se remueve la condición estricta de estado APROBADO para forzar el paso a PENDIENTE
+                $pepAfectado = DB::table('produccion_ingresos_proceso')
+                    ->where('lote_produccion', $loteOriginal)
+                    ->orderBy('id_ingreso', 'desc')
+                    ->first();
+                
+                if ($pepAfectado) {
+                    DB::table('produccion_ingresos_proceso')
+                        ->where('id_ingreso', $pepAfectado->id_ingreso)
+                        ->update(['estado' => 'PENDIENTE']);
+                    $mensaje = 'Movimiento extornado. El Producto en Proceso ha vuelto a estar PENDIENTE en el Registro de Recepciones.';
+                }
+            } else {
+                // Buscamos la compra que coincida con el número de documento del Kardex
+                // numero_documento en Kardex es 'SERIE-CORRELATIVO' (Ej: F001-123)
+                $docKardex = $movimientoOriginal->numero_documento;
 
-            if ($compraAfectada && $compraAfectada->estado === 'RECIBIDA') {
-                $compraAfectada->update(['estado' => 'PENDIENTE']);
+                // Mejora: Evitamos fallos por espacios en blanco accidentales en la base de datos
+                $compraAfectada = Compra::whereRaw("REPLACE(CONCAT(serie_documento, '-', numero_documento), ' ', '') = ?", [str_replace(' ', '', $docKardex)])
+                    ->first();
+
+                if ($compraAfectada) {
+                    $compraAfectada->update(['estado' => 'PENDIENTE']);
+                    $mensaje = 'Movimiento extornado. La compra asociada ha vuelto a estar PENDIENTE para su nueva recepción.';
+                }
             }
             // =========================================================
 
             DB::commit();
-            return redirect()->route('inventario.extornos')->with('success', 'Movimiento extornado. La compra asociada ha vuelto a estar PENDIENTE para su nueva recepción.');
+            return redirect()->route('inventario.extornos')->with('success', $mensaje);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1313,12 +1333,16 @@ class InventarioController extends Controller
                 ->where('k.documento', 'PRODUCCION')
                 ->where('k.numero_documento', 'LIKE', $kardex->numero_documento . '%')
                 ->where('k.tipo_movimiento', 'SALIDA')
+                ->where(function ($q) {
+                    $q->whereNull('k.observaciones')
+                      ->orWhere('k.observaciones', 'NOT LIKE', '%[EXTORNADO]%');
+                })
                 ->select('p.descripcion', 'k.lote', 'k.cantidad_salida as cantidad', 'k.costo_salida as costo_unitario', 'k.total_salida as total')
                 ->get();
 
-            $costosAdicionales = DB::table('produccion_costos')
-                ->where('idop', $idop)
-                ->get();
+            // Forzamos siempre el cálculo dinámico por proceso para evitar 
+            // mezclar costos de diferentes procesos de la misma OP
+            $costosAdicionales = collect();
 
             // Si aún no hay costos consolidados, calcularlos dinámicamente "en vivo"
             if ($costosAdicionales->isEmpty()) {
@@ -1443,6 +1467,10 @@ class InventarioController extends Controller
                 ->where('k.documento', 'MERMA')
                 ->where('k.numero_documento', $kardex->numero_documento)
                 ->where('k.tipo_movimiento', 'SALIDA')
+                ->where(function ($q) {
+                    $q->whereNull('k.observaciones')
+                      ->orWhere('k.observaciones', 'NOT LIKE', '%[EXTORNADO]%');
+                })
                 ->select('p.descripcion', 'k.lote', 'k.cantidad_salida as cantidad', 'k.costo_salida as costo_unitario', 'k.total_salida as total')
                 ->get();
 

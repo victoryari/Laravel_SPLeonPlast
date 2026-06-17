@@ -20,7 +20,7 @@
             <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
         </div>
         
-        <div class="md:w-1/3">
+        <div class="md:w-1/3 flex gap-2">
             <select id="tipoFilter" class="w-full px-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition cursor-pointer">
                 <option value="">Todos los tipos de producto</option>
                 @foreach($tipos as $tipo)
@@ -29,6 +29,12 @@
                     </option>
                 @endforeach
             </select>
+            
+            @if(!empty($search) || !empty($tipoFiltro))
+                <a href="{{ route('productos.index', ['clear_filter' => 1]) }}" class="px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-100 transition flex items-center justify-center" title="Limpiar filtro">
+                    <i class="fas fa-times"></i>
+                </a>
+            @endif
         </div>
     </div>
 

@@ -164,6 +164,7 @@ class TransferenciaAlmacenController extends Controller
                     'costo_promedio'               => $costoUnitario,
                     'total_saldo'                  => $totalSaldoOrigen,
                     'codigo_referencia_movimiento' => $movSalidaId,
+                    'lote'                         => $item['lote'],
                     'observaciones'                => "Envío a $destino",
                     'usuario_registro'             => $usuario_id,
                 ]);
@@ -179,6 +180,7 @@ class TransferenciaAlmacenController extends Controller
                 if ($invDestino) {
                     DB::table('inventario')->where('id_inventario', $invDestino->id_inventario)->update([
                         'stock_actual' => DB::raw("stock_actual + {$item['cantidad']}"),
+                        'estado' => 1,
                         'fecha_ultimo_movimiento' => now(),
                         'usuario_ultimo_movimiento' => $usuario_id
                     ]);
@@ -234,6 +236,7 @@ class TransferenciaAlmacenController extends Controller
                     'costo_promedio'               => $costoUnitario,
                     'total_saldo'                  => $totalSaldoDestino,
                     'codigo_referencia_movimiento' => $movIngresoId,
+                    'lote'                         => $item['lote'],
                     'observaciones'                => "Recepción desde $origen",
                     'usuario_registro'             => $usuario_id,
                 ]);
@@ -341,6 +344,7 @@ class TransferenciaAlmacenController extends Controller
                     'costo_promedio'               => $costoUnitario,
                     'total_saldo'                  => $totalSaldoDestino,
                     'codigo_referencia_movimiento' => $movSalidaId,
+                    'lote'                         => $det->lote,
                     'observaciones'                => "Anulación",
                     'usuario_registro'             => $usuario_id,
                 ]);
@@ -356,6 +360,7 @@ class TransferenciaAlmacenController extends Controller
                 if ($invOrigen) {
                     DB::table('inventario')->where('id_inventario', $invOrigen->id_inventario)->update([
                         'stock_actual' => DB::raw("stock_actual + {$det->cantidad}"),
+                        'estado' => 1,
                         'fecha_ultimo_movimiento' => now(),
                         'usuario_ultimo_movimiento' => $usuario_id
                     ]);
@@ -410,6 +415,7 @@ class TransferenciaAlmacenController extends Controller
                     'costo_promedio'               => $costoUnitario,
                     'total_saldo'                  => $totalSaldoOrigen,
                     'codigo_referencia_movimiento' => $movIngresoId,
+                    'lote'                         => $det->lote,
                     'observaciones'                => "Anulación",
                     'usuario_registro'             => $usuario_id,
                 ]);

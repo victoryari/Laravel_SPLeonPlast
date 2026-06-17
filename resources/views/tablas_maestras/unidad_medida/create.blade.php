@@ -6,7 +6,7 @@
 <div class="max-w-2xl mx-auto">
     <x-page-header title="Nueva Unidad de Medida" subtitle="Defina el código y descripción para la nueva unidad." />
 
-    <x-card>
+    <x-card class="p-6 md:p-8">
         <form action="{{ route('unidades_medida.store') }}" method="POST" class="space-y-6">
             @csrf
             

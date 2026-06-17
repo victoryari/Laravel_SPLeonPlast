@@ -35,9 +35,15 @@
                         </select>
                     </x-form-group>
 
+                    <x-form-group class="md:col-span-2" label="Proceso de la OP" required>
+                        <select name="id_proceso" id="selectProceso" class="w-full" required disabled>
+                            <option value="">Primero seleccione una OP...</option>
+                        </select>
+                    </x-form-group>
+
                     <x-form-group class="md:col-span-2" label="Producto Origen (Con Stock Disponible)" required>
                         <select name="codigo_producto" id="selectProducto" class="w-full" required disabled>
-                            <option value="">Primero seleccione una OP...</option>
+                            <option value="">Primero seleccione un proceso...</option>
                         </select>
                     </x-form-group>
 
@@ -50,20 +56,46 @@
                         <p class="text-[10px] text-slate-500 mt-1">El almacén se auto-asigna según el producto.</p>
                     </x-form-group>
 
-                    <x-form-group label="Cantidad Merma Pura (Irrecuperable)">
-                        <input type="number" name="cantidad_pura" id="inputCantidadPura" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
-                        <p class="text-[10px] text-slate-500 mt-1">Material que va a la basura.</p>
-                    </x-form-group>
+                    <div id="sectionMermaEstandar" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                        <x-form-group label="Cantidad Merma Pura (Irrecuperable)">
+                            <input type="number" name="cantidad_pura" id="inputCantidadPura" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
+                            <p class="text-[10px] text-slate-500 mt-1">Material que va a la basura.</p>
+                        </x-form-group>
 
-                    <x-form-group label="Cantidad Recuperada (Molienda)">
-                        <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
-                        <p class="text-[10px] text-slate-500 mt-1">Material que se vuelve a usar.</p>
-                    </x-form-group>
+                        <x-form-group label="Cantidad Recuperada (Molienda)">
+                            <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
+                            <p class="text-[10px] text-slate-500 mt-1">Material que se vuelve a usar.</p>
+                        </x-form-group>
 
-                    <div class="md:col-span-2 flex justify-between items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
-                        <span class="text-sm font-medium text-indigo-800">Total a mermar: <span id="totalMermar">0.00</span></span>
-                        <span class="text-sm font-medium text-indigo-800" id="maxStockLabel">Max disponible: --</span>
+                        <div class="md:col-span-2 flex justify-between items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
+                            <span class="text-sm font-medium text-indigo-800">Total a mermar: <span id="totalMermar">0.00</span></span>
+                            <span class="text-sm font-medium text-indigo-800" id="maxStockLabel">Max disponible: --</span>
+                        </div>
                     </div>
+
+                    <div id="sectionMermaEnsamblado" class="md:col-span-2 hidden">
+                        <h3 class="text-md font-bold mb-3 text-slate-700 border-b pb-2">Registro de Merma por Componente (Ensamblado)</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-slate-100">
+                                        <th class="p-2 border">Componente</th>
+                                        <th class="p-2 border">Stock en Almacén</th>
+                                        <th class="p-2 border">Merma Pura</th>
+                                        <th class="p-2 border">Merma Recuperada</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyComponentesEnsamblado">
+                                    <tr>
+                                        <td colspan="4" class="p-4 text-center text-slate-500">Seleccione el producto de origen...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2"><i class="fas fa-info-circle"></i> Los descuentos se harán directamente de los stocks de cada componente indicado.</p>
+                    </div>
+
+                    <input type="hidden" name="es_ensamblado" id="es_ensamblado_flag" value="0">
 
                     <x-form-group class="md:col-span-2" label="Motivo o Descripción (Opcional)">
                         <textarea name="motivo" rows="2" class="input-field" placeholder="Ej: Máquina mal calibrada..."></textarea>
@@ -84,7 +116,7 @@
 <script>
     $(document).ready(function() {
         if(typeof $().select2 !== 'undefined') {
-            $('#selectOP, #selectProducto').select2({
+            $('#selectOP, #selectProceso, #selectProducto').select2({
                 placeholder: 'Seleccione una opción...',
                 allowClear: true
             });
@@ -94,6 +126,58 @@
 
         $('#selectOP').on('change', function() {
             let idop = $(this).val();
+            let $selectProc = $('#selectProceso');
+            let $selectProd = $('#selectProducto');
+            
+            $selectProc.empty().append('<option value="">Seleccione el proceso...</option>');
+            $selectProd.empty().append('<option value="">Primero seleccione un proceso...</option>');
+            $('#selectAlmacen').val('');
+            maxStockDisponible = 0;
+            actualizarValidacionStock();
+            
+            if (idop) {
+                $selectProc.prop('disabled', false);
+                $selectProd.prop('disabled', true);
+                
+                $.ajax({
+                    url: '{{ route("mermas.procesos_por_op") }}',
+                    type: 'GET',
+                    data: { idop: idop },
+                    success: function(data) {
+                        if(data.length === 0) {
+                            $selectProc.empty().append('<option value="">No hay procesos para esta OP</option>');
+                        } else {
+                            $.each(data, function(index, item) {
+                                $selectProc.append(
+                                    $('<option></option>')
+                                        .val(item.id)
+                                        .text(item.descripcion_proceso + ' (' + item.estado_avance + ')')
+                                );
+                            });
+                        }
+                    }
+                });
+            } else {
+                $selectProc.prop('disabled', true).empty().append('<option value="">Primero seleccione una OP...</option>');
+                $selectProd.prop('disabled', true).empty().append('<option value="">Primero seleccione un proceso...</option>');
+            }
+        });
+
+        $('#selectProceso').on('change', function() {
+            let idop = $('#selectOP').val();
+            let id_proceso = $(this).val();
+            let processText = $(this).find('option:selected').text().toUpperCase();
+            let isEnsamblado = processText.includes('ENSAMBLADO');
+            $('#es_ensamblado_flag').val(isEnsamblado ? '1' : '0');
+            
+            if (isEnsamblado) {
+                $('#sectionMermaEstandar').hide();
+                $('#sectionMermaEnsamblado').show();
+            } else {
+                $('#sectionMermaEstandar').show();
+                $('#sectionMermaEnsamblado').hide();
+            }
+
             let $selectProd = $('#selectProducto');
             
             $selectProd.empty().append('<option value="">Seleccione el producto...</option>');
@@ -101,16 +185,15 @@
             maxStockDisponible = 0;
             actualizarValidacionStock();
             
-            if (idop) {
+            if (id_proceso) {
                 $selectProd.prop('disabled', false);
-                // AJAX call to get products
                 $.ajax({
                     url: '{{ route("mermas.productos_por_op") }}',
                     type: 'GET',
-                    data: { idop: idop },
+                    data: { idop: idop, id_proceso: id_proceso },
                     success: function(data) {
                         if(data.length === 0) {
-                            $selectProd.empty().append('<option value="">No hay productos con stock para esta OP</option>');
+                            $selectProd.empty().append('<option value="">No hay productos con stock para este proceso</option>');
                         } else {
                             $.each(data, function(index, item) {
                                 $selectProd.append(
@@ -125,19 +208,54 @@
                     }
                 });
             } else {
-                $selectProd.prop('disabled', true).empty().append('<option value="">Primero seleccione una OP...</option>');
+                $selectProd.prop('disabled', true).empty().append('<option value="">Primero seleccione un proceso...</option>');
             }
         });
 
         $('#selectProducto').on('change', function() {
             let option = $(this).find(':selected');
+            let isEnsamblado = $('#es_ensamblado_flag').val() === '1';
+
             if (option.val()) {
                 $('#selectAlmacen').val(option.data('almacen'));
                 maxStockDisponible = parseFloat(option.data('stock'));
                 $('#maxStockLabel').text('Max disponible: ' + maxStockDisponible.toFixed(2));
+                
+                if (isEnsamblado) {
+                    let idop = $('#selectOP').val();
+                    let id_proceso = $('#selectProceso').val();
+                    let codigo_almacen = option.data('almacen');
+                    let $tbody = $('#tbodyComponentesEnsamblado');
+                    $tbody.html('<tr><td colspan="4" class="text-center p-4">Cargando componentes...</td></tr>');
+                    
+                    $.ajax({
+                        url: '{{ route("mermas.componentes_ensamblado") }}',
+                        type: 'GET',
+                        data: { idop: idop, id_proceso: id_proceso, codigo_almacen: codigo_almacen },
+                        success: function(data) {
+                            if(data.length === 0) {
+                                $tbody.html('<tr><td colspan="4" class="text-center p-4 text-red-500">No se encontraron componentes en el almacén ' + codigo_almacen + '</td></tr>');
+                            } else {
+                                $tbody.empty();
+                                $.each(data, function(index, comp) {
+                                    let html = '<tr>';
+                                    html += '<td class="p-2 border">' + comp.codigo_producto + '<br><span class="text-xs text-slate-500">' + comp.descripcion + '</span></td>';
+                                    html += '<td class="p-2 border font-bold text-center">' + parseFloat(comp.stock_actual).toFixed(2) + ' <span class="text-xs text-slate-500 font-normal">' + (comp.codigo_unidad_medida || '') + '</span></td>';
+                                    html += '<td class="p-2 border"><div class="relative"><input type="number" name="componentes[' + comp.codigo_producto + '][pura]" step="0.01" min="0" max="' + comp.stock_actual + '" class="w-full border-gray-300 rounded-md py-1 px-2 pr-8 text-sm" placeholder="0.00"><span class="absolute right-2 top-1.5 text-xs text-slate-400">' + (comp.codigo_unidad_medida || '') + '</span></div></td>';
+                                    html += '<td class="p-2 border"><div class="relative"><input type="number" name="componentes[' + comp.codigo_producto + '][recuperada]" step="0.01" min="0" max="' + comp.stock_actual + '" class="w-full border-gray-300 rounded-md py-1 px-2 pr-8 text-sm" placeholder="0.00"><span class="absolute right-2 top-1.5 text-xs text-slate-400">' + (comp.codigo_unidad_medida || '') + '</span></div></td>';
+                                    html += '</tr>';
+                                    $tbody.append(html);
+                                });
+                            }
+                        }
+                    });
+                }
             } else {
                 $('#maxStockLabel').text('Max disponible: --');
                 maxStockDisponible = 0;
+                if (isEnsamblado) {
+                    $('#tbodyComponentesEnsamblado').html('<tr><td colspan="4" class="p-4 text-center text-slate-500">Seleccione el producto de origen...</td></tr>');
+                }
             }
             actualizarValidacionStock();
         });
@@ -147,16 +265,23 @@
         });
 
         function actualizarValidacionStock() {
-            let pura = parseFloat($('#inputCantidadPura').val()) || 0;
-            let recu = parseFloat($('#inputCantidadRecuperada').val()) || 0;
-            let total = pura + recu;
+            let isEnsamblado = $('#es_ensamblado_flag').val() === '1';
             
-            $('#totalMermar').text(total.toFixed(2));
-
-            if (total <= 0) {
-                $('.cantidad-input').get(0).setCustomValidity('Debe ingresar al menos una cantidad mayor a 0');
-            } else {
+            if (isEnsamblado) {
+                // Clear validation on standard inputs so they don't block submission
                 $('.cantidad-input').get(0).setCustomValidity('');
+            } else {
+                let pura = parseFloat($('#inputCantidadPura').val()) || 0;
+                let recu = parseFloat($('#inputCantidadRecuperada').val()) || 0;
+                let total = pura + recu;
+                
+                $('#totalMermar').text(total.toFixed(2));
+
+                if (total <= 0) {
+                    $('.cantidad-input').get(0).setCustomValidity('Debe ingresar al menos una cantidad mayor a 0');
+                } else {
+                    $('.cantidad-input').get(0).setCustomValidity('');
+                }
             }
         }
     });

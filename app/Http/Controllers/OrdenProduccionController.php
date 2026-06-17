@@ -37,9 +37,28 @@ class OrdenProduccionController extends Controller
 
     public function create()
     {
+        $year = date('Y');
+        $prefix = "OP-{$year}-";
+
+        $latestOp = \DB::table('orden_produccion_global')
+            ->where('codigo_op', 'LIKE', "{$prefix}%")
+            ->orderByRaw('LENGTH(codigo_op) DESC')
+            ->orderBy('codigo_op', 'desc')
+            ->first();
+
+        $nextNumber = 1;
+        if ($latestOp) {
+            $numberPart = str_replace($prefix, '', $latestOp->codigo_op);
+            if (is_numeric($numberPart)) {
+                $nextNumber = intval($numberPart) + 1;
+            }
+        }
+
+        $codigo_op_sugerido = $prefix . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
         // Obtenemos productos de proceso para el select
-        $productos_proceso = ProductoProceso::orderBy('descripcion', 'asc')->get();
-        return view('produccion.ordenes.create', compact('productos_proceso'));
+        $productos_proceso = \App\Models\ProductoProceso::orderBy('descripcion', 'asc')->get();
+        return view('produccion.ordenes.create', compact('productos_proceso', 'codigo_op_sugerido'));
     }
 
     public function store(Request $request)

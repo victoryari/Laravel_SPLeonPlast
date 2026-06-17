@@ -35,6 +35,7 @@
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-center">Tipo</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-right">Cantidad</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-right">Costo Total</th>
+                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-xs md:text-sm">
@@ -67,10 +68,22 @@
                             <td class="px-4 md:px-6 py-3 md:py-4 text-right font-semibold text-primary">
                                 S/ {{ number_format($m->costo_total, 2) }}
                             </td>
+                            <td class="px-4 md:px-6 py-3 md:py-4 text-center">
+                                @if($m->estado !== 'ANULADA')
+                                    <form action="{{ route('mermas.anular', $m->id_merma) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Está seguro de anular esta merma? Esta acción revertirá los movimientos de inventario y no se puede deshacer.');">
+                                        @csrf
+                                        <button type="submit" class="text-red-500 hover:text-red-700 p-1" title="Anular Merma">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-xs text-red-500 font-bold border border-red-500 px-2 py-1 rounded">ANULADA</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron registros de mermas.</td>
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron registros de mermas.</td>
                         </tr>
                     @endforelse
                 </tbody>

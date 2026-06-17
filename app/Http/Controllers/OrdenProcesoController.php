@@ -303,6 +303,7 @@ class OrdenProcesoController extends Controller
         $es_actividad = ($proceso->codigo_proceso == '1');
         $es_mezclado = ($proceso->codigo_proceso == '16');
         $es_inyectado = ($proceso->codigo_proceso == '15');
+        $es_ensamblado = ($proceso->codigo_proceso == '10');
 
         $proceso_nombre = strtoupper(trim($proceso->proceso_desc));
         $formulas_disponibles = DB::table('formula_produccion')
@@ -322,6 +323,8 @@ class OrdenProcesoController extends Controller
                     $query->orWhere('codigo', 'LIKE', 'C1%');
                 } elseif (str_contains($proceso_nombre, 'TROQUELADO')) {
                     $query->orWhere('codigo', 'LIKE', 'C2%');
+                } elseif (str_contains($proceso_nombre, 'ENSAMBLADO')) {
+                    $query->orWhere('codigo', 'LIKE', 'EN%');
                 }
             })
             ->orderBy('codigo')
@@ -370,7 +373,7 @@ class OrdenProcesoController extends Controller
         $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
 
         return view('produccion.procesos.ejecucion', compact(
-            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado',
+            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado',
             'formulas_disponibles', 'registrados', 'tiene_componentes', 'tipos_producto',
             'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen'
         ));
@@ -380,6 +383,7 @@ class OrdenProcesoController extends Controller
     {
         $codigo_formula = $request->codigo_formula;
         $codigo_molde = $request->codigo_molde;
+        $codigo_almacen = $request->codigo_almacen;
         
         if (!$codigo_formula) {
             return response()->json(['success' => false, 'message' => 'Código de fórmula no proporcionado.']);
@@ -396,21 +400,70 @@ class OrdenProcesoController extends Controller
                 'tp.descripcion as descripcion_tipo_producto',
                 'cf.cantidad_nominal',
                 'cf.codigo_unidad_medida',
-                'u.descripcion as descripcion_unidad_medida'
+                'u.descripcion as descripcion_unidad_medida',
+                'cf.codigo_molde'
             )
             ->where('cf.codigo_formula', $codigo_formula);
 
         if ($codigo_molde) {
-            $query->where('cf.codigo_molde', $codigo_molde);
+            $query->where(function($q) use ($codigo_molde) {
+                $q->where('cf.codigo_molde', $codigo_molde)
+                  ->orWhereNull('cf.codigo_molde');
+            });
         }
 
         $componentes = $query->get();
 
-        if ($componentes->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'La fórmula no tiene componentes o no coinciden los parámetros.']);
+        // Lógica de ensamblado (dinámica) si no se pasa molde desde el UI
+        if (!$codigo_molde) {
+            $componentesFiltrados = collect();
+            $productosConMolde = [];
+
+            foreach ($componentes as $comp) {
+                if (!empty($comp->codigo_molde)) {
+                    if (!array_key_exists($comp->codigo_producto, $productosConMolde)) {
+                        // Buscar el molde del lote más antiguo en stock
+                        $queryStock = DB::table('inventario as i')
+                            ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
+                            ->where('i.codigo_producto', $comp->codigo_producto)
+                            ->where('a.activo', 1)
+                            ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); })
+                            ->where('i.stock_actual', '>', 0);
+                            
+                        if ($codigo_almacen) {
+                            $queryStock->where('i.codigo_almacen', $codigo_almacen);
+                        }
+
+                        $loteActivo = $queryStock->orderBy('i.fecha_vencimiento', 'asc')
+                            ->orderBy('i.id_inventario', 'asc')
+                            ->first();
+
+                        $moldeStock = null;
+                        if ($loteActivo && $loteActivo->lote) {
+                            $moldeStock = DB::table('produccion_ingresos_proceso')
+                                ->where('lote_produccion', $loteActivo->lote)
+                                ->value('codigo_molde');
+                        }
+                        $productosConMolde[$comp->codigo_producto] = $moldeStock;
+                    }
+
+                    // Solo incluir si coincide con el molde en stock
+                    if ($comp->codigo_molde === $productosConMolde[$comp->codigo_producto]) {
+                        $componentesFiltrados->push($comp);
+                    }
+                } else {
+                    // Si no tiene molde (ej. Clip) se incluye directamente
+                    $componentesFiltrados->push($comp);
+                }
+            }
+            $componentes = $componentesFiltrados;
         }
 
-        return response()->json(['success' => true, 'componentes' => $componentes]);
+        if ($componentes->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'La fórmula no tiene componentes o no coinciden los parámetros de stock/molde.']);
+        }
+
+        return response()->json(['success' => true, 'componentes' => $componentes->values()]);
     }
 
     public function verificarStock(Request $request)
@@ -455,6 +508,19 @@ class OrdenProcesoController extends Controller
             $trace_movimientos = 0;
             $trace_componentes = count($componentes);
             $consumosResumen = []; // [key => ['producto','almacen','cantidad','primer_mov_id']]
+
+            $codigo_molde_op = null;
+            foreach ($componentes as $comp) {
+                if (!empty($comp['codigo_molde'])) {
+                    $codigo_molde_op = $comp['codigo_molde'];
+                    break;
+                }
+            }
+
+            $descripcion_molde_op = null;
+            if ($codigo_molde_op) {
+                $descripcion_molde_op = DB::table('molde')->where('codigo', $codigo_molde_op)->value('descripcion');
+            }
 
             $proceso = OrdenProceso::findOrFail($id);
             if ($proceso->estado_avance === 'COMPLETADO') {
@@ -788,7 +854,9 @@ class OrdenProcesoController extends Controller
                         'lote_produccion' => $lote_pep,
                         'fecha_ingreso' => now(),
                         'usuario_registro' => $usuario_id,
-                        'estado' => 'PENDIENTE'
+                        'estado' => 'PENDIENTE',
+                        'codigo_molde' => $codigo_molde_op,
+                        'descripcion_molde' => $descripcion_molde_op
                     ]);
                     $ingresos_creados++;
                 }
@@ -816,6 +884,8 @@ class OrdenProcesoController extends Controller
                         'lote_produccion' => $lote_pr,
                         'fecha_ingreso' => now(),
                         'usuario_registro' => $usuario_id,
+                        'codigo_molde' => $codigo_molde_op,
+                        'descripcion_molde' => $descripcion_molde_op
                     ]);
                     $ingresos_creados++;
                 }
@@ -1462,9 +1532,9 @@ class OrdenProcesoController extends Controller
                     }
                     $nuevaCantidadPEP = max(0, $pepRow->cantidad - $componente->cantidad);
                     if ($nuevaCantidadPEP <= 0) {
-                        DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->delete();
+                        DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->delete();
                     } else {
-                        DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->update(['cantidad' => $nuevaCantidadPEP]);
+                        DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->update(['cantidad' => $nuevaCantidadPEP]);
                     }
                 }
             }

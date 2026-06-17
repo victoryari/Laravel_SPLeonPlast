@@ -240,6 +240,7 @@ class DespachoRequerimientoController extends Controller
                         ->where('id_inventario', $invDestino->id_inventario)
                         ->update([
                             'stock_actual' => $invDestino->stock_actual + $cantidad,
+                            'estado' => 1,
                             'costo_promedio' => $costosIngreso['costo_promedio'],
                             'fecha_ultimo_movimiento' => now(),
                             'usuario_ultimo_movimiento' => Auth::id(),

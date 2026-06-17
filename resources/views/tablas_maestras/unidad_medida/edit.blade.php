@@ -6,7 +6,7 @@
 <div class="max-w-2xl mx-auto">
     <x-page-header title="Editar Unidad: {{ $unidad->codigo }}" subtitle="Actualice la descripción de la unidad seleccionada." />
 
-    <x-card>
+    <x-card class="p-6 md:p-8">
         <form action="{{ route('unidades_medida.update', $unidad->codigo) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')

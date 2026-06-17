@@ -33,17 +33,60 @@ class MermaController extends Controller
         return view('mermas.create', compact('almacenes', 'ordenes'));
     }
 
-    public function getProductosPorOP(Request $request)
+    public function getProcesosPorOP(Request $request)
     {
         $idop = $request->idop;
         
+        $procesos = DB::table('orden_proceso')
+            ->where('idop', $idop)
+            ->select('id', 'descripcion_proceso', 'estado_avance')
+            ->orderBy('secuencia')
+            ->get();
+            
+        return response()->json($procesos);
+    }
+
+    public function getComponentesEnsamblado(Request $request)
+    {
+        $idop = $request->idop;
+        $id_proceso = $request->id_proceso;
+        $codigo_almacen = $request->codigo_almacen;
+
+        $componentes = DB::table('componentes_orden_produccion_global as c')
+            ->join('producto as p', 'c.codigo_producto', '=', 'p.codigo')
+            ->join('inventario as i', function($join) use ($codigo_almacen) {
+                $join->on('c.codigo_producto', '=', 'i.codigo_producto')
+                     ->where('i.codigo_almacen', '=', $codigo_almacen)
+                     ->where('i.stock_actual', '>', 0);
+            })
+            ->where('c.idop', $idop)
+            ->where('c.id_proceso', $id_proceso)
+            ->where('c.estado', 1)
+            ->select('c.codigo_producto', 'p.descripcion', 'i.stock_actual', 'c.codigo_unidad_medida')
+            ->distinct()
+            ->get();
+
+        return response()->json($componentes);
+    }
+
+    public function getProductosPorOP(Request $request)
+    {
+        $idop = $request->idop;
+        $id_proceso = $request->id_proceso;
+        
         $productos = DB::table('inventario')
             ->join('producto', 'inventario.codigo_producto', '=', 'producto.codigo')
-            ->join('produccion_ingresos_proceso', function($join) use ($idop) {
+            ->join('produccion_ingresos_proceso', function($join) use ($idop, $id_proceso) {
                 $join->on('produccion_ingresos_proceso.codigo_producto_proceso', '=', 'inventario.codigo_producto')
+                     ->on('produccion_ingresos_proceso.codigo_almacen', '=', 'inventario.codigo_almacen')
                      ->where('produccion_ingresos_proceso.idop', '=', $idop);
+                
+                if ($id_proceso) {
+                    $join->where('produccion_ingresos_proceso.id_proceso', '=', $id_proceso);
+                }
             })
-            ->where('inventario.stock_actual', '>', 0)
+            // Se elimina la restricción de stock > 0 porque la merma descuenta de la materia prima, 
+            // no del producto generado (el cual pudo haber sido transferido a otro almacén).
             ->select(
                 'producto.codigo', 
                 'producto.descripcion', 
@@ -65,15 +108,33 @@ class MermaController extends Controller
             'codigo_almacen' => 'required|exists:almacen,codigo_almacen',
             'cantidad_pura' => 'nullable|numeric|min:0',
             'cantidad_recuperada' => 'nullable|numeric|min:0',
-            'motivo' => 'nullable|string|max:255'
+            'motivo' => 'nullable|string|max:255',
+            'es_ensamblado' => 'nullable|in:0,1',
+            'componentes' => 'nullable|array'
         ]);
 
-        $pura = (float) $request->cantidad_pura;
-        $recuperada = (float) $request->cantidad_recuperada;
-        $cantidadTotalMerma = $pura + $recuperada;
+        $es_ensamblado = $request->es_ensamblado === '1';
 
-        if ($cantidadTotalMerma <= 0) {
-            return back()->with('error', 'Debe ingresar al menos una cantidad mayor a 0.');
+        if (!$es_ensamblado) {
+            $pura = (float) $request->cantidad_pura;
+            $recuperada = (float) $request->cantidad_recuperada;
+            $cantidadTotalMerma = $pura + $recuperada;
+
+            if ($cantidadTotalMerma <= 0) {
+                return back()->with('error', 'Debe ingresar al menos una cantidad mayor a 0.');
+            }
+        } else {
+            $hasMerma = false;
+            if ($request->componentes) {
+                foreach ($request->componentes as $cod => $cant) {
+                    $p = (float)($cant['pura'] ?? 0);
+                    $r = (float)($cant['recuperada'] ?? 0);
+                    if ($p > 0 || $r > 0) $hasMerma = true;
+                }
+            }
+            if (!$hasMerma) {
+                return back()->with('error', 'Debe ingresar al menos una cantidad mayor a 0 en algún componente.');
+            }
         }
 
         if (str_starts_with($request->codigo_producto, 'REC-')) {
@@ -83,6 +144,160 @@ class MermaController extends Controller
         try {
             DB::beginTransaction();
 
+            if ($es_ensamblado) {
+                foreach ($request->componentes as $cod => $cant) {
+                    $pura = (float)($cant['pura'] ?? 0);
+                    $recuperada = (float)($cant['recuperada'] ?? 0);
+                    $cantidadTotalMerma = $pura + $recuperada;
+
+                    if ($cantidadTotalMerma <= 0) continue;
+
+                    if (str_starts_with($cod, 'REC-')) {
+                        throw new \Exception("No se puede registrar merma de un producto ya recuperado: {$cod}.");
+                    }
+
+                    $compProducto = Producto::findOrFail($cod);
+
+                    $merma = Merma::create([
+                        'id_orden_produccion' => $request->id_orden_produccion,
+                        'codigo_producto' => $cod,
+                        'descripcion_producto' => $compProducto->descripcion,
+                        'cantidad' => $cantidadTotalMerma,
+                        'costo_unitario' => 0,
+                        'costo_total' => 0,
+                        'motivo' => $request->motivo,
+                        'tipo_merma' => ($pura > 0 && $recuperada > 0) ? 'MIXTO' : (($pura > 0) ? 'PURA' : 'RECUPERABLE'),
+                        'codigo_almacen' => $request->codigo_almacen,
+                        'estado' => 'REGISTRADA',
+                        'usuario_registro' => Auth::id()
+                    ]);
+
+                    $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+
+                    $inv = DB::table('inventario')
+                        ->where('codigo_producto', $cod)
+                        ->where('codigo_almacen', $request->codigo_almacen)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$inv || $inv->stock_actual < $cantidadTotalMerma) {
+                        throw new \Exception("Stock insuficiente del componente {$cod} ({$compProducto->descripcion}) en el almacén {$request->codigo_almacen}. Se requieren {$cantidadTotalMerma}.");
+                    }
+
+                    $costoSalida = $inv->costo_promedio;
+                    $totalSalida = round($cantidadTotalMerma * $costoSalida, 2);
+                    $nuevoStock = $inv->stock_actual - $cantidadTotalMerma;
+
+                    DB::table('kardex')->insert([
+                        'codigo_producto' => $cod,
+                        'codigo_almacen' => $request->codigo_almacen,
+                        'fecha_movimiento' => now(),
+                        'tipo_movimiento' => 'SALIDA',
+                        'documento' => 'MERMA',
+                        'numero_documento' => $numeroDoc,
+                        'cantidad_entrada' => 0,
+                        'costo_entrada' => 0,
+                        'total_entrada' => 0,
+                        'cantidad_salida' => $cantidadTotalMerma,
+                        'costo_salida' => $costoSalida,
+                        'total_salida' => $totalSalida,
+                        'cantidad_saldo' => $nuevoStock,
+                        'costo_promedio' => $inv->costo_promedio,
+                        'total_saldo' => $nuevoStock * $inv->costo_promedio,
+                        'observaciones' => "MERMA DIRECTA COMPONENTE ENSAMBLADO OP-{$request->id_orden_produccion}",
+                        'usuario_registro' => Auth::id()
+                    ]);
+
+                    DB::table('inventario')
+                        ->where('id_inventario', $inv->id_inventario)
+                        ->update([
+                            'stock_actual' => $nuevoStock,
+                            'fecha_ultimo_movimiento' => now(),
+                            'usuario_ultimo_movimiento' => Auth::id()
+                        ]);
+
+                    $merma->update([
+                        'costo_unitario' => $costoSalida,
+                        'costo_total' => $totalSalida
+                    ]);
+
+                    if ($recuperada > 0) {
+                        $param = ParametroSistema::where('codigo_parametro', 'PORCENTAJE_COSTO_RECICLADO')->lockForUpdate()->first();
+                        $porcentaje = $param ? (float) $param->valor : 0.8;
+                        
+                        $costoReciclado = $costoSalida * $porcentaje;
+                        $totalEntradaRec = round($recuperada * $costoReciclado, 2);
+
+                        $codRecuperado = 'REC-' . $cod;
+
+                        $prodRecuperado = Producto::firstOrCreate(
+                            ['codigo' => $codRecuperado],
+                            [
+                                'descripcion' => 'RECUPERADO - ' . $compProducto->descripcion,
+                                'codigo_tipo_producto' => $compProducto->codigo_tipo_producto,
+                                'codigo_unidad_medida' => $compProducto->codigo_unidad_medida,
+                                'estado' => 1
+                            ]
+                        );
+                        
+                        DB::table('inventario')->updateOrInsert(
+                            ['codigo_producto' => $codRecuperado, 'codigo_almacen' => $request->codigo_almacen],
+                            [
+                                'stock_minimo' => 0,
+                                'stock_maximo' => 0
+                            ]
+                        );
+                        
+                        $invRec = DB::table('inventario')
+                            ->where('codigo_producto', $codRecuperado)
+                            ->where('codigo_almacen', $request->codigo_almacen)
+                            ->lockForUpdate()
+                            ->first();
+                        
+                        $saldoAnteriorRec = $invRec->stock_actual ?? 0;
+                        $costoPromAnteriorRec = $invRec->costo_promedio ?? 0;
+                        $nuevoSaldoRec = $saldoAnteriorRec + $recuperada;
+                        $nuevoTotalSaldoRec = ($saldoAnteriorRec * $costoPromAnteriorRec) + $totalEntradaRec;
+                        $nuevoCostoPromRec = $nuevoSaldoRec > 0 ? round($nuevoTotalSaldoRec / $nuevoSaldoRec, 6) : 0;
+
+                        DB::table('kardex')->insert([
+                            'codigo_producto' => $codRecuperado,
+                            'codigo_almacen' => $request->codigo_almacen,
+                            'fecha_movimiento' => now(),
+                            'tipo_movimiento' => 'INGRESO',
+                            'documento' => 'MERMA',
+                            'numero_documento' => $numeroDoc,
+                            'cantidad_entrada' => $recuperada,
+                            'costo_entrada' => $costoReciclado,
+                            'total_entrada' => $totalEntradaRec,
+                            'cantidad_salida' => 0,
+                            'costo_salida' => 0,
+                            'total_salida' => 0,
+                            'cantidad_saldo' => $nuevoSaldoRec,
+                            'costo_promedio' => $nuevoCostoPromRec,
+                            'total_saldo' => round($nuevoSaldoRec * $nuevoCostoPromRec, 6),
+                            'observaciones' => "INGRESO RECUPERADO DE COMPONENTE ENSAMBLADO OP-{$request->id_orden_produccion}",
+                            'usuario_registro' => Auth::id()
+                        ]);
+
+                        DB::table('inventario')
+                            ->where('codigo_producto', $codRecuperado)
+                            ->where('codigo_almacen', $request->codigo_almacen)
+                            ->update([
+                                'stock_actual' => $nuevoSaldoRec,
+                                'costo_promedio' => $nuevoCostoPromRec,
+                                'fecha_ultimo_movimiento' => now(),
+                                'usuario_ultimo_movimiento' => Auth::id()
+                            ]);
+                    }
+                }
+
+                DB::commit();
+                return redirect()->route('mermas.index')->with('success', 'Merma de Ensamblado registrada exitosamente.');
+            }
+
+            // ================== FLUJO INYECTADO (ESTÁNDAR) ==================
+            
             $productoOrigen = Producto::findOrFail($request->codigo_producto);
 
             // Obtener el proceso de la OP que generó este producto
@@ -103,12 +318,14 @@ class MermaController extends Controller
             // Factor de consumo proporcional
             $factor = $cantidadTotalMerma / $cantidadPlanificadaPEP;
 
-            // Obtener las materias primas del proceso
+            // Obtener las materias primas del proceso (agrupadas para evitar duplicados en el Kardex)
             $componentes = DB::table('componentes_orden_produccion_global')
                 ->where('idop', $request->id_orden_produccion)
                 ->where('id_proceso', $procesoIngreso->id_proceso)
                 ->whereIn('codigo_tipo_producto', ['MTP', 'MAT', 'INS'])
                 ->where('estado', 1)
+                ->selectRaw('codigo_producto, MAX(descripcion_producto) as descripcion_producto, SUM(cantidad) as cantidad')
+                ->groupBy('codigo_producto')
                 ->get();
 
             if ($componentes->isEmpty()) {
@@ -271,6 +488,85 @@ class MermaController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al registrar merma: ' . $e->getMessage());
+        }
+    }
+
+    public function anular($id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $merma = Merma::findOrFail($id);
+            
+            if ($merma->estado === 'ANULADA') {
+                return back()->with('error', 'La merma ya se encuentra anulada.');
+            }
+            
+            $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+            
+            $movimientos = DB::table('kardex')
+                ->where('numero_documento', $numeroDoc)
+                ->orderBy('id_kardex', 'desc')
+                ->get();
+                
+            foreach ($movimientos as $mov) {
+                $inv = DB::table('inventario')
+                    ->where('codigo_producto', $mov->codigo_producto)
+                    ->where('codigo_almacen', $mov->codigo_almacen)
+                    ->lockForUpdate()
+                    ->first();
+                    
+                if (!$inv) continue;
+                
+                if ($mov->tipo_movimiento === 'SALIDA') {
+                    // Revertir salida -> sumar stock
+                    $nuevoStock = $inv->stock_actual + $mov->cantidad_salida;
+                } else {
+                    // Revertir ingreso -> restar stock
+                    $nuevoStock = $inv->stock_actual - $mov->cantidad_entrada;
+                    if ($nuevoStock < 0) {
+                        throw new \Exception("No se puede anular porque el stock del producto {$mov->codigo_producto} quedaría en negativo.");
+                    }
+                }
+                
+                // Registrar el movimiento de extorno
+                DB::table('kardex')->insert([
+                    'codigo_producto' => $mov->codigo_producto,
+                    'codigo_almacen' => $mov->codigo_almacen,
+                    'fecha_movimiento' => now(),
+                    'tipo_movimiento' => 'EXTORNO',
+                    'documento' => 'ANULACION MERMA',
+                    'numero_documento' => 'ANUL-' . $numeroDoc,
+                    'cantidad_entrada' => $mov->tipo_movimiento === 'SALIDA' ? $mov->cantidad_salida : 0,
+                    'costo_entrada' => $mov->tipo_movimiento === 'SALIDA' ? $mov->costo_salida : 0,
+                    'total_entrada' => $mov->tipo_movimiento === 'SALIDA' ? $mov->total_salida : 0,
+                    'cantidad_salida' => $mov->tipo_movimiento === 'INGRESO' ? $mov->cantidad_entrada : 0,
+                    'costo_salida' => $mov->tipo_movimiento === 'INGRESO' ? $mov->costo_entrada : 0,
+                    'total_salida' => $mov->tipo_movimiento === 'INGRESO' ? $mov->total_entrada : 0,
+                    'cantidad_saldo' => $nuevoStock,
+                    'costo_promedio' => $inv->costo_promedio,
+                    'total_saldo' => $nuevoStock * $inv->costo_promedio,
+                    'observaciones' => "EXTORNO POR ANULACION DE MERMA OP-{$merma->id_orden_produccion}",
+                    'usuario_registro' => Auth::id()
+                ]);
+                
+                DB::table('inventario')
+                    ->where('id_inventario', $inv->id_inventario)
+                    ->update([
+                        'stock_actual' => $nuevoStock,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]);
+            }
+            
+            $merma->update(['estado' => 'ANULADA']);
+            
+            DB::commit();
+            return redirect()->route('mermas.index')->with('success', 'La merma ha sido anulada y los movimientos de inventario han sido extornados.');
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al anular la merma: ' . $e->getMessage());
         }
     }
 }

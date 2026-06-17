@@ -13,6 +13,24 @@
         </x-slot:actions>
     </x-page-header>
 
+    @if(session('error'))
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded shadow-sm" role="alert">
+            <p class="font-bold">Error:</p>
+            <p>{{ session('error') }}</p>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-5 rounded shadow-sm" role="alert">
+            <p class="font-bold">Por favor corrija los siguientes errores:</p>
+            <ul class="list-disc pl-5 mt-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form action="{{ route('compras.update', $compra->id_compra) }}" method="POST" id="formCompra">
         @csrf
         @method('PUT')
@@ -138,7 +156,7 @@
                                             <input type="date" name="productos[{{ $index }}][fecha_vencimiento]" value="{{ $det->fecha_vencimiento }}" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px">
                                         </td>
                                         <td class="p-1">
-                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ $compra->igv_incluido ? ($det->precio_unitario * 1.18) : $det->precio_unitario }}" step="any" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
+                                            <input type="number" name="productos[{{ $index }}][precio]" value="{{ round($compra->igv_incluido ? ($det->precio_unitario * 1.18) : $det->precio_unitario, 9) }}" step="any" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px">
                                         </td>
                                         <td class="p-1">
                                             <input type="text" class="w-full bg-transparent border-none text-right font-semibold text-xs out-sub" value="{{ number_format($det->subtotal, 2, '.', '') }}" readonly tabindex="-1" style="height:28px">

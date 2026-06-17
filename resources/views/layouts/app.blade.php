@@ -15,9 +15,8 @@
     <div class="flex h-screen overflow-hidden">
 
         <div id="sidebar" class="fixed md:relative z-50 inset-y-0 left-0 w-64 h-full bg-sidebar text-white flex flex-col shrink-0 shadow-xl -translate-x-full md:translate-x-0 transition-transform duration-200 ease-out">
-            <div class="p-6 text-center border-b border-slate-700 shrink-0">
-                <h2 class="text-xl font-bold tracking-wider">LEON PLAST</h2>
-                <p class="text-xs text-sidebar-text mt-1">Sistema de Producción</p>
+            <div class="p-6 flex justify-center border-b border-slate-700 shrink-0 bg-white">
+                <img src="{{ asset('img/logo.png') }}" alt="LEON PLAST" class="h-10 w-auto object-contain">
             </div>
 
             <nav class="flex-1 mt-4 px-4 pb-4 overflow-y-auto scrollbar-thin">
@@ -252,17 +251,17 @@
         </div>
     </div>
 
-    <div id="toast-container" class="toast-container"></div>
-
-    @if(session('success'))
-        <x-toast type="success" :message="session('success')" />
-    @endif
-    @if(session('error'))
-        <x-toast type="error" :message="session('error')" />
-    @endif
-    @if(session('warning'))
-        <x-toast type="warning" :message="session('warning')" />
-    @endif
+    <div id="toast-container" class="toast-container">
+        @if(session('success'))
+            <x-toast type="success" :message="session('success')" />
+        @endif
+        @if(session('error'))
+            <x-toast type="error" :message="session('error')" />
+        @endif
+        @if(session('warning'))
+            <x-toast type="warning" :message="session('warning')" />
+        @endif
+    </div>
 
     @stack('scripts')
 
