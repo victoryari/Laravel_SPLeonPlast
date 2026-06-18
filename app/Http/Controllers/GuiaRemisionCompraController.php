@@ -197,6 +197,65 @@ class GuiaRemisionCompraController extends Controller
                     'fecha_movimiento'     => now(),
                     'estado'               => 1,
                 ]);
+
+                // 8. Lógica de Terceros: Conciliación FIFO
+                $mapeoTercero = DB::table('terceros_mapeo_productos')
+                    ->where('codigo_producto_destino', $item['codigo_producto'])
+                    ->where('estado', 1)
+                    ->first();
+                
+                if ($mapeoTercero) {
+                    $codigoOrigen = $mapeoTercero->codigo_producto_origen;
+                    
+                    // Buscar guias de salida pendientes de este proveedor que tengan este codigo origen
+                    $salidasPendientes = DB::table('guia_remision_terceros_salida as c')
+                        ->join('guia_remision_terceros_salida_detalle as d', 'c.id_guia_salida', '=', 'd.id_guia_salida')
+                        ->where('c.proveedor_destino', $request->proveedor)
+                        ->where('d.codigo_producto', $codigoOrigen)
+                        ->whereIn('d.estado_detalle', ['PENDIENTE', 'PARCIAL'])
+                        ->where('c.estado_guia', '!=', 'ANULADA')
+                        ->orderBy('c.fecha_emision', 'asc')
+                        ->orderBy('d.id_detalle_salida', 'asc')
+                        ->select('d.*', 'c.numero_guia')
+                        ->get();
+                    
+                    $cantidadAAmortizar = $item['cantidad'];
+                    
+                    foreach ($salidasPendientes as $salida) {
+                        if ($cantidadAAmortizar <= 0) break;
+                        
+                        $saldoPendienteSalida = $salida->cantidad_enviada - $salida->cantidad_devuelta - $salida->cantidad_merma;
+                        
+                        if ($saldoPendienteSalida <= 0) continue;
+                        
+                        $cantidadAmortizada = min($cantidadAAmortizar, $saldoPendienteSalida);
+                        
+                        // Registrar en tabla conciliacion_terceros
+                        DB::table('conciliacion_terceros')->insert([
+                            'id_detalle_salida' => $salida->id_detalle_salida,
+                            'id_detalle_compra' => $detalle->id_detalle_guia,
+                            'cantidad_amortizada' => $cantidadAmortizada,
+                            'fecha_conciliacion' => now(),
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        
+                        // Actualizar detalle salida
+                        $nuevaCantidadDevuelta = $salida->cantidad_devuelta + $cantidadAmortizada;
+                        // Si la diferencia es menor a 0.01 se considera completado por exactitud
+                        $nuevoEstado = ($salida->cantidad_enviada - $nuevaCantidadDevuelta - $salida->cantidad_merma <= 0.01) ? 'COMPLETADO' : 'PARCIAL';
+                        
+                        DB::table('guia_remision_terceros_salida_detalle')
+                            ->where('id_detalle_salida', $salida->id_detalle_salida)
+                            ->update([
+                                'cantidad_devuelta' => $nuevaCantidadDevuelta,
+                                'estado_detalle' => $nuevoEstado,
+                                'updated_at' => now(),
+                            ]);
+                            
+                        $cantidadAAmortizar -= $cantidadAmortizada;
+                    }
+                }
             }
 
             DB::commit();

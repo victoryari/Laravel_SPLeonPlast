@@ -10,11 +10,11 @@
             <p class="text-sm text-slate-500 mt-1">Historial cronológico valorizado de entradas, salidas y saldos.</p>
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('inventario.kardex.exportar.excel', request()->query()) }}"
+            <a href="{{ route('inventario.kardex.exportar.excel', request()->query()) }}" id="btn-export-excel"
                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow transition no-print">
                 <i class="fas fa-file-excel mr-1"></i> Exportar Excel
             </a>
-            <a href="{{ route('inventario.kardex.exportar.pdf', request()->query()) }}"
+            <a href="{{ route('inventario.kardex.exportar.pdf', request()->query()) }}" id="btn-export-pdf"
                class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow transition no-print">
                 <i class="fas fa-file-pdf mr-1"></i> Exportar PDF
             </a>
@@ -242,6 +242,11 @@ document.addEventListener('DOMContentLoaded', function () {
             url.searchParams.delete('page');
         }
         window.history.pushState({}, '', url);
+        
+        const currentParams = url.searchParams.toString();
+        document.getElementById('btn-export-excel').href = "{{ route('inventario.kardex.exportar.excel') }}?" + currentParams;
+        document.getElementById('btn-export-pdf').href = "{{ route('inventario.kardex.exportar.pdf') }}?" + currentParams;
+        
         tableContainer.classList.add('opacity-50', 'pointer-events-none');
 
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })

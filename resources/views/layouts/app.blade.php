@@ -182,6 +182,17 @@
                     </a>
                     @endif
 
+                    @if(Auth::user()->hasAccess('terceros.salidas.index') || Auth::user()->rol_id == 1)
+                    <a href="{{ route('terceros.salidas.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('terceros.salidas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-truck-loading w-6"></i>
+                        <span>Terceros - Envíos</span>
+                    </a>
+                    <a href="{{ route('terceros.liquidacion.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('terceros.liquidacion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-balance-scale w-6"></i>
+                        <span>Terceros</span>
+                    </a>
+                    @endif
+
                     @if(Auth::user()->hasAccess('reportes.index'))
                     <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.index') || request()->routeIs('reportes.produccion') || request()->routeIs('reportes.inventario') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-file-invoice-dollar w-6"></i>

@@ -55,6 +55,16 @@
                     </p>
                 </div>
 
+                <div>
+                    <label for="observaciones" class="block text-sm font-medium text-gray-700 mb-2">
+                        Observaciones / Detalle Adicional (Opcional)
+                    </label>
+                    <textarea name="observaciones" id="observaciones" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Ej. Cáscara color azul ultra mar...">{{ old('observaciones') }}</textarea>
+                    <p class="mt-2 text-xs text-gray-500">
+                        Útil para diferenciar procesos similares (ej. inyectado de diferentes colores/partes para el mismo ensamble).
+                    </p>
+                </div>
+
                 <!-- Detalles Informativos -->
                 <div class="bg-primary-50 border border-primary-50 rounded-lg p-4">
                     <h4 class="text-primary font-semibold text-sm mb-2 flex items-center">

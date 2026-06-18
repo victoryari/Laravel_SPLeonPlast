@@ -151,7 +151,7 @@
                                 $selectProc.append(
                                     $('<option></option>')
                                         .val(item.id)
-                                        .text(item.descripcion_proceso + ' (' + item.estado_avance + ')')
+                                        .text(item.descripcion_completa)
                                 );
                             });
                         }

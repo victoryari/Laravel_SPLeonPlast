@@ -28,6 +28,6 @@ class ProductoProceso extends Model
             'producto_proceso_rutas', 
             'codigo_producto_proceso', 
             'codigo_proceso'
-        )->withPivot('secuencia', 'id')->orderBy('secuencia', 'asc');
+        )->withPivot('secuencia', 'id')->withTimestamps()->orderBy('secuencia', 'asc');
     }
 }

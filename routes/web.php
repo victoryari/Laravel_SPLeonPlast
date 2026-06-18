@@ -90,8 +90,9 @@ Route::middleware('auth')->group(function () {
         // Rutas de Parámetros del Sistema
         Route::get('/parametros', [ParametroSistemaController::class, 'index'])->name('parametros.index');
         Route::post('/parametros', [ParametroSistemaController::class, 'store'])->name('parametros.store');
-        Route::post('/parametros/update', [ParametroSistemaController::class, 'updateBulk'])->name('parametros.updateBulk');
+        Route::post('/parametros/update-bulk', [ParametroSistemaController::class, 'updateBulk'])->name('parametros.updateBulk');
         Route::post('/parametros/fetch-tipo-cambio', [ParametroSistemaController::class, 'fetchTipoCambio'])->name('parametros.fetchTipoCambio');
+        Route::post('/parametros/limpiar-db', [ParametroSistemaController::class, 'limpiarDB'])->name('parametros.limpiar_db');
 
         // Proveedores
         Route::resource('proveedores', ProveedorController::class)->names('proveedores');
@@ -219,7 +220,7 @@ Route::middleware('auth')->group(function () {
             'store' => 'produccion.ordenes.store',
             'destroy' => 'produccion.ordenes.destroy',
         ])->except(['show', 'edit', 'update']);
-        
+        Route::post('ordenes/{orden}/finalizar', [OrdenProduccionController::class, 'finalizar'])->name('produccion.ordenes.finalizar');
         Route::get('ordenes/{orden}/procesos-ajax', [OrdenProduccionController::class, 'getProcesos'])->name('produccion.ordenes.procesos_ajax');
         
         // Procesos de la Orden
@@ -268,6 +269,14 @@ Route::middleware('auth')->group(function () {
     // =========================================================
     // MÓDULO DE REPORTES
     // =========================================================
+    Route::prefix('terceros')->name('terceros.')->group(function () {
+        Route::get('/salidas', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'index'])->name('salidas.index');
+        Route::get('/salidas/create', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'create'])->name('salidas.create');
+        Route::post('/salidas', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'store'])->name('salidas.store');
+        Route::get('/liquidacion', [\App\Http\Controllers\TercerosLiquidacionController::class, 'index'])->name('liquidacion.index');
+        Route::post('/liquidacion/{id}/cerrar', [\App\Http\Controllers\TercerosLiquidacionController::class, 'cerrarConMerma'])->name('liquidacion.cerrar');
+    });
+
     Route::prefix('reportes')->name('reportes.')->group(function () {
         Route::get('/', [ReporteController::class, 'index'])->name('index');
         Route::get('/produccion', [ReporteController::class, 'produccion'])->name('produccion');

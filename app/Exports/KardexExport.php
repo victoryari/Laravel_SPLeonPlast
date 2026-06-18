@@ -26,6 +26,7 @@ class KardexExport implements FromCollection, WithHeadings, WithMapping, WithSty
         $query = DB::table('kardex')
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->where('kardex.codigo_almacen', '!=', 'ALM04')
             ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen');
 
         if (!empty($this->filtros['documento'])) {

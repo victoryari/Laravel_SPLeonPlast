@@ -91,13 +91,31 @@ class KardexService
                         'total_saldo' => max(0, round($cantidadAcumulada * $costoPromedio, 9)),
                     ]);
 
+                if ($mov->codigo_referencia_movimiento) {
+                    DB::table('movimientos_inventario')
+                        ->where('id_movimiento', $mov->codigo_referencia_movimiento)
+                        ->update([
+                            'costo_unitario' => $costoSalidaEfectivo,
+                            'total' => round($totalSalida, 2)
+                        ]);
+                }
+
                 // Propagar costo a la entrada de la transferencia si aplica
                 if ($mov->documento === 'TRANSFERENCIA' || $mov->documento === 'ANULACION_TRANSFERENCIA') {
-                    DB::table('kardex')
+                    $ingresoTransf = DB::table('kardex')
                         ->where('numero_documento', $mov->numero_documento)
                         ->where('codigo_producto', $codigoProducto)
                         ->where('tipo_movimiento', 'INGRESO')
-                        ->update(['costo_entrada' => $costoSalidaEfectivo]);
+                        ->first();
+                        
+                    if ($ingresoTransf && abs((float)$ingresoTransf->costo_entrada - (float)$costoSalidaEfectivo) > 0.000001) {
+                        DB::table('kardex')
+                            ->where('id_kardex', $ingresoTransf->id_kardex)
+                            ->update(['costo_entrada' => $costoSalidaEfectivo]);
+                            
+                        // Llamada recursiva para propagar el recálculo en el almacén destino
+                        $this->recalcular($codigoProducto, $ingresoTransf->codigo_almacen);
+                    }
                 }
                 
                 continue;
@@ -132,6 +150,15 @@ class KardexService
                     'cantidad_saldo' => max(0, $cantidadAcumulada),
                     'total_saldo'    => round(max(0, $cantidadAcumulada) * $costoPromedio, 9),
                 ]);
+
+            if ($mov->codigo_referencia_movimiento) {
+                DB::table('movimientos_inventario')
+                    ->where('id_movimiento', $mov->codigo_referencia_movimiento)
+                    ->update([
+                        'costo_unitario' => $costoEntradaEfectivo,
+                        'total' => round($totalEntrada, 2)
+                    ]);
+            }
         }
 
         $ultimo = DB::table('kardex')

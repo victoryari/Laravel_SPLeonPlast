@@ -61,6 +61,7 @@ class DespachoRequerimientoController extends Controller
                 ->join('almacen', 'inventario.codigo_almacen', '=', 'almacen.codigo_almacen')
                 ->where('inventario.codigo_producto', $detalle->codigo_producto)
                 ->where('inventario.stock_actual', '>', 0)
+                ->where('inventario.codigo_almacen', '!=', $detalle->codigo_almacen_destino)
                 ->orderBy('inventario.fecha_vencimiento', 'asc')
                 ->orderBy('inventario.lote', 'asc')
                 ->get(['inventario.codigo_almacen', 'almacen.descripcion as almacen_nombre', 'inventario.lote', 'inventario.fecha_vencimiento', 'inventario.stock_actual']);
@@ -109,7 +110,6 @@ class DespachoRequerimientoController extends Controller
 
         DB::beginTransaction();
         try {
-            $todasCompletas = true;
 
             foreach ($request->lotes as $item) {
                 if ($item['codigo_almacen_origen'] === $item['codigo_almacen_destino']) {
@@ -276,8 +276,15 @@ class DespachoRequerimientoController extends Controller
                 $detalle->increment('cantidad_atendida', $cantidad);
                 $detalle->refresh();
 
-                if ($detalle->cantidad_atendida < $detalle->cantidad_solicitada) {
+            }
+
+            // Verificar si todos los detalles del requerimiento están completos
+            $requerimiento->refresh();
+            $todasCompletas = true;
+            foreach ($requerimiento->detalles as $det) {
+                if ($det->cantidad_atendida < $det->cantidad_solicitada) {
                     $todasCompletas = false;
+                    break;
                 }
             }
 

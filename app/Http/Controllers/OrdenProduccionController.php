@@ -120,6 +120,16 @@ class OrdenProduccionController extends Controller
         }
     }
 
+    public function finalizar($id)
+    {
+        try {
+            \App\Models\OrdenProduccion::where('idop', $id)->update(['estado' => 'COMPLETADO']);
+            return back()->with('success', 'Orden de Producción cerrada exitosamente.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al cerrar la Orden: ' . $e->getMessage());
+        }
+    }
+
     public function getProcesos($idop)
     {
         $procesos = \App\Models\OrdenProceso::where('idop', $idop)

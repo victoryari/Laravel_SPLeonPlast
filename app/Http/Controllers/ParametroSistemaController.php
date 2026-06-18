@@ -89,4 +89,47 @@ class ParametroSistemaController extends Controller
             return redirect()->route('parametros.index')->with('error', 'Error de conexión con el servicio de tipo de cambio.');
         }
     }
+
+    public function limpiarDB()
+    {
+        if (\Illuminate\Support\Facades\Auth::user()->rol !== 'Administrador') {
+            return back()->with('error', 'No tienes permisos para realizar esta acción.');
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            
+            $tablas_transaccionales = [
+                'compras',
+                'despacho_requerimiento_lotes',
+                'detalle_compra',
+                'detalle_guia_compras',
+                'detalle_requerimientos_materiales',
+                'guia_remision_compras',
+                'inventario',
+                'kardex',
+                'mermas',
+                'movimientos_inventario',
+                'orden_proceso',
+                'orden_produccion_global',
+                'componentes_orden_produccion_global',
+                'produccion_costos',
+                'produccion_ingresos_proceso',
+                'requerimientos_materiales',
+                'transferencias_almacen',
+                'transferencias_almacen_detalle',
+            ];
+
+            foreach ($tablas_transaccionales as $tabla) {
+                \Illuminate\Support\Facades\DB::table($tabla)->truncate();
+            }
+            
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            
+            return redirect()->route('parametros.index')->with('success', 'Base de datos operativa vaciada exitosamente. Las tablas maestras se han conservado.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return back()->with('error', 'Error al purgar la base de datos: ' . $e->getMessage());
+        }
+    }
 }

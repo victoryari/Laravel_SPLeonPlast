@@ -24,19 +24,19 @@
     </div>
 
     <!-- Cargador de Fórmulas -->
-    @if(($es_mezclado || $es_inyectado || $es_ensamblado) && $estado_proceso_actual !== 'COMPLETADO')
+    @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido) && $estado_proceso_actual !== 'COMPLETADO')
     <div class="bg-white rounded-xl shadow-md border-t-4 border-orange-500 mb-6 overflow-hidden">
         <div class="bg-slate-50 border-b border-gray-200 px-6 py-4 flex items-center">
             <h2 class="text-lg font-bold text-slate-800">
-                <i class="fas fa-flask mr-2 text-orange-500"></i>{{ $es_ensamblado ? 'Cargar Fórmula de Ensamblado' : ($es_inyectado ? 'Cargar Fórmula (Mezclado Directo)' : 'Cargar Fórmula de Mezclado') }}
+                <i class="fas fa-flask mr-2 text-orange-500"></i>{{ $es_molido ? 'Cargar Fórmula de Molido' : ($es_ensamblado ? 'Cargar Fórmula de Ensamblado' : ($es_inyectado ? 'Cargar Fórmula (Mezclado Directo)' : 'Cargar Fórmula de Mezclado')) }}
             </h2>
         </div>
         <div class="p-6 bg-white">
             <div class="flex flex-wrap items-end gap-4">
                 
-                @if($es_inyectado || $es_ensamblado)
+                @if($es_inyectado || $es_ensamblado || $es_molido)
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">{{ $es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)' }}</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">{{ $es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)') }}</label>
                     <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
@@ -61,7 +61,7 @@
                 @endif
                 
                 <div class="flex-1 min-w-50">
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">{{ $es_ensamblado ? 'Producto a Ensamblar' : 'Seleccione Fórmula' }}</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado ? 'Producto a Ensamblar' : 'Seleccione Fórmula') }}</label>
                     <select id="formula_selector" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($formulas_disponibles as $fm)
@@ -136,7 +136,7 @@
 
     <!-- Detalle de Componentes -->
     <!-- Hidden input for stock check when the form block is hidden -->
-    @if(!($es_mezclado || $es_inyectado || $es_ensamblado) || $estado_proceso_actual === 'COMPLETADO')
+    @if(!($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido) || $estado_proceso_actual === 'COMPLETADO')
         <input type="hidden" id="codigo_almacen_consumo" value="{{ $proceso_produccion_almacen ?? '' }}">
     @endif
 
@@ -396,6 +396,7 @@
     const formulasData = @json($formulas_disponibles);
     const esInyectado = {{ $es_inyectado ? 'true' : 'false' }};
     const esEnsamblado = {{ $es_ensamblado ? 'true' : 'false' }};
+    const esMolido = {{ (isset($es_molido) && $es_molido) ? 'true' : 'false' }};
 
     function vincularFormula() {
         const sm = document.getElementById('molde_global');
@@ -590,9 +591,9 @@
             molde = document.getElementById('molde_global').value;
             if (!centro || !molde) return window.toast('Seleccione Inyectora y Molde.', 'warning');
             url += `&codigo_molde=${encodeURIComponent(molde)}`;
-        } else if (esEnsamblado) {
+        } else if (esEnsamblado || esMolido) {
             centro = document.getElementById('centro_global').value;
-            if (!centro) return window.toast('Seleccione Ensambladora (Centro).', 'warning');
+            if (!centro) return window.toast(`Seleccione ${esMolido ? 'Molino' : 'Ensambladora'} (Centro).`, 'warning');
             const almacenConsumo = document.getElementById('codigo_almacen_consumo')?.value;
             if (almacenConsumo) {
                 url += `&codigo_almacen=${encodeURIComponent(almacenConsumo)}`;
@@ -617,7 +618,7 @@
         fetch(url).then(r => r.json()).then(data => {
             if (data.success) {
                 let pesoTotalFormula = 0;
-                if (esEnsamblado) {
+                if (esEnsamblado || esMolido) {
                     data.componentes.forEach(c => {
                         pesoTotalFormula += parseFloat(c.cantidad_nominal) || 0;
                     });
@@ -627,7 +628,7 @@
                     let cant = cantEfectiva * parseFloat(comp.cantidad_nominal);
                     let um = comp.codigo_unidad_medida;
                     
-                    if (esEnsamblado) {
+                    if (esEnsamblado || esMolido) {
                         // Opción A: Cálculo por Proporción de Kilos
                         if (pesoTotalFormula > 0) {
                             cant = cantEfectiva * (parseFloat(comp.cantidad_nominal) / pesoTotalFormula);

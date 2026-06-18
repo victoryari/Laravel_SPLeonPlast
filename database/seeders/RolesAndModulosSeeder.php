@@ -44,6 +44,8 @@ class RolesAndModulosSeeder extends Seeder
         ];
 
         foreach ($modulos as $mod) {
+            $mod['created_at'] = now();
+            $mod['updated_at'] = now();
             DB::table('modulos')->updateOrInsert(['slug' => $mod['slug']], $mod);
         }
 
@@ -55,6 +57,8 @@ class RolesAndModulosSeeder extends Seeder
         ];
 
         foreach ($roles as $rol) {
+            $rol['created_at'] = now();
+            $rol['updated_at'] = now();
             DB::table('roles')->updateOrInsert(['nombre' => $rol['nombre']], $rol);
         }
 
@@ -66,7 +70,9 @@ class RolesAndModulosSeeder extends Seeder
         foreach ($modulosIds as $modId) {
             $pivotData[] = [
                 'rol_id' => $adminId,
-                'modulo_id' => $modId
+                'modulo_id' => $modId,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
         }
         

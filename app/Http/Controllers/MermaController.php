@@ -39,9 +39,34 @@ class MermaController extends Controller
         
         $procesos = DB::table('orden_proceso')
             ->where('idop', $idop)
-            ->select('id', 'descripcion_proceso', 'estado_avance')
+            ->select('id', 'descripcion_proceso', 'estado_avance', 'observaciones')
             ->orderBy('secuencia')
             ->get();
+            
+        foreach ($procesos as $p) {
+            $componentes = DB::table('componentes_orden_produccion_global')
+                ->where('id_proceso', $p->id)
+                ->where(function($query) {
+                    $query->where('estado', 1)->orWhereNull('estado');
+                })
+                ->get(['descripcion_formula_produccion']);
+                
+            $formulas = $componentes->pluck('descripcion_formula_produccion')
+                ->filter(function($val) { return !empty($val) && $val != 'N/A'; })
+                ->unique();
+                
+            $extra = '';
+            if ($formulas->count() > 0) {
+                $extra = $formulas->implode(' / ');
+            } elseif (!empty($p->observaciones)) {
+                $extra = $p->observaciones;
+            }
+            
+            $p->descripcion_completa = $p->descripcion_proceso . ' (' . $p->estado_avance . ')';
+            if ($extra) {
+                $p->descripcion_completa .= ' - ' . $extra;
+            }
+        }
             
         return response()->json($procesos);
     }

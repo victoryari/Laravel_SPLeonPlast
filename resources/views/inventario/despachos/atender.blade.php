@@ -41,15 +41,22 @@
                     <i class="fas fa-cube text-primary"></i>
                     {{ $det->producto->descripcion ?? $det->codigo_producto }}
                 </h2>
-                <div class="text-sm text-slate-500">
-                    <span class="font-semibold text-slate-700">Solicitado:</span> {{ number_format($det->cantidad_solicitada, 2) }} {{ $det->producto->unidad->abreviatura ?? '' }}
-                    &nbsp;|&nbsp;
-                    <span class="font-semibold text-green-600">Atendido:</span> {{ number_format($det->cantidad_atendida, 2) }} {{ $det->producto->unidad->abreviatura ?? '' }}
-                    &nbsp;|&nbsp;
-                    <span class="font-semibold {{ $linea['saldo'] > 0 ? 'text-amber-600' : 'text-green-600' }}">Pendiente:</span> {{ number_format($linea['saldo'], 2) }} {{ $det->producto->unidad->abreviatura ?? '' }}
+                <div class="flex items-center gap-4 text-sm text-slate-500">
+                    <div>
+                        <span class="font-semibold text-slate-700">Solicitado:</span> {{ number_format($det->cantidad_solicitada, 2) }} {{ $det->producto->unidad->abreviatura ?? '' }}
+                        &nbsp;|&nbsp;
+                        <span class="font-semibold text-green-600">Atendido:</span> {{ number_format($det->cantidad_atendida, 2) }} {{ $det->producto->unidad->abreviatura ?? '' }}
+                        &nbsp;|&nbsp;
+                        <span class="font-semibold {{ $linea['saldo'] > 0 ? 'text-amber-600' : 'text-green-600' }}">Pendiente:</span> {{ number_format($linea['saldo'], 2) }} {{ $det->producto->unidad->abreviatura ?? '' }}
+                    </div>
+                    <label class="inline-flex items-center cursor-pointer ml-2 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-200">
+                        <input type="checkbox" class="sr-only peer omitir-linea-checkbox" data-index="{{ $index }}" {{ count($linea['lotes']) == 0 ? 'checked disabled' : '' }}>
+                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                        <span class="ms-2 text-xs font-bold text-slate-600 uppercase tracking-wide">Omitir</span>
+                    </label>
                 </div>
             </div>
-            <div class="p-6">
+            <div class="p-6" id="card-body-{{ $index }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                     <div>
                         <span class="text-xs text-slate-500 font-semibold uppercase">Estado</span>
@@ -57,7 +64,7 @@
                     </div>
                     <div>
                         <span class="text-xs text-slate-500 font-semibold uppercase">Almacén Destino</span>
-                        <select class="w-full border border-slate-300 rounded-lg text-sm px-2 py-1 select-destino" data-target=".hidden-destino-{{ $index }}" required>
+                        <select class="w-full border border-slate-300 rounded-lg text-sm px-2 py-1 select-destino" data-target=".hidden-destino-{{ $index }}" id="select-destino-{{ $index }}" required>
                             <option value="">-- Seleccione Almacén Destino --</option>
                             @foreach($almacenes as $alm)
                                 <option value="{{ $alm->codigo_almacen }}" {{ $det->codigo_almacen_destino == $alm->codigo_almacen ? 'selected' : '' }}>{{ $alm->descripcion }}</option>
@@ -80,7 +87,7 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100">
                             @foreach($linea['lotes'] as $lote)
-                            <tr>
+                            <tr data-origen="{{ $lote->codigo_almacen }}">
                                 <td class="p-2 text-slate-700">{{ $lote->almacen_nombre ?? $lote->codigo_almacen }}</td>
                                 <td class="p-2 font-mono text-slate-800 font-semibold">{{ $lote->lote }}</td>
                                 <td class="p-2 text-slate-600">{{ $lote->fecha_vencimiento ? \Carbon\Carbon::parse($lote->fecha_vencimiento)->format('d/m/Y') : 'N/A' }}</td>
@@ -174,17 +181,69 @@
             document.querySelectorAll(targetClass).forEach(function(hiddenInput) {
                 hiddenInput.value = val;
             });
+            
+            const index = this.id.replace('select-destino-', '');
+            const tableRows = document.querySelectorAll('#card-body-' + index + ' tbody tr');
+            const omitirCheckbox = document.querySelector('.omitir-linea-checkbox[data-index="' + index + '"]');
+            const isOmitted = omitirCheckbox ? omitirCheckbox.checked : false;
+
+            tableRows.forEach(function(row) {
+                const origenValue = row.getAttribute('data-origen');
+                const inputs = row.querySelectorAll('input:not([type="hidden"])');
+                const hiddenInputs = row.querySelectorAll('input[type="hidden"]');
+                if (origenValue === val && val !== '') {
+                    row.style.display = 'none';
+                    inputs.forEach(i => { i.disabled = true; i.value = ''; });
+                    hiddenInputs.forEach(i => { i.disabled = true; });
+                } else {
+                    row.style.display = '';
+                    if (!isOmitted) {
+                        inputs.forEach(i => i.disabled = false);
+                        hiddenInputs.forEach(i => i.disabled = false);
+                    }
+                }
+            });
+            
+            const firstInput = document.querySelector('#card-body-' + index + ' .input-lote-cant');
+            if (firstInput) firstInput.dispatchEvent(new Event('input'));
         });
         
-        // Inicializar el valor on load si ya está pre-seleccionado
         if (select.value) {
-            const targetClass = select.getAttribute('data-target');
-            const val = select.value;
-            document.querySelectorAll(targetClass).forEach(function(hiddenInput) {
-                hiddenInput.value = val;
-            });
+            select.dispatchEvent(new Event('change'));
         }
     });
 
+    document.querySelectorAll('.omitir-linea-checkbox').forEach(function(checkbox) {
+        toggleLineaState(checkbox);
+        checkbox.addEventListener('change', function() {
+            toggleLineaState(this);
+        });
+    });
+
+    function toggleLineaState(checkbox) {
+        const index = checkbox.getAttribute('data-index');
+        const cardBody = document.getElementById('card-body-' + index);
+        if(!cardBody) return;
+        
+        const inputs = cardBody.querySelectorAll('input:not([type="hidden"]), select');
+        const hiddenInputs = cardBody.querySelectorAll('input[type="hidden"]');
+        
+        if (checkbox.checked) {
+            cardBody.classList.add('opacity-50', 'pointer-events-none', 'bg-slate-100');
+            inputs.forEach(i => {
+                if(i.hasAttribute('required')) i.dataset.wasRequired = 'true';
+                i.required = false;
+                i.disabled = true;
+            });
+            hiddenInputs.forEach(i => i.disabled = true);
+        } else {
+            cardBody.classList.remove('opacity-50', 'pointer-events-none', 'bg-slate-100');
+            inputs.forEach(i => {
+                if(i.dataset.wasRequired === 'true') i.required = true;
+                i.disabled = false;
+            });
+            hiddenInputs.forEach(i => i.disabled = false);
+        }
+    }
 </script>
 @endsection

@@ -505,6 +505,7 @@ class InventarioController extends Controller
         $query = DB::table('kardex')
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->where('kardex.codigo_almacen', '!=', 'ALM04')
             ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen');
 
         if ($request->filled('documento')) {
@@ -639,6 +640,7 @@ class InventarioController extends Controller
         $query = DB::table('kardex')
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
+            ->where('kardex.codigo_almacen', '!=', 'ALM04')
             ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen');
 
         if ($request->filled('documento')) {
@@ -1325,7 +1327,7 @@ class InventarioController extends Controller
             
             $html .= '<div class="bg-slate-50 p-3 rounded-lg border border-slate-200">';
             $html .= '<p class="text-sm"><strong>Orden de Producción:</strong> ' . ($op->codigo_op ?? 'OP#' . $idop) . '</p>';
-            $html .= '<p class="text-sm"><strong>Proceso:</strong> ' . ($proceso->proceso ?? 'Desconocido') . '</p>';
+            $html .= '<p class="text-sm"><strong>Proceso:</strong> ' . ($proceso->descripcion_proceso ?? 'Desconocido') . '</p>';
             $html .= '</div>';
 
             $consumos = DB::table('kardex as k')

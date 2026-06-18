@@ -81,6 +81,29 @@
             </div>
         </form>
 
+        @if(Auth::user()->rol === 'Administrador')
+        <div class="mt-12 bg-red-50 rounded-3xl shadow-sm border border-red-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-red-200 bg-red-100/50">
+                <h2 class="text-lg font-bold text-red-800 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i> Zona de Peligro
+                </h2>
+            </div>
+            <div class="p-6 flex flex-col md:flex-row items-center justify-between">
+                <div>
+                    <h3 class="text-md font-bold text-red-700">Limpiar Base de Datos (Purgar Transaccionales)</h3>
+                    <p class="text-sm text-red-600 mt-1 max-w-2xl">
+                        Esta acción eliminará de forma <strong>permanente</strong> todo el historial de kardex, inventario, mermas, órdenes de producción y compras. Únicamente se conservarán las tablas maestras (productos, usuarios, fórmulas, etc.). Esta acción es irreversible.
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <button type="button" onclick="abrirModal('modalLimpiarDB')" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-md transition font-semibold whitespace-nowrap">
+                        <i class="fas fa-skull-crossbones mr-2"></i> Purgar Base de Datos
+                    </button>
+                </div>
+            </div>
+        </div>
+        @endif
+
     </div>
 </div>
 
@@ -122,7 +145,51 @@
     </form>
 </x-modal>
 
+<!-- Modal Limpiar BD -->
+@if(Auth::user()->rol === 'Administrador')
+<x-modal id="modalLimpiarDB" title="¡ADVERTENCIA DE PELIGRO EXTREMO!">
+    <div class="p-4 bg-red-100 rounded-lg border-l-4 border-red-500 text-red-700 mb-6">
+        <p class="font-bold mb-2"><i class="fas fa-exclamation-triangle mr-2"></i> Está a punto de borrar los datos operativos.</p>
+        <p class="text-sm mb-2">Se vaciarán completamente las siguientes tablas:</p>
+        <ul class="list-disc list-inside text-xs space-y-1 ml-2 font-mono">
+            <li>compras, detalle_compra, guia_remision_compras, detalle_guia_compras</li>
+            <li>requerimientos_materiales, detalle_requerimientos_materiales, despacho_requerimiento_lotes</li>
+            <li>inventario, kardex, mermas, movimientos_inventario</li>
+            <li>orden_proceso, orden_produccion_global, produccion_costos, produccion_ingresos_proceso</li>
+            <li>transferencias_almacen, transferencias_almacen_detalle</li>
+        </ul>
+        <p class="text-sm mt-3 font-semibold">Las tablas maestras (productos, usuarios, fórmulas) se conservarán.</p>
+    </div>
+    
+    <form action="{{ route('parametros.limpiar_db') }}" method="POST" id="formLimpiarDB" class="space-y-4">
+        @csrf
+        <div class="mb-4">
+            <label class="block text-sm font-bold text-slate-700 mb-2">Para continuar, escriba "CONFIRMAR" en la caja de texto:</label>
+            <input type="text" id="inputConfirmacion" class="w-full rounded-md border border-slate-300 px-4 py-2 uppercase outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition" placeholder="Escriba CONFIRMAR" required autocomplete="off" onkeyup="validarConfirmacion(this.value)">
+        </div>
+        <x-slot:footer>
+            <button type="submit" form="formLimpiarDB" id="btnLimpiarDB" class="px-6 py-2 bg-slate-300 text-slate-500 rounded-xl shadow-md font-bold w-full cursor-not-allowed" disabled>
+                <i class="fas fa-trash-alt mr-2"></i> EJECUTAR PURGA MASIVA
+            </button>
+        </x-slot:footer>
+    </form>
+</x-modal>
+@endif
+
 <script>
+    function validarConfirmacion(valor) {
+        const btn = document.getElementById('btnLimpiarDB');
+        if(valor.trim() === 'CONFIRMAR') {
+            btn.disabled = false;
+            btn.classList.remove('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+            btn.classList.add('bg-red-600', 'hover:bg-red-700', 'text-white', 'transition');
+        } else {
+            btn.disabled = true;
+            btn.classList.add('bg-slate-300', 'text-slate-500', 'cursor-not-allowed');
+            btn.classList.remove('bg-red-600', 'hover:bg-red-700', 'text-white', 'transition');
+        }
+    }
+
     window.cerrarModal = function(id) {
         const modal = document.getElementById(id);
         if (modal) {

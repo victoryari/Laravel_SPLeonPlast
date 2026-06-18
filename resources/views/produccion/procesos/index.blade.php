@@ -22,10 +22,23 @@
                 Fecha: <span class="font-medium text-gray-700">{{ \Carbon\Carbon::parse($orden->fecha)->format('d/m/Y') }}</span>
             </p>
         </div>
-        <a href="{{ route('ordenes.procesos.create', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
-            <i class="fas fa-plus"></i>
-            <span class="hidden sm:inline ml-2">Agregar Proceso</span>
-        </a>
+        <div class="flex items-center gap-2">
+            @if($orden->estado !== 'COMPLETADO')
+                <form action="{{ route('produccion.ordenes.finalizar', $orden->idop) }}" method="POST" onsubmit="return confirm('¿Está seguro de que desea CERRAR DEFINITIVAMENTE esta Orden de Producción? Ya no podrá agregar nuevos procesos o ingresos.');">
+                    @csrf
+                    <button type="submit" class="shrink-0 flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="hidden sm:inline ml-2">Cerrar OP</span>
+                    </button>
+                </form>
+            @endif
+            @if($orden->estado !== 'COMPLETADO')
+                <a href="{{ route('ordenes.procesos.create', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+                    <i class="fas fa-plus"></i>
+                    <span class="hidden sm:inline ml-2">Agregar Proceso</span>
+                </a>
+            @endif
+        </div>
     </div>
 
     {{-- Tarjeta Principal --}}
@@ -58,6 +71,16 @@
                             </td>
                             <td class="px-6 py-4">
                                 <strong class="text-gray-900 font-medium">{{ $p->proceso_desc }}</strong>
+                                @if($p->observaciones)
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        <i class="fas fa-info-circle mr-1"></i> {{ $p->observaciones }}
+                                    </div>
+                                @endif
+                                @if($p->nombres_componentes)
+                                    <div class="text-xs text-indigo-600 mt-1 font-semibold truncate max-w-sm" title="{{ $p->nombres_componentes }}">
+                                        <i class="fas fa-layer-group mr-1"></i> {{ $p->nombres_componentes }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @php
@@ -77,6 +100,7 @@
                                 <x-badge color="indigo">📦 {{ $p->total_componentes }} items</x-badge>
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
+                                @if($orden->estado !== 'COMPLETADO')
                                 <div class="flex justify-center gap-2">
                                     <a href="{{ route('ordenes.procesos.ejecutar', [$orden->idop, $p->id]) }}" class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-primary hover:bg-primary-dark shadow-sm transition-colors" title="Ejecutar proceso">
                                         <i class="fas fa-play mr-1"></i> Ejecutar
@@ -85,6 +109,9 @@
                                         <i class="fas fa-trash mr-1"></i> Anular
                                     </button>
                                 </div>
+                                @else
+                                <span class="text-xs text-gray-400"><i class="fas fa-lock mr-1"></i>Bloqueado</span>
+                                @endif
                             </td>
                         </tr>
                     @endforeach

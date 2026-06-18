@@ -23,12 +23,25 @@ class OrdenProcesoController extends Controller
             
         // Calculate components count per process
         foreach ($procesos as $proceso) {
-            $proceso->total_componentes = DB::table('componentes_orden_produccion_global')
+            $componentes = DB::table('componentes_orden_produccion_global')
                 ->where('id_proceso', $proceso->id)
                 ->where(function($query) {
                     $query->where('estado', 1)->orWhereNull('estado');
                 })
-                ->count();
+                ->get(['descripcion_producto', 'descripcion_color', 'descripcion_formula_produccion']);
+                
+            $proceso->total_componentes = $componentes->count();
+            
+            // Obtener el nombre de la fórmula única usada en este proceso
+            $formulas = $componentes->pluck('descripcion_formula_produccion')
+                ->filter(function($val) { return !empty($val) && $val != 'N/A'; })
+                ->unique();
+                
+            if ($formulas->count() > 0) {
+                $proceso->nombres_componentes = $formulas->implode(' / ');
+            } else {
+                $proceso->nombres_componentes = null;
+            }
                 
             // Fetch the process description (if not already stored) or use Eloquent relationships later
             $desc = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('descripcion');
@@ -55,6 +68,7 @@ class OrdenProcesoController extends Controller
     {
         $request->validate([
             'codigo_proceso' => 'required|string',
+            'observaciones' => 'nullable|string',
         ]);
 
         try {
@@ -76,6 +90,7 @@ class OrdenProcesoController extends Controller
                 'secuencia' => $secuencia_nueva,
                 'codigo_proceso' => $request->codigo_proceso,
                 'descripcion_proceso' => $procesoRef->descripcion,
+                'observaciones' => $request->observaciones,
                 'estado' => 1,
                 'estado_avance' => 'PENDIENTE',
                 'fecha_inicio' => $orden->fecha // As derived from legacy code
@@ -304,6 +319,7 @@ class OrdenProcesoController extends Controller
         $es_mezclado = ($proceso->codigo_proceso == '16');
         $es_inyectado = ($proceso->codigo_proceso == '15');
         $es_ensamblado = ($proceso->codigo_proceso == '10');
+        $es_molido = ($proceso->codigo_proceso == '18');
 
         $proceso_nombre = strtoupper(trim($proceso->proceso_desc));
         $formulas_disponibles = DB::table('formula_produccion')
@@ -325,6 +341,8 @@ class OrdenProcesoController extends Controller
                     $query->orWhere('codigo', 'LIKE', 'C2%');
                 } elseif (str_contains($proceso_nombre, 'ENSAMBLADO')) {
                     $query->orWhere('codigo', 'LIKE', 'EN%');
+                } elseif (str_contains($proceso_nombre, 'MOLIDO')) {
+                    $query->orWhere('codigo', 'LIKE', 'MO%');
                 }
             })
             ->orderBy('codigo')
@@ -373,7 +391,7 @@ class OrdenProcesoController extends Controller
         $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
 
         return view('produccion.procesos.ejecucion', compact(
-            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado',
+            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_molido',
             'formulas_disponibles', 'registrados', 'tiene_componentes', 'tipos_producto',
             'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen'
         ));
@@ -413,6 +431,7 @@ class OrdenProcesoController extends Controller
         }
 
         $componentes = $query->get();
+
 
         // Lógica de ensamblado (dinámica) si no se pasa molde desde el UI
         if (!$codigo_molde) {
@@ -612,6 +631,8 @@ class OrdenProcesoController extends Controller
             }
 
             $grupos_pep = []; 
+            $productos_resultantes_arr = json_decode($request->productos_resultantes_json ?? '[]', true);
+            $has_manual_products = count($productos_resultantes_arr) > 0;
 
             foreach ($componentes as $comp) {
                 $codigo_producto = $comp['codigo_producto'];
@@ -641,7 +662,7 @@ class OrdenProcesoController extends Controller
                         ];
                     }
                     $grupos_pep[$key]['cant'] += $cantidad;
-                } elseif (!empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] === 'PEP') {
+                } elseif (!$has_manual_products && !empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] === 'PEP') {
                     $codigo_pep = $this->determinarPEPdesdeProducto($codigo_producto);
                     if (!empty($codigo_pep)) {
                         $key = $codigo_pep . '_' . ($codigo_color ?: 'SC');
@@ -657,7 +678,7 @@ class OrdenProcesoController extends Controller
                         }
                         $grupos_pep[$key]['cant'] += $cantidad;
                     }
-                } elseif (!empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] !== 'ACT') {
+                } elseif (!$has_manual_products && !empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] !== 'ACT') {
                     $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
                     if ($op && !empty($op->descripcion_producto_proceso)) {
                         $producto_pep = DB::table('producto')
@@ -1397,7 +1418,7 @@ class OrdenProcesoController extends Controller
             }
 
             OrdenProceso::where('id', $id)->update(['estado_avance' => 'COMPLETADO', 'fecha_fin' => now()]);
-            
+
             DB::commit();
             return back()->with('success', 'Proceso finalizado y cerrado correctamente. Costos de producción asignados y Kardex actualizado.');
         } catch (\Exception $e) {
