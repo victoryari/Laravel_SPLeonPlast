@@ -1572,9 +1572,15 @@ class OrdenProcesoController extends Controller
 
     private function determinarCodigoPEP($codigo_formula) {
         if (empty($codigo_formula)) return null;
+        // Primero verificar si la fórmula tiene asignado explícitamente un producto resultante
         $res = DB::table('formula_produccion')->where('codigo', $codigo_formula)->value('codigo_producto_resultante');
         if ($res) return $res;
-        $res = DB::table('producto')->where('codigo', $codigo_formula)->where('codigo_tipo_producto', 'PEP')->where('estado', 1)->value('codigo');
+        // Si no, asumir que el código de la fórmula es el código del producto resultante (puede ser PEP, REC, PDT)
+        $res = DB::table('producto')
+            ->where('codigo', $codigo_formula)
+            ->whereIn('codigo_tipo_producto', ['PEP', 'REC', 'PDT'])
+            ->where('estado', 1)
+            ->value('codigo');
         return $res ?: null;
     }
 
