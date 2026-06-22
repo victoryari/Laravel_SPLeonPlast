@@ -348,11 +348,23 @@
             document.getElementById('modalUnidad').value = fila.querySelector('.input-unidad').value;
             document.getElementById('modalMolde').value = fila.querySelector('.input-molde').value;
             
-            $('#modalProducto').val(fila.querySelector('.input-producto').value).trigger('change');
+            const prodVal = fila.querySelector('.input-producto').value;
+            const prodTxt = fila.querySelector('.text-producto').innerText;
+            if ($('#modalProducto').find("option[value='" + prodVal + "']").length) {
+                $('#modalProducto').val(prodVal).trigger('change');
+            } else {
+                const newOption = new Option(prodTxt, prodVal, true, true);
+                $('#modalProducto').append(newOption).trigger('change');
+            }
+            
+            document.getElementById('modalTipo').value = fila.querySelector('.input-tipo').value;
+            document.getElementById('modalTipoDesc').value = fila.querySelector('.input-tipo-desc').value;
         } else {
             document.getElementById('modalTitle').innerText = 'Nuevo Componente';
             document.getElementById('modalRowId').value = '';
             $('#modalProducto').val('').trigger('change');
+            document.getElementById('modalTipo').value = '';
+            document.getElementById('modalTipoDesc').value = '';
             document.getElementById('modalMolde').value = $('#moldeGlobal').val();
         }
         modal.classList.remove('hidden');
