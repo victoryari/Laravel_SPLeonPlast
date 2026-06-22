@@ -836,21 +836,41 @@
         const resultados = document.querySelectorAll('.nueva-fila-resultado');
         let resultadosData = [];
         let resultadosError = false;
+        let sumaConsumoKG = 0;
+        let sumaResultanteKG = 0;
+
+        // Sumar consumos en KG
+        data.forEach(item => {
+            if (item.codigo_unidad_medida === 'KG') {
+                sumaConsumoKG += parseFloat(item.cantidad) || 0;
+            }
+        });
         
         resultados.forEach(r => {
             const prod = r.querySelector('.c-prod').value;
             const cant = r.querySelector('.c-cant').value;
+            const um = r.querySelector('.c-um').value;
+            
             if (!prod || !cant) resultadosError = true;
+            if (um === 'KG') {
+                sumaResultanteKG += parseFloat(cant) || 0;
+            }
             
             resultadosData.push({
                 codigo_producto: prod,
                 cantidad: cant,
-                codigo_unidad_medida: r.querySelector('.c-um').value
+                codigo_unidad_medida: um
             });
         });
         
         if (resultadosError) return window.toast("Por favor seleccione un producto y especifique una cantidad en todas las filas de productos resultantes.", 'warning');
         
+        if (sumaResultanteKG > sumaConsumoKG && sumaConsumoKG > 0) {
+            if (!confirm(`La cantidad de productos resultantes en KG (${sumaResultanteKG} KG) es mayor a la cantidad de materiales consumidos en KG (${sumaConsumoKG} KG).\n\n¿Está seguro de que desea guardar con estos valores?`)) {
+                return;
+            }
+        }
+
         document.getElementById('componentes_json').value = JSON.stringify(data);
         document.getElementById('productos_resultantes_json').value = JSON.stringify(resultadosData);
         document.getElementById('form_masivo').submit();
