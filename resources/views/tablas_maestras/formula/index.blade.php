@@ -13,11 +13,16 @@
     </x-page-header>
 
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+        <div class="flex gap-2">
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
+            <button id="btnClearSearch" type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 md:px-6 py-2 md:py-2.5 rounded-lg border border-gray-300 transition font-medium text-sm md:text-base flex items-center">
+                <i class="fas fa-times mr-2"></i> <span class="hidden sm:inline">Limpiar</span>
+            </button>
         </div>
     </div>
 
@@ -82,7 +87,20 @@
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('searchInput');
         const tableContainer = document.getElementById('table-container');
+        const btnClearSearch = document.getElementById('btnClearSearch');
         let timeout = null;
+
+        // Recuperar filtro de sessionStorage si no hay en URL
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('search')) {
+            const savedSearch = sessionStorage.getItem('formulas_search');
+            if (savedSearch && searchInput.value === '') {
+                searchInput.value = savedSearch;
+                fetchResults();
+            }
+        } else {
+            sessionStorage.setItem('formulas_search', searchInput.value);
+        }
 
         function fetchResults(url = null) {
             if (!url) {
@@ -111,8 +129,15 @@
         }
 
         searchInput.addEventListener('input', function () {
+            sessionStorage.setItem('formulas_search', searchInput.value);
             clearTimeout(timeout);
             timeout = setTimeout(() => fetchResults(), 400);
+        });
+
+        btnClearSearch.addEventListener('click', function() {
+            searchInput.value = '';
+            sessionStorage.removeItem('formulas_search');
+            fetchResults();
         });
 
         tableContainer.addEventListener('click', function(e) {
