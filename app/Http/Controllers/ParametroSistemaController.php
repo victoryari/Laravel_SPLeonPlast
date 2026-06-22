@@ -118,6 +118,9 @@ class ParametroSistemaController extends Controller
                 'requerimientos_materiales',
                 'transferencias_almacen',
                 'transferencias_almacen_detalle',
+                'guia_remision_terceros_salida',
+                'guia_remision_terceros_salida_detalle',
+                'conciliacion_terceros',
             ];
 
             foreach ($tablas_transaccionales as $tabla) {
