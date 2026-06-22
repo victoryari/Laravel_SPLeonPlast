@@ -507,7 +507,14 @@
             const isResultado = row.classList.contains('nueva-fila-resultado');
             let tipo = tipoSelect ? tipoSelect.value : '';
             if (isResultado) {
-                tipo = 'PEP'; // Forzar a PEP en la fila de Productos Resultantes
+                if (esMolido) {
+                    tipo = 'REC';
+                } else if (esEnsamblado) {
+                    // Ensamblado podría producir PDT (Producto Terminado) o PEP
+                    tipo = ''; // Vacío para permitir buscar cualquier tipo
+                } else {
+                    tipo = 'PEP'; // Forzar a PEP en la fila de Productos Resultantes
+                }
             }
             
             let url = `/productos/search-ajax?q=${encodeURIComponent(filter)}`;
