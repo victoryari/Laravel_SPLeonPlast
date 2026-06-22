@@ -125,6 +125,12 @@
                 </div>
                 <p class="text-slate-500 text-sm md:text-base">No hay componentes en esta fórmula.</p>
             </div>
+            <div class="flex justify-between items-center bg-white p-3 border-t border-gray-100" id="paginationWrapper" style="display: none;">
+                <div class="text-xs md:text-sm text-gray-500" id="paginationInfo">
+                    Mostrando <span id="pageStart"></span> a <span id="pageEnd"></span> de <span id="pageTotal"></span> registros
+                </div>
+                <div class="flex gap-1 flex-wrap" id="paginationButtons"></div>
+            </div>
         </div>
         
         <div class="bg-white p-3 md:p-4 rounded-xl shadow-lg border border-gray-200 flex justify-end">
@@ -255,6 +261,63 @@
     const msgVacio = document.getElementById('msgVacio');
     const template = document.getElementById('rowTemplate');
     let rowCounter = 1000;
+    let currentPage = 1;
+    const rowsPerPage = 10;
+
+    function updatePagination() {
+        const rows = Array.from(tbComposicion.querySelectorAll('tr'));
+        const totalRows = rows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        let start = (currentPage - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+
+        rows.forEach((row, index) => {
+            if (index >= start && index < end) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        if (totalRows > rowsPerPage) {
+            document.getElementById('paginationWrapper').style.display = 'flex';
+            document.getElementById('pageStart').innerText = totalRows === 0 ? 0 : start + 1;
+            document.getElementById('pageEnd').innerText = Math.min(end, totalRows);
+            document.getElementById('pageTotal').innerText = totalRows;
+
+            let buttonsHtml = '';
+            buttonsHtml += `<button type="button" onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded border ${currentPage === 1 ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    buttonsHtml += `<button type="button" class="px-3 py-1 rounded bg-purple-600 text-white font-bold">${i}</button>`;
+                } else if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    buttonsHtml += `<button type="button" onclick="changePage(${i})" class="px-3 py-1 rounded border text-gray-700 hover:bg-gray-100">${i}</button>`;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    buttonsHtml += `<span class="px-2 py-1">...</span>`;
+                }
+            }
+
+            buttonsHtml += `<button type="button" onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded border ${currentPage === totalPages ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
+            
+            document.getElementById('paginationButtons').innerHTML = buttonsHtml;
+        } else {
+            document.getElementById('paginationWrapper').style.display = 'none';
+        }
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        updatePagination();
+    }
+
+    $(document).ready(function() {
+        updatePagination();
+    });
 
     function aplicarMoldeGlobal() {
         const moldeCodigo = $('#moldeGlobal').val();
@@ -340,6 +403,7 @@
         fila.querySelector('.input-molde').value = data.molde === 'Sin Molde' ? '' : data.molde;
 
         if (!rowId) tbComposicion.appendChild(fila);
+        updatePagination();
         cerrarModal();
     });
 
@@ -348,6 +412,7 @@
         if (btn) {
             btn.closest('tr').remove();
             if (tbComposicion.children.length === 0) msgVacio.classList.remove('hidden');
+            updatePagination();
         }
     });
 </script>
