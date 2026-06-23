@@ -64,7 +64,7 @@ class ProductoController extends Controller
     {
         $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
         $unidades = UnidadMedida::where('estado', 1)->orderBy('descripcion', 'asc')->get();
-        $colores = Color::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        $colores = Color::where('activo', 1)->orderBy('descripcion', 'asc')->get();
         
         return view('tablas_maestras.producto.create', compact('tipos', 'unidades', 'colores'));
     }
@@ -116,7 +116,7 @@ class ProductoController extends Controller
 
         $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
         $unidades = UnidadMedida::where('estado', 1)->orderBy('descripcion', 'asc')->get();
-        $colores = Color::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        $colores = Color::where('activo', 1)->orderBy('descripcion', 'asc')->get();
 
         return view('tablas_maestras.producto.edit', compact('producto', 'tipos', 'unidades', 'colores'));
     }
