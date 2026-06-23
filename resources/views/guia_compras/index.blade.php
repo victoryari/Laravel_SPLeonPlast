@@ -58,6 +58,7 @@
                         <th class="p-4 border-b border-slate-200">Emisión</th>
                         <th class="p-4 border-b border-slate-200">Guía N°</th>
                         <th class="p-4 border-b border-slate-200">Proveedor</th>
+                        <th class="p-4 border-b border-slate-200 text-center">Cant. Total</th>
                         <th class="p-4 border-b border-slate-200 text-center">Estado</th>
                         <th class="p-4 border-b border-slate-200 text-right">Acciones</th>
                     </tr>
@@ -73,6 +74,9 @@
                         </td>
                         <td class="p-4 font-semibold text-primary">
                             {{ Str::limit($guia->proveedor, 30) }}
+                        </td>
+                        <td class="p-4 text-center font-bold text-slate-700">
+                            {{ number_format($guia->detalles_sum_cantidad, 2) }}
                         </td>
                         <td class="p-4 text-center">
                             @php

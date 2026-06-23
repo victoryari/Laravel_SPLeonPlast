@@ -19,6 +19,7 @@ class GuiaRemisionCompraController extends Controller
         $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
 
         $query = GuiaRemisionCompra::with('datosProveedor', 'creador')
+            ->withSum('detalles', 'cantidad')
             ->whereDate('fecha_registro', '>=', $fecha_desde)
             ->whereDate('fecha_registro', '<=', $fecha_hasta);
 
