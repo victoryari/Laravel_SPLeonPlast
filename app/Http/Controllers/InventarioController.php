@@ -811,7 +811,7 @@ class InventarioController extends Controller
             ]);
 
             DB::commit();
-            return redirect()->route('inventario.index')->with('success', 'Ajuste procesado exitosamente.');
+            return redirect()->route('inventario.ajuste.lista')->with('success', 'Ajuste procesado exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error: ' . $e->getMessage());
