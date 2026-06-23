@@ -381,11 +381,21 @@ class OrdenProcesoController extends Controller
             }
         }
 
-        $centros_trabajo = DB::table('centro_trabajo_produccion as ct')
+        $query_centros = DB::table('centro_trabajo_produccion as ct')
             ->join('proceso_centro_trabajo as pct', 'ct.codigo', '=', 'pct.codigo_centro_trabajo')
             ->select('ct.codigo', 'ct.descripcion')
-            ->where('pct.codigo_proceso', $proceso->codigo_proceso)
-            ->get();
+            ->where('pct.codigo_proceso', $proceso->codigo_proceso);
+
+        if ($es_inyectado) {
+            $descProducto = strtoupper($orden->descripcion_producto_proceso);
+            if (str_contains($descProducto, 'GANCHO')) {
+                $query_centros->where('ct.codigo', '!=', 'INY-001');
+            } elseif (str_contains($descProducto, 'COLADOR')) {
+                $query_centros->where('ct.codigo', 'INY-001');
+            }
+        }
+
+        $centros_trabajo = $query_centros->get();
 
         $almacenes = DB::table('almacen')->where('activo', 1)->get();
         $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
