@@ -51,7 +51,12 @@
 
                 <div class="col-span-1">
                     <x-form-group label="Color">
-                        <input type="text" name="codigo_color" id="codigo_color" value="{{ old('codigo_color') }}" class="input-field @error('codigo_color') border-red-500 @enderror" placeholder="Ej: Rojo, Azul, Transparente..." maxlength="50">
+                        <select name="codigo_color" id="codigo_color" class="input-field @error('codigo_color') border-red-500 @enderror">
+                            <option value="">Ninguno / No aplica</option>
+                            @foreach($colores as $color)
+                                <option value="{{ $color->codigo }}" {{ old('codigo_color') == $color->codigo ? 'selected' : '' }}>{{ $color->descripcion }}</option>
+                            @endforeach
+                        </select>
                         @error('codigo_color') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </x-form-group>
                 </div>

@@ -69,7 +69,14 @@
                     <label for="codigo_color" class="block text-sm font-medium text-gray-700 mb-1">
                         Color <span class="text-xs text-gray-400 font-normal">(Opcional)</span>
                     </label>
-                    <input type="text" name="codigo_color" id="codigo_color" value="{{ old('codigo_color', $producto->codigo_color) }}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 @error('codigo_color') border-red-500 @enderror" placeholder="Ej: Rojo, Azul, Transparente..." maxlength="50">
+                    <select name="codigo_color" id="codigo_color" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 @error('codigo_color') border-red-500 @enderror">
+                        <option value="">Ninguno / No aplica</option>
+                        @foreach($colores as $color)
+                            <option value="{{ $color->codigo }}" {{ old('codigo_color', $producto->codigo_color) == $color->codigo ? 'selected' : '' }}>
+                                {{ $color->descripcion }}
+                            </option>
+                        @endforeach
+                    </select>
                     @error('codigo_color')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror

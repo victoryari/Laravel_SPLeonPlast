@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Producto;
-use App\Models\TipoProducto;
-use App\Models\UnidadMedida;
+use App\Models\{Producto, TipoProducto, UnidadMedida, User, Color};
 use Carbon\Carbon;
 
 class ProductoController extends Controller
@@ -66,8 +64,9 @@ class ProductoController extends Controller
     {
         $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
         $unidades = UnidadMedida::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        $colores = Color::where('estado', 1)->orderBy('descripcion', 'asc')->get();
         
-        return view('tablas_maestras.producto.create', compact('tipos', 'unidades'));
+        return view('tablas_maestras.producto.create', compact('tipos', 'unidades', 'colores'));
     }
 
     /**
@@ -80,7 +79,7 @@ class ProductoController extends Controller
             'codigo_tipo_producto' => 'required|exists:tipo_producto,codigo',
             'descripcion' => 'nullable|string|max:150',
             'codigo_unidad_medida' => 'nullable|exists:unidad_medida,codigo',
-            'codigo_color' => 'nullable|string|max:50',
+            'codigo_color' => 'nullable|exists:color,codigo',
             'es_producto_proceso' => 'nullable|integer',
         ], [
             'codigo.required' => 'El código es obligatorio.',
@@ -117,8 +116,9 @@ class ProductoController extends Controller
 
         $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();
         $unidades = UnidadMedida::where('estado', 1)->orderBy('descripcion', 'asc')->get();
+        $colores = Color::where('estado', 1)->orderBy('descripcion', 'asc')->get();
 
-        return view('tablas_maestras.producto.edit', compact('producto', 'tipos', 'unidades'));
+        return view('tablas_maestras.producto.edit', compact('producto', 'tipos', 'unidades', 'colores'));
     }
 
     /**
@@ -132,7 +132,7 @@ class ProductoController extends Controller
             'codigo_tipo_producto' => 'required|exists:tipo_producto,codigo',
             'descripcion' => 'nullable|string|max:150',
             'codigo_unidad_medida' => 'nullable|exists:unidad_medida,codigo',
-            'codigo_color' => 'nullable|string|max:50',
+            'codigo_color' => 'nullable|exists:color,codigo',
             'es_producto_proceso' => 'nullable|integer',
         ], [
             'codigo_tipo_producto.required' => 'El tipo de producto es obligatorio.',
