@@ -374,10 +374,22 @@ class OrdenProcesoController extends Controller
             
             // Si no hay moldes vinculados al producto, traer todos los activos como fallback
             if ($moldes->isEmpty()) {
-                $moldes = DB::table('molde')
+                $query_fallback = DB::table('molde')
                     ->select('codigo', 'descripcion', DB::raw('(SELECT codigo_formula FROM composicion_formula cf WHERE cf.codigo_molde = molde.codigo LIMIT 1) as codigo_formula'))
-                    ->where('activo', 1)
-                    ->get();
+                    ->where('activo', 1);
+                    
+                $descProducto = strtoupper($orden->descripcion_producto_proceso);
+                if (str_contains($descProducto, 'GANCHO')) {
+                    $query_fallback->where('descripcion', 'LIKE', '%GANCHO%');
+                } elseif (str_contains($descProducto, 'JABONERA')) {
+                    $query_fallback->where('descripcion', 'LIKE', '%JABONERA%');
+                } elseif (str_contains($descProducto, 'COLADOR')) {
+                    $query_fallback->where('descripcion', 'LIKE', '%COLADOR%');
+                } elseif (str_contains($descProducto, 'MATAMOSCA')) {
+                    $query_fallback->where('descripcion', 'LIKE', '%MATAMOSCA%');
+                }
+
+                $moldes = $query_fallback->get();
             }
         }
 
