@@ -40,7 +40,7 @@ class InventarioController extends Controller
             $query->where('inventario.codigo_almacen', $request->almacen);
         }
 
-        $stocks = $query->orderBy('producto.descripcion')->paginate(15)->appends(request()->all());
+        $stocks = $query->orderBy('producto.descripcion')->paginate(10)->appends(request()->all());
         $almacenes = Almacen::where('activo', 1)->get();
         return view('inventario.index', compact('stocks', 'almacenes'));
     }

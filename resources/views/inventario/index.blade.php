@@ -34,6 +34,11 @@
                     </select>
                     <i class="fas fa-warehouse absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
                 </div>
+                <div class="flex">
+                    <a href="{{ route('inventario.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 md:px-6 py-3 rounded-2xl border border-gray-300 transition font-medium text-sm flex items-center justify-center w-full h-full">
+                        <i class="fas fa-times mr-2"></i> <span class="hidden sm:inline">Limpiar</span>
+                    </a>
+                </div>
             </div>
         </div>
 
