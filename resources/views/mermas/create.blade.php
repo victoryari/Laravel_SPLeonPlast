@@ -71,6 +71,12 @@
                         <x-form-group label="Cantidad Recuperada (Molienda)">
                             <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que se vuelve a usar.</p>
+                            <div class="mt-3">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="es_molido" value="1" id="chkEsMolido" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-300 focus:ring focus:ring-offset-0 focus:ring-emerald-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 font-medium">☑ Material recuperado ya molido en máquina</span>
+                                </label>
+                            </div>
                         </x-form-group>
 
                         <div class="md:col-span-2 flex justify-between items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">

@@ -458,12 +458,25 @@ class MermaController extends Controller
                 $costoReciclado = $costoUnitarioMerma * $porcentaje;
                 $totalEntradaRec = round($recuperada * $costoReciclado, 2);
 
-                $codRecuperado = 'REC-' . $request->codigo_producto;
+                $esMolido = $request->has('es_molido');
+                
+                if ($esMolido) {
+                    $partes = explode('-', $request->codigo_producto, 2);
+                    $codigoSufijo = count($partes) > 1 ? $partes[1] : $request->codigo_producto;
+                    $codRecuperado = 'MO07-' . $codigoSufijo;
+                    
+                    $descLimpia = str_replace(['CASCARA', 'COLADA'], '', $productoOrigen->descripcion);
+                    $descLimpia = str_replace(['INYECTADO '], '', $descLimpia);
+                    $descRecuperado = 'MOLIDO RECICLADO ' . trim($descLimpia);
+                } else {
+                    $codRecuperado = 'REC-' . $request->codigo_producto;
+                    $descRecuperado = 'RECUPERADO - ' . $productoOrigen->descripcion;
+                }
 
                 $prodRecuperado = Producto::firstOrCreate(
                     ['codigo' => $codRecuperado],
                     [
-                        'descripcion' => 'RECUPERADO - ' . $productoOrigen->descripcion,
+                        'descripcion' => $descRecuperado,
                         'codigo_tipo_producto' => $productoOrigen->codigo_tipo_producto,
                         'codigo_unidad_medida' => $productoOrigen->codigo_unidad_medida,
                         'estado' => 1
