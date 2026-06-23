@@ -12,12 +12,20 @@ class MermaController extends Controller
     public function index(Request $request)
     {
         $query = Merma::with(['producto', 'almacen', 'usuarioRegistro']);
+        
         if ($request->search) {
-            $query->where('codigo_producto', 'like', "%{$request->search}%")
+            $query->where(function($q) use ($request) {
+                $q->where('codigo_producto', 'like', "%{$request->search}%")
                   ->orWhere('descripcion_producto', 'like', "%{$request->search}%");
+            });
         }
-        $mermas = $query->orderBy('created_at', 'desc')->paginate(15);
-        return view('mermas.index', compact('mermas'));
+
+        if ($request->fecha) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $mermas = $query->orderBy('created_at', 'desc')->paginate(10);
+        return view('mermas.index', compact('mermas', 'request'));
     }
 
     public function create()
