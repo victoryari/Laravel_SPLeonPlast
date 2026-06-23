@@ -87,8 +87,14 @@ class MermaController extends Controller
             ->where('c.idop', $idop)
             ->where('c.id_proceso', $id_proceso)
             ->where('c.estado', 1)
-            ->select('c.codigo_producto', 'p.descripcion', 'i.stock_actual', 'c.codigo_unidad_medida')
-            ->distinct()
+            ->select(
+                'c.codigo_producto',
+                'p.descripcion',
+                'i.stock_actual',
+                'c.codigo_unidad_medida',
+                DB::raw('SUM(c.cantidad) as cantidad_total')
+            )
+            ->groupBy('c.codigo_producto', 'p.descripcion', 'i.stock_actual', 'c.codigo_unidad_medida')
             ->get();
 
         return response()->json($componentes);

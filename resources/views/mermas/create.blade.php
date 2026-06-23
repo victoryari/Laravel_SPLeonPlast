@@ -45,6 +45,12 @@
                         <select name="codigo_producto" id="selectProducto" class="w-full" required disabled>
                             <option value="">Primero seleccione un proceso...</option>
                         </select>
+                        <div class="mt-2" id="wrapperLimpiezaMaquina" style="display: none;">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="chkLimpiezaMaquina" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700 font-medium">Merma por Limpieza de Máquina (Consumo proporcional de insumos)</span>
+                            </label>
+                        </div>
                     </x-form-group>
 
                     <x-form-group label="Almacén" required>
@@ -73,8 +79,8 @@
                         </div>
                     </div>
 
-                    <div id="sectionMermaEnsamblado" class="md:col-span-2 hidden">
-                        <h3 class="text-md font-bold mb-3 text-slate-700 border-b pb-2">Registro de Merma por Componente (Ensamblado)</h3>
+                    <div id="sectionComponentesFormula" class="md:col-span-2 hidden">
+                        <h3 class="text-md font-bold mb-3 text-slate-700 border-b pb-2" id="titleComponentes">Distribución de Insumos</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
@@ -83,16 +89,17 @@
                                         <th class="p-2 border">Stock en Almacén</th>
                                         <th class="p-2 border">Merma Pura</th>
                                         <th class="p-2 border">Merma Recuperada</th>
+                                        <th class="p-2 border text-center col-action" style="display:none;">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyComponentesEnsamblado">
                                     <tr>
-                                        <td colspan="4" class="p-4 text-center text-slate-500">Seleccione el producto de origen...</td>
+                                        <td colspan="5" class="p-4 text-center text-slate-500">Seleccione el producto de origen...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <p class="text-xs text-slate-500 mt-2"><i class="fas fa-info-circle"></i> Los descuentos se harán directamente de los stocks de cada componente indicado.</p>
+                        <p class="text-xs text-slate-500 mt-2" id="helpTextComponentes"><i class="fas fa-info-circle"></i> Los descuentos se harán directamente de los stocks de cada componente indicado.</p>
                     </div>
 
                     <input type="hidden" name="es_ensamblado" id="es_ensamblado_flag" value="0">
@@ -123,6 +130,9 @@
         }
 
         let maxStockDisponible = 0;
+        let formulaComponentes = [];
+        let isEnsambladoMode = false;
+        let isLimpiezaMode = false;
 
         $('#selectOP').on('change', function() {
             let idop = $(this).val();
@@ -167,15 +177,28 @@
             let idop = $('#selectOP').val();
             let id_proceso = $(this).val();
             let processText = $(this).find('option:selected').text().toUpperCase();
-            let isEnsamblado = processText.includes('ENSAMBLADO');
-            $('#es_ensamblado_flag').val(isEnsamblado ? '1' : '0');
+            isEnsambladoMode = processText.includes('ENSAMBLADO');
             
-            if (isEnsamblado) {
+            if (isEnsambladoMode) {
+                $('#wrapperLimpiezaMaquina').hide();
+                $('#chkLimpiezaMaquina').prop('checked', false);
+                isLimpiezaMode = false;
+                
                 $('#sectionMermaEstandar').hide();
-                $('#sectionMermaEnsamblado').show();
+                $('#sectionComponentesFormula').show();
+                $('#es_ensamblado_flag').val('1');
+                $('.col-action').hide();
+                $('#titleComponentes').text('Registro de Merma por Componente (Ensamblado)');
+                $('#helpTextComponentes').html('<i class="fas fa-info-circle"></i> Ingrese las cantidades a mermar de cada componente manualamente.');
             } else {
+                $('#wrapperLimpiezaMaquina').show();
+                $('#chkLimpiezaMaquina').prop('checked', false);
+                isLimpiezaMode = false;
+                
                 $('#sectionMermaEstandar').show();
-                $('#sectionMermaEnsamblado').hide();
+                $('#sectionComponentesFormula').hide();
+                $('#es_ensamblado_flag').val('0');
+                $('.col-action').hide();
             }
 
             let $selectProd = $('#selectProducto');
@@ -214,54 +237,126 @@
 
         $('#selectProducto').on('change', function() {
             let option = $(this).find(':selected');
-            let isEnsamblado = $('#es_ensamblado_flag').val() === '1';
 
             if (option.val()) {
                 $('#selectAlmacen').val(option.data('almacen'));
                 maxStockDisponible = parseFloat(option.data('stock'));
                 $('#maxStockLabel').text('Max disponible: ' + maxStockDisponible.toFixed(2));
                 
-                if (isEnsamblado) {
-                    let idop = $('#selectOP').val();
-                    let id_proceso = $('#selectProceso').val();
-                    let codigo_almacen = option.data('almacen');
-                    let $tbody = $('#tbodyComponentesEnsamblado');
-                    $tbody.html('<tr><td colspan="4" class="text-center p-4">Cargando componentes...</td></tr>');
-                    
-                    $.ajax({
-                        url: '{{ route("mermas.componentes_ensamblado") }}',
-                        type: 'GET',
-                        data: { idop: idop, id_proceso: id_proceso, codigo_almacen: codigo_almacen },
-                        success: function(data) {
-                            if(data.length === 0) {
-                                $tbody.html('<tr><td colspan="4" class="text-center p-4 text-red-500">No se encontraron componentes en el almacén ' + codigo_almacen + '</td></tr>');
-                            } else {
-                                $tbody.empty();
-                                $.each(data, function(index, comp) {
-                                    let html = '<tr>';
-                                    html += '<td class="p-2 border">' + comp.codigo_producto + '<br><span class="text-xs text-slate-500">' + comp.descripcion + '</span></td>';
-                                    html += '<td class="p-2 border font-bold text-center">' + parseFloat(comp.stock_actual).toFixed(2) + ' <span class="text-xs text-slate-500 font-normal">' + (comp.codigo_unidad_medida || '') + '</span></td>';
-                                    html += '<td class="p-2 border"><div class="relative"><input type="number" name="componentes[' + comp.codigo_producto + '][pura]" step="0.01" min="0" max="' + comp.stock_actual + '" class="w-full border-gray-300 rounded-md py-1 px-2 pr-8 text-sm" placeholder="0.00"><span class="absolute right-2 top-1.5 text-xs text-slate-400">' + (comp.codigo_unidad_medida || '') + '</span></div></td>';
-                                    html += '<td class="p-2 border"><div class="relative"><input type="number" name="componentes[' + comp.codigo_producto + '][recuperada]" step="0.01" min="0" max="' + comp.stock_actual + '" class="w-full border-gray-300 rounded-md py-1 px-2 pr-8 text-sm" placeholder="0.00"><span class="absolute right-2 top-1.5 text-xs text-slate-400">' + (comp.codigo_unidad_medida || '') + '</span></div></td>';
-                                    html += '</tr>';
-                                    $tbody.append(html);
-                                });
-                            }
+                let idop = $('#selectOP').val();
+                let id_proceso = $('#selectProceso').val();
+                let codigo_almacen = option.data('almacen');
+                
+                $.ajax({
+                    url: '{{ route("mermas.componentes_ensamblado") }}',
+                    type: 'GET',
+                    data: { idop: idop, id_proceso: id_proceso, codigo_almacen: codigo_almacen },
+                    success: function(data) {
+                        formulaComponentes = data.map(c => ({...c, activo: true}));
+                        if (isEnsambladoMode || isLimpiezaMode) {
+                            renderComponentesTable();
                         }
-                    });
-                }
+                    }
+                });
             } else {
                 $('#maxStockLabel').text('Max disponible: --');
                 maxStockDisponible = 0;
-                if (isEnsamblado) {
-                    $('#tbodyComponentesEnsamblado').html('<tr><td colspan="4" class="p-4 text-center text-slate-500">Seleccione el producto de origen...</td></tr>');
+                formulaComponentes = [];
+                if (isEnsambladoMode || isLimpiezaMode) {
+                    $('#tbodyComponentesEnsamblado').html('<tr><td colspan="5" class="p-4 text-center text-slate-500">Seleccione el producto de origen...</td></tr>');
                 }
             }
             actualizarValidacionStock();
         });
 
-        $('.cantidad-input').on('input', function() {
+        $('#chkLimpiezaMaquina').on('change', function() {
+            isLimpiezaMode = $(this).is(':checked');
+            if (isLimpiezaMode) {
+                $('#sectionComponentesFormula').show();
+                $('#es_ensamblado_flag').val('1');
+                $('.col-action').show();
+                $('#titleComponentes').text('Distribución Proporcional de Insumos (Limpieza)');
+                $('#helpTextComponentes').html('<i class="fas fa-info-circle"></i> Excluya los insumos que no participan en la limpieza. Las cantidades se calcularán automáticamente según la fórmula.');
+                renderComponentesTable();
+            } else {
+                $('#sectionComponentesFormula').hide();
+                $('#es_ensamblado_flag').val('0');
+                $('.col-action').hide();
+            }
             actualizarValidacionStock();
+        });
+
+        function renderComponentesTable() {
+            let $tbody = $('#tbodyComponentesEnsamblado');
+            if (formulaComponentes.length === 0) {
+                $tbody.html('<tr><td colspan="5" class="text-center p-4 text-red-500">No se encontraron componentes en el almacén</td></tr>');
+                return;
+            }
+            
+            $tbody.empty();
+            $.each(formulaComponentes, function(index, comp) {
+                if (!comp.activo && isLimpiezaMode) return; // Hide completely if removed in limpieza mode
+
+                let html = '<tr>';
+                html += '<td class="p-2 border">' + comp.codigo_producto + '<br><span class="text-xs text-slate-500">' + comp.descripcion + '</span></td>';
+                html += '<td class="p-2 border font-bold text-center">' + parseFloat(comp.stock_actual).toFixed(2) + ' <span class="text-xs text-slate-500 font-normal">' + (comp.codigo_unidad_medida || '') + '</span></td>';
+                
+                let readOnlyAttr = isLimpiezaMode ? 'readonly tabindex="-1" class="w-full border-gray-200 bg-gray-50 rounded-md py-1 px-2 pr-8 text-sm text-gray-500 pointer-events-none"' : 'class="w-full border-gray-300 rounded-md py-1 px-2 pr-8 text-sm cantidad-input"';
+                
+                let namePura = comp.activo ? `name="componentes[${comp.codigo_producto}][pura]"` : '';
+                let nameRecu = comp.activo ? `name="componentes[${comp.codigo_producto}][recuperada]"` : '';
+
+                html += `<td class="p-2 border"><div class="relative"><input type="number" ${namePura} id="calc_pura_${$.escapeSelector(comp.codigo_producto)}" step="0.01" min="0" max="${comp.stock_actual}" ${readOnlyAttr} placeholder="0.00"><span class="absolute right-2 top-1.5 text-xs text-slate-400">${comp.codigo_unidad_medida || ''}</span></div></td>`;
+                html += `<td class="p-2 border"><div class="relative"><input type="number" ${nameRecu} id="calc_recu_${$.escapeSelector(comp.codigo_producto)}" step="0.01" min="0" max="${comp.stock_actual}" ${readOnlyAttr} placeholder="0.00"><span class="absolute right-2 top-1.5 text-xs text-slate-400">${comp.codigo_unidad_medida || ''}</span></div></td>`;
+                
+                if (isLimpiezaMode) {
+                    html += `<td class="p-2 border text-center col-action"><button type="button" class="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded-lg" onclick="toggleComponente('${comp.codigo_producto}')" title="Excluir componente"><i class="fas fa-trash-alt"></i></button></td>`;
+                } else {
+                    html += `<td class="p-2 border text-center col-action" style="display:none;"></td>`;
+                }
+                
+                html += '</tr>';
+                $tbody.append(html);
+            });
+            
+            if (isLimpiezaMode) {
+                actualizarDistribucionLimpieza();
+            }
+        }
+
+        window.toggleComponente = function(codigo) {
+            let comp = formulaComponentes.find(c => c.codigo_producto === codigo);
+            if (comp) {
+                comp.activo = !comp.activo;
+                renderComponentesTable();
+            }
+        };
+
+        function actualizarDistribucionLimpieza() {
+            if (!isLimpiezaMode) return;
+            
+            let totalPura = parseFloat($('#inputCantidadPura').val()) || 0;
+            let totalRecu = parseFloat($('#inputCantidadRecuperada').val()) || 0;
+            
+            let sumCantidadTotal = formulaComponentes.filter(c => c.activo).reduce((sum, c) => sum + parseFloat(c.cantidad_total || 0), 0);
+            
+            if (sumCantidadTotal > 0) {
+                formulaComponentes.forEach(comp => {
+                    if (comp.activo) {
+                        let ratio = parseFloat(comp.cantidad_total || 0) / sumCantidadTotal;
+                        let valPura = (totalPura * ratio).toFixed(4);
+                        let valRecu = (totalRecu * ratio).toFixed(4);
+                        
+                        $(`#calc_pura_${$.escapeSelector(comp.codigo_producto)}`).val(valPura > 0 ? valPura : '');
+                        $(`#calc_recu_${$.escapeSelector(comp.codigo_producto)}`).val(valRecu > 0 ? valRecu : '');
+                    }
+                });
+            }
+        }
+
+        $(document).on('input', '.cantidad-input', function() {
+            actualizarValidacionStock();
+            actualizarDistribucionLimpieza();
         });
 
         function actualizarValidacionStock() {
