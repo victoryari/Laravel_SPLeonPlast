@@ -57,7 +57,7 @@ class InventarioController extends Controller
             ->get();
 
         $guiasPendientes = GuiaRemisionCompra::with(['datosProveedor', 'detalles.producto'])
-            ->where('estado', 'RECIBIDA')
+            ->whereIn('estado', ['RECIBIDA', 'FACTURADA'])
             ->orderBy('fecha_emision', 'asc')
             ->get();
 
@@ -356,8 +356,8 @@ class InventarioController extends Controller
     public function procesarUbicacionGuia(Request $request, $id) {
         $guia = GuiaRemisionCompra::with('detalles')->findOrFail($id);
 
-        if ($guia->estado !== 'RECIBIDA') {
-            return back()->with('error', 'La guía ya ha sido ubicada o no está en estado RECIBIDA.');
+        if (!in_array($guia->estado, ['RECIBIDA', 'FACTURADA'])) {
+            return back()->with('error', 'La guía ya ha sido ubicada o no está en estado válido para recepción.');
         }
 
         if (!$request->has('items') || !is_array($request->items)) {
@@ -385,11 +385,17 @@ class InventarioController extends Controller
 
                 // ===== 1. SALIDA DE ALM04 =====
                 // Bloqueo de inventario origen
-                $inventarioOrigen = DB::table('inventario')
+                $inventarioOrigenQuery = DB::table('inventario')
                     ->where('codigo_producto', $codigo_producto)
-                    ->where('codigo_almacen', $almacen_origen)
-                    ->lockForUpdate()
-                    ->first();
+                    ->where('codigo_almacen', $almacen_origen);
+
+                if (!empty($detalle->lote)) {
+                    $inventarioOrigenQuery->where('lote', $detalle->lote);
+                } else {
+                    $inventarioOrigenQuery->whereNull('lote');
+                }
+
+                $inventarioOrigen = $inventarioOrigenQuery->orderBy('id_inventario', 'desc')->lockForUpdate()->first();
 
                 if (!$inventarioOrigen || $inventarioOrigen->stock_actual < $cantidad_transferir) {
                     throw new \Exception("Stock insuficiente en ALMACEN COMPRAS NAC/IMP para el producto $codigo_producto.");

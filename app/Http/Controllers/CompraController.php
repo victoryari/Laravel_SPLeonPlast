@@ -138,9 +138,16 @@ class CompraController extends Controller
 
             if (!empty($request->ids_guias)) {
                 \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)
+                    ->where('estado', 'RECIBIDA')
                     ->update([
                         'id_compra' => $compra->id_compra,
                         'estado' => 'FACTURADA'
+                    ]);
+
+                \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)
+                    ->where('estado', '!=', 'RECIBIDA')
+                    ->update([
+                        'id_compra' => $compra->id_compra
                     ]);
             }
 
