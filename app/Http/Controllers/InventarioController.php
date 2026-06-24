@@ -729,13 +729,34 @@ class InventarioController extends Controller
         return view('inventario.ajuste', compact('productos', 'almacenes', 'unidadesMedida'));
     }
 
+    public function getLotesAjax(Request $request) {
+        $producto = $request->producto;
+        $almacen = $request->almacen;
+
+        if (!$producto) return response()->json([]);
+
+        $query = DB::table('inventario')
+            ->where('codigo_producto', $producto)
+            ->where('stock_actual', '>', 0);
+            
+        if ($almacen) {
+            $query->where('codigo_almacen', $almacen);
+        }
+
+        $lotes = $query->select('lote', 'stock_actual')->get();
+
+        return response()->json($lotes);
+    }
+
     public function storeAjuste(Request $request) {
         $request->validate([
             'codigo_producto'      => 'required',
             'codigo_almacen'       => 'required',
             'cantidad'             => 'required|numeric|min:0.01',
             'tipo'                 => 'required|in:INGRESO,SALIDA',
-            'codigo_unidad_medida' => 'required'
+            'codigo_unidad_medida' => 'required',
+            'lote'                 => 'required|string|max:50',
+            'costo_unitario'       => 'nullable|numeric|min:0'
         ]);
 
         try {
@@ -744,6 +765,7 @@ class InventarioController extends Controller
             $registroInventario = DB::table('inventario')
                 ->where('codigo_producto', $request->codigo_producto)
                 ->where('codigo_almacen', $request->codigo_almacen)
+                ->where('lote', $request->lote)
                 ->lockForUpdate()
                 ->first();
 
@@ -779,6 +801,10 @@ class InventarioController extends Controller
                 ->first();
             $costoPromedioActual = $ultimoKardex?->costo_promedio ?? 0;
 
+            if ($request->tipo === 'INGRESO' && $request->filled('costo_unitario')) {
+                $costoPromedioActual = $request->costo_unitario;
+            }
+
             $costos = $kardexService->calcularCostos(
                 $request->codigo_producto, $request->codigo_almacen,
                 $cantidadEntrada, $costoPromedioActual,
@@ -786,7 +812,7 @@ class InventarioController extends Controller
             );
 
             DB::table('inventario')->updateOrInsert(
-                ['codigo_producto' => $request->codigo_producto, 'codigo_almacen' => $request->codigo_almacen],
+                ['codigo_producto' => $request->codigo_producto, 'codigo_almacen' => $request->codigo_almacen, 'lote' => $request->lote],
                 [
                     'stock_actual' => $nuevo_saldo,
                     'costo_promedio' => $costos['costo_promedio'],
@@ -796,10 +822,11 @@ class InventarioController extends Controller
                 ]
             );
 
-            DB::table('kardex')->insert([
+            $idKardex = DB::table('kardex')->insertGetId([
                 'codigo_almacen'       => $request->codigo_almacen,
                 'codigo_producto'      => $request->codigo_producto,
                 'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                'lote'                 => $request->lote,
                 'fecha_movimiento'     => now(),
                 'tipo_movimiento'      => 'AJUSTE',
                 'documento'            => 'TICKET',
@@ -814,6 +841,25 @@ class InventarioController extends Controller
                 'costo_promedio'       => $costos['costo_promedio'],
                 'total_saldo'          => $costos['total_saldo'],
                 'usuario_registro'     => Auth::id()
+            ]);
+
+            DB::table('movimientos_inventario')->insert([
+                'codigo_almacen'       => $request->codigo_almacen,
+                'codigo_producto'      => $request->codigo_producto,
+                'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                'lote'                 => $request->lote,
+                'fecha_vencimiento'    => $registroInventario->fecha_vencimiento ?? now()->addYears(1),
+                'tipo_movimiento'      => $request->tipo,
+                'cantidad'             => $request->cantidad,
+                'costo_unitario'       => $request->tipo === 'INGRESO' ? $costos['costo_entrada'] : $costos['costo_salida'],
+                'total'                => $request->tipo === 'INGRESO' ? $costos['total_entrada'] : $costos['total_salida'],
+                'documento_referencia' => 'TICKET',
+                'numero_referencia'    => 'AJ-' . date('YmdHis'),
+                'observaciones'        => $request->observaciones ?? 'Ajuste Manual',
+                'usuario_movimiento'   => Auth::id(),
+                'estado'               => 1,
+                'tiene_kardex'         => 1,
+                'fecha_movimiento'     => now()
             ]);
 
             DB::commit();

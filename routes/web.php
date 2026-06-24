@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
             // Ajustes Manuales
             Route::get('/ajuste', [InventarioController::class, 'ajuste'])->name('inventario.ajuste');
             Route::post('/ajuste', [InventarioController::class, 'storeAjuste'])->name('inventario.store_ajuste');
+            Route::get('/lotes-ajax', [InventarioController::class, 'getLotesAjax'])->name('inventario.lotes_ajax');
 
             // Bandeja de Ajustes (CRUD)
             Route::get('/ajuste/lista', [InventarioController::class, 'ajustesIndex'])->name('inventario.ajuste.lista');

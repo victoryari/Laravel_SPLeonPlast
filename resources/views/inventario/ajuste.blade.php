@@ -64,12 +64,38 @@
                     <label class="block text-sm font-semibold text-slate-700 mb-2">
                         Tipo de operación
                     </label>
-                    <select name="tipo"
+                    <select name="tipo" id="selectTipo"
                         class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
                         required>
                         <option value="INGRESO">INGRESO (+)</option>
                         <option value="SALIDA">SALIDA (-)</option>
                     </select>
+                </div>
+
+                <!-- Lote y Costo -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Lote
+                        </label>
+                        <!-- Para Ingresos -->
+                        <input type="text" name="lote" id="inputLote" placeholder="Ej. LOTE-001"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition"
+                            required>
+                        <!-- Para Salidas -->
+                        <select name="lote_select" id="selectLote" style="display:none;"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                            <option value="">-- Seleccione lote --</option>
+                        </select>
+                    </div>
+                    <div id="divCosto">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            Costo Unitario (S/.)
+                        </label>
+                        <input type="number" name="costo_unitario" id="inputCosto" step="0.0001" min="0"
+                            placeholder="Automático o Ingresar"
+                            class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                    </div>
                 </div>
 
                 <!-- Cantidad + Unidad Medida -->
@@ -141,6 +167,46 @@
                 width: '100%'
             });
         }
+
+        function updateLoteField() {
+            const tipo = $('#selectTipo').val();
+            if (tipo === 'SALIDA') {
+                $('#inputLote').removeAttr('name').hide();
+                $('#selectLote').attr('name', 'lote').show().prop('required', true);
+                $('#divCosto').hide();
+                $('#inputCosto').val('');
+                cargarLotes();
+            } else {
+                $('#selectLote').removeAttr('name').hide().prop('required', false);
+                $('#inputLote').attr('name', 'lote').show();
+                $('#divCosto').show();
+            }
+        }
+
+        function cargarLotes() {
+            const producto = $('#selectProducto').val();
+            const almacen = $('select[name="codigo_almacen"]').val();
+            
+            if (!producto || $('#selectTipo').val() !== 'SALIDA') return;
+            
+            $('#selectLote').html('<option value="">Cargando...</option>');
+            $.get('/lotes-ajax', { producto: producto, almacen: almacen }, function(data) {
+                $('#selectLote').empty();
+                if(data.length === 0) {
+                    $('#selectLote').append('<option value="">Sin lotes con stock</option>');
+                } else {
+                    $('#selectLote').append('<option value="">-- Seleccione lote --</option>');
+                    data.forEach(function(lote) {
+                        $('#selectLote').append(`<option value="${lote.lote}">${lote.lote} (Stock: ${lote.stock_actual})</option>`);
+                    });
+                }
+            });
+        }
+
+        $('#selectTipo, select[name="codigo_almacen"]').on('change', updateLoteField);
+        $('#selectProducto').on('change', cargarLotes);
+        
+        updateLoteField();
     });
 </script>
 @endsection
