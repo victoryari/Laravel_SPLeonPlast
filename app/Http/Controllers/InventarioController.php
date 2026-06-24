@@ -1032,6 +1032,7 @@ class InventarioController extends Controller
                 DB::table('inventario')
                     ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                     ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                    ->where('lote', $ajusteOriginal->lote)
                     ->update([
                         'stock_actual' => $saldoActual,
                         'codigo_unidad_medida' => $request->codigo_unidad_medida,
@@ -1051,6 +1052,7 @@ class InventarioController extends Controller
                 DB::table('inventario')
                     ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                     ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                    ->where('lote', $ajusteOriginal->lote)
                     ->update([
                         'stock_actual' => $nuevo_saldo,
                         'codigo_unidad_medida' => $request->codigo_unidad_medida,
@@ -1065,6 +1067,16 @@ class InventarioController extends Controller
                 'cantidad_salida'      => $request->tipo === 'SALIDA' ? $request->cantidad : 0,
                 'observaciones'        => $request->observaciones,
             ]);
+
+            DB::table('movimientos_inventario')
+                ->where('numero_referencia', $ajusteOriginal->numero_documento)
+                ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                ->where('tipo_movimiento', $request->tipo)
+                ->update([
+                    'cantidad'      => $request->cantidad,
+                    'observaciones' => $request->observaciones,
+                ]);
 
             // Recalcular costos para este producto/almacen
             app(KardexService::class)->recalcular(
