@@ -88,6 +88,12 @@
                 </div>
 
                 <div>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha</label>
+                    <input type="date" id="fecha_global" value="{{ $orden->fecha ?? date('Y-m-d') }}"
+                        class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                </div>
+
+                <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Inicio</label>
                     <input type="time" id="hora_ini_global" value="08:00"
                         class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
@@ -609,6 +615,7 @@
         if(!f || c <= 0) return window.toast('Seleccione Fórmula y especifique una cantidad mayor a 0.', 'warning');
         
         const trabajador = document.getElementById('trabajador_global').value;
+        const fechaGlobal = document.getElementById('fecha_global') ? document.getElementById('fecha_global').value : '';
         const horaIni    = document.getElementById('hora_ini_global').value;
         const horaFin    = document.getElementById('hora_fin_global').value;
 
@@ -653,7 +660,7 @@
 
                     // Forzar a mostrar 4 decimales para mayor precisión en KG
                     agregarFila({ ...comp, cantidad: cant.toFixed(4), formula: f, centro, molde,
-                                 codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin });
+                                 codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin, fecha: fechaGlobal });
                 });
                 verificarStock();
             } else {
@@ -702,7 +709,7 @@
     function agregarFila(item = {}) {
         const tbody = document.getElementById('tbody_items');
         const rowId = 'row_' + Date.now() + Math.floor(Math.random()*1000);
-        const today = new Date().toISOString().split('T')[0];
+        const today = item.fecha || new Date().toISOString().split('T')[0];
         
         let tiposHtml = tiposData.map(t=>`<option value="${t.codigo}" ${item.codigo_tipo_producto==t.codigo?'selected':''}>${t.codigo}</option>`).join('');
         let centrosHtml = '<option value="">--</option>' + centros.map(c=>`<option value="${c.codigo}" ${item.centro==c.codigo?'selected':''}>${c.codigo}</option>`).join('');
