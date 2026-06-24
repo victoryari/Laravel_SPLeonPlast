@@ -465,6 +465,28 @@
                 }
             }
         });
+        // Global Double Submit Prevention
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form.classList.contains('allow-double-submit')) return;
+            
+            if (form.checkValidity && !form.checkValidity()) return;
+
+            const submitButtons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+            submitButtons.forEach(btn => {
+                if (btn.disabled) return;
+                // Add a small delay before disabling to ensure the form submission goes through
+                setTimeout(() => {
+                    btn.disabled = true;
+                    if (btn.tagName.toLowerCase() === 'button' && !btn.querySelector('.fa-spinner')) {
+                        const originalHtml = btn.innerHTML;
+                        btn.dataset.originalHtml = originalHtml;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Procesando...';
+                        btn.classList.add('opacity-80', 'cursor-not-allowed');
+                    }
+                }, 10);
+            });
+        });
     </script>
 </body>
 </html>
