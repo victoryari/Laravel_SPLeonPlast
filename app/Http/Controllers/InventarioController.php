@@ -872,7 +872,7 @@ class InventarioController extends Controller
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
             ->leftJoin('unidad_medida', 'kardex.codigo_unidad_medida', '=', 'unidad_medida.codigo')
-            ->leftJoin('users', 'kardex.usuario_registro', '=', 'users.id')
+            ->leftJoin('usuarios', 'kardex.usuario_registro', '=', 'usuarios.id_usuario')
             ->where('kardex.id_kardex', $id)
             ->where('kardex.tipo_movimiento', 'AJUSTE')
             ->select(
@@ -881,7 +881,7 @@ class InventarioController extends Controller
                 'almacen.descripcion as almacen',
                 'unidad_medida.descripcion as unidad_medida',
                 'unidad_medida.codigo as codigo_unidad_medida',
-                'users.name as usuario_nombre'
+                'usuarios.nombre_usuario as usuario_nombre'
             )
             ->firstOrFail();
 
