@@ -374,7 +374,7 @@ class InventarioController extends Controller
             $kardexService = app(KardexService::class);
 
             foreach ($ingresos as $ingreso) {
-                $almacen_destino = $ingreso->codigo_almacen;
+                $almacen_destino = !empty($request->codigo_almacen) ? trim($request->codigo_almacen) : $ingreso->codigo_almacen;
                 $codigo_prod = $ingreso->codigo_producto_proceso;
                 $cantidad_real = floatval($ingreso->cantidad);
 
