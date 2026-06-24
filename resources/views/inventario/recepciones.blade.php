@@ -321,76 +321,130 @@
             </div>
 
             <div class="p-6 space-y-4 bg-gray-50">
-                @forelse($produccionPendientes as $pep)
+                @forelse($produccionPendientesAgrupada as $idop => $productos)
+                    @php
+                        $totalLotesOP = 0;
+                        foreach($productos as $lotes) { $totalLotesOP += $lotes->count(); }
+                    @endphp
+                    <!-- Acordeón Nivel OP -->
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
-                        <div class="px-6 py-5 cursor-pointer border-l-4 border-emerald-400 flex flex-col lg:flex-row justify-between gap-4"
-                             onclick="toggleAccordion('pep-{{ $pep->id_ingreso }}')">
-
+                        <div class="px-6 py-5 cursor-pointer border-l-4 border-slate-800 flex flex-col lg:flex-row justify-between gap-4 bg-slate-50"
+                             onclick="toggleAccordion('op-{{ $idop }}')">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                    <i class="fas fa-cogs text-xl"></i>
+                                <div class="w-12 h-12 rounded-2xl bg-slate-800 text-white flex items-center justify-center font-bold">
+                                    OP
                                 </div>
                                 <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="font-bold text-slate-800 text-sm uppercase">{{ $pep->descripcion_producto_proceso }}</h3>
-                                        <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-semibold">Pendiente</span>
-                                    </div>
-                                    <p class="text-sm text-slate-500 mt-1">Código: {{ $pep->codigo_producto_proceso }} | Lote: {{ $pep->lote_produccion }}</p>
+                                    <h3 class="font-bold text-slate-800 text-lg uppercase">Orden de Producción #{{ $idop }}</h3>
+                                    <p class="text-sm text-slate-500 mt-1">
+                                        <span class="font-semibold text-slate-700">{{ $productos->count() }}</span> productos distintos &bull; <span class="font-semibold text-slate-700">{{ $totalLotesOP }}</span> lotes pendientes
+                                    </p>
                                 </div>
                             </div>
-
                             <div class="flex items-center gap-6">
-                                <div class="text-right">
-                                    <p class="text-xs uppercase text-slate-400">Fecha / OP</p>
-                                    <p class="font-bold text-slate-700">{{ \Carbon\Carbon::parse($pep->fecha_ingreso)->format('d/m/Y') }} | OP #{{ $pep->idop }}</p>
-                                </div>
-                                <div class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center">
-                                    <i class="fas fa-chevron-down transition-transform duration-300" id="icon-pep-{{ $pep->id_ingreso }}"></i>
+                                <div class="w-10 h-10 rounded-xl border border-slate-300 flex items-center justify-center bg-white">
+                                    <i class="fas fa-chevron-down transition-transform duration-300" id="icon-op-{{ $idop }}"></i>
                                 </div>
                             </div>
                         </div>
 
-                        <div id="pep-{{ $pep->id_ingreso }}" class="hidden border-t bg-slate-50">
-                            <form action="{{ route('inventario.procesar_recepcion_produccion', $pep->id_ingreso) }}" method="POST" class="p-6">
-                                @csrf
-                                <div class="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-                                    <div class="lg:col-span-5">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Almacén destino</label>
-                                        <div class="relative">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <i class="fas fa-warehouse text-slate-400"></i>
+                        <!-- Contenido OP -->
+                        <div id="op-{{ $idop }}" class="hidden border-t bg-white p-4 lg:p-6 space-y-4">
+                            @foreach($productos as $codigoProducto => $lotes)
+                                @php
+                                    $primerLote = $lotes->first();
+                                @endphp
+                                <!-- Acordeón Nivel Producto/Color -->
+                                <div class="bg-emerald-50/50 rounded-xl border border-emerald-100 overflow-hidden">
+                                    <div class="px-5 py-4 cursor-pointer flex flex-col lg:flex-row justify-between gap-4"
+                                         onclick="toggleAccordion('prod-{{ $idop }}-{{ Str::slug($codigoProducto) }}')">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                                                <i class="fas fa-tint"></i>
                                             </div>
-                                            <select name="codigo_almacen" class="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-emerald-500" required>
-                                                <option value="">Seleccione...</option>
-                                                @foreach($almacenes as $almacen)
-                                                    <option value="{{ $almacen->codigo_almacen }}" {{ $pep->codigo_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>
-                                                        {{ $almacen->descripcion }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                            <div>
+                                                <h4 class="font-bold text-slate-800 text-sm uppercase">{{ $primerLote->descripcion_producto_proceso }}</h4>
+                                                <p class="text-xs text-slate-500 mt-0.5">Código: {{ $codigoProducto }} | {{ $lotes->count() }} lotes pendientes</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <!-- Botón de Aprobación Global -->
+                                            <form action="{{ route('inventario.procesar_recepcion_produccion_global', ['idop' => $idop, 'codigo_producto' => $codigoProducto]) }}" method="POST" class="inline" onsubmit="event.stopPropagation();">
+                                                @csrf
+                                                <button type="submit" onclick="return confirm('¿Está seguro de aprobar TODOS los {{ $lotes->count() }} lotes de este color? Se ingresarán con sus cantidades reportadas al almacén {{ $primerLote->codigo_almacen }}');" 
+                                                    class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex items-center gap-2">
+                                                    <i class="fas fa-check-double"></i> Aprobar Todo
+                                                </button>
+                                            </form>
+                                            <div class="w-8 h-8 rounded-lg bg-white border border-emerald-200 flex items-center justify-center">
+                                                <i class="fas fa-chevron-down text-xs text-emerald-600 transition-transform duration-300" id="icon-prod-{{ $idop }}-{{ Str::slug($codigoProducto) }}"></i>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="lg:col-span-3">
-                                        <label class="block text-xs font-semibold text-slate-500 mb-1">Reportado</label>
-                                        <div class="bg-slate-100 rounded-xl px-4 py-2 text-center font-bold text-slate-700">
-                                            {{ number_format($pep->cantidad, 2) }} {{ $pep->codigo_unidad_medida }}
-                                        </div>
-                                    </div>
-                                    <div class="lg:col-span-4">
-                                        <label class="block text-xs font-semibold text-emerald-600 mb-1">Cantidad Real a Ingresar</label>
-                                        <div class="flex items-center">
-                                            <input type="number" name="cantidad_real" value="{{ $pep->cantidad }}" step="0.01" class="w-full rounded-l-xl border-2 border-emerald-200 bg-emerald-50 text-center text-lg font-bold text-emerald-700 py-2 focus:ring-4 focus:ring-emerald-100" required>
-                                            <span class="bg-emerald-100 border-2 border-l-0 border-emerald-200 text-emerald-700 rounded-r-xl px-4 py-2 font-bold">{{ $pep->codigo_unidad_medida }}</span>
+
+                                    <!-- Contenido Producto/Color (Lotes individuales) -->
+                                    <div id="prod-{{ $idop }}-{{ Str::slug($codigoProducto) }}" class="hidden border-t border-emerald-100 bg-white p-4">
+                                        <div class="space-y-4">
+                                            @foreach($lotes as $pep)
+                                                <div class="bg-white rounded-xl border border-slate-200 shadow-xs hover:border-emerald-300 transition-colors overflow-hidden">
+                                                    <div class="px-4 py-3 bg-slate-50 border-b flex justify-between items-center cursor-pointer"
+                                                         onclick="toggleAccordion('pep-{{ $pep->id_ingreso }}')">
+                                                        <div class="flex items-center gap-3">
+                                                            <i class="fas fa-box text-slate-400 text-sm"></i>
+                                                            <div>
+                                                                <p class="text-xs font-bold text-slate-700">Lote: {{ $pep->lote_produccion }}</p>
+                                                                <p class="text-[10px] text-slate-500">Fecha: {{ \Carbon\Carbon::parse($pep->fecha_ingreso)->format('d/m/Y H:i') }}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="flex items-center gap-3">
+                                                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                                                                {{ number_format($pep->cantidad, 2) }} {{ $pep->codigo_unidad_medida }}
+                                                            </span>
+                                                            <i class="fas fa-chevron-down text-xs text-slate-400 transition-transform duration-300" id="icon-pep-{{ $pep->id_ingreso }}"></i>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div id="pep-{{ $pep->id_ingreso }}" class="hidden p-4">
+                                                        <form action="{{ route('inventario.procesar_recepcion_produccion', $pep->id_ingreso) }}" method="POST">
+                                                            @csrf
+                                                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                                                <div class="md:col-span-5">
+                                                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Almacén destino</label>
+                                                                    <div class="relative">
+                                                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                                            <i class="fas fa-warehouse text-slate-400"></i>
+                                                                        </div>
+                                                                        <select name="codigo_almacen" class="w-full pl-10 pr-8 py-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-emerald-500" required>
+                                                                            <option value="">Seleccione...</option>
+                                                                            @foreach($almacenes as $almacen)
+                                                                                <option value="{{ $almacen->codigo_almacen }}" {{ $pep->codigo_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>
+                                                                                    {{ $almacen->descripcion }}
+                                                                                </option>
+                                                                            @endforeach
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="md:col-span-4">
+                                                                    <label class="block text-xs font-semibold text-emerald-600 mb-1">Cant. Ingresar</label>
+                                                                    <div class="flex items-center">
+                                                                        <input type="number" name="cantidad_real" value="{{ $pep->cantidad }}" step="0.01" class="w-full rounded-l-lg border-2 border-emerald-200 bg-emerald-50 text-center font-bold text-emerald-700 py-1.5 focus:ring-4 focus:ring-emerald-100" required>
+                                                                        <span class="bg-emerald-100 border-2 border-l-0 border-emerald-200 text-emerald-700 rounded-r-lg px-3 py-1.5 font-bold text-sm">{{ $pep->codigo_unidad_medida }}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="md:col-span-3 text-right">
+                                                                    <button type="submit" class="w-full py-2 rounded-lg bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow text-sm">
+                                                                        <i class="fas fa-check mr-1"></i> Aprobar
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            @endforeach
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                                    <button type="button" onclick="toggleAccordion('pep-{{ $pep->id_ingreso }}')" class="px-6 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 font-semibold">Cancelar</button>
-                                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow-lg">
-                                        <i class="fas fa-check mr-2"></i> Aprobar e Ingresar
-                                    </button>
-                                </div>
-                            </form>
+                            @endforeach
                         </div>
                     </div>
                 @empty
@@ -435,13 +489,17 @@ function toggleAccordion(id) {
     const content = document.getElementById(id);
     const icon = document.getElementById('icon-' + id);
 
-    document.querySelectorAll('[id^="compra-"], [id^="pep-"], [id^="guia-"]').forEach(el => {
-        if (el.id !== id && !el.classList.contains('hidden')) {
-            el.classList.add('hidden');
-            const otherIcon = document.getElementById('icon-' + el.id);
-            if (otherIcon) otherIcon.classList.remove('rotate-180');
-        }
-    });
+    // Si es compra, guia o un OP principal, cerramos los del mismo nivel.
+    // No cerramos automáticamente los sub-niveles (prod- y pep-) para no volver loco al usuario.
+    if (id.startsWith('compra-') || id.startsWith('guia-') || id.startsWith('op-')) {
+        document.querySelectorAll('[id^="compra-"], [id^="guia-"], [id^="op-"]').forEach(el => {
+            if (el.id !== id && !el.classList.contains('hidden')) {
+                el.classList.add('hidden');
+                const otherIcon = document.getElementById('icon-' + el.id);
+                if (otherIcon) otherIcon.classList.remove('rotate-180');
+            }
+        });
+    }
 
     content.classList.toggle('hidden');
     if (icon) icon.classList.toggle('rotate-180');

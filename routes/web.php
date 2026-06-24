@@ -166,6 +166,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/alertas-stock', [InventarioController::class, 'alertasStock'])->name('inventario.alertas_stock');
             Route::post('/actualizar-stock-minimo', [InventarioController::class, 'actualizarStockMinimo'])->name('inventario.actualizar_stock_minimo');
             Route::post('/recibir-produccion/{id}', [InventarioController::class, 'procesarRecepcionProduccion'])->name('inventario.procesar_recepcion_produccion');
+            Route::post('/recibir-produccion/global/{idop}/{codigo_producto}', [InventarioController::class, 'procesarRecepcionProduccionGlobal'])->name('inventario.procesar_recepcion_produccion_global');
             Route::post('/ubicar-guia/{id}', [InventarioController::class, 'procesarUbicacionGuia'])->name('inventario.procesar_ubicacion_guia');
 
             // Ajustes Manuales

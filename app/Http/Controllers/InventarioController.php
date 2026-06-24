@@ -55,6 +55,10 @@ class InventarioController extends Controller
         $produccionPendientes = ProduccionIngresoProceso::where('estado', 'PENDIENTE')
             ->orderBy('fecha_ingreso', 'asc')
             ->get();
+            
+        $produccionPendientesAgrupada = $produccionPendientes->groupBy('idop')->map(function ($opGroup) {
+            return $opGroup->groupBy('codigo_producto_proceso');
+        });
 
         $guiasPendientes = GuiaRemisionCompra::with(['datosProveedor', 'detalles.producto'])
             ->whereIn('estado', ['RECIBIDA', 'FACTURADA'])
@@ -62,7 +66,7 @@ class InventarioController extends Controller
             ->get();
 
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'guiasPendientes', 'almacenes'));
+        return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'produccionPendientesAgrupada', 'guiasPendientes', 'almacenes'));
     }
 
     // 2.0.1 HISTORIAL DE RECEPCIONES
@@ -349,6 +353,136 @@ class InventarioController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al procesar recepción de producción: ' . $e->getMessage());
+        }
+    }
+
+    public function procesarRecepcionProduccionGlobal(Request $request, $idop, $codigo_producto) {
+        try {
+            DB::beginTransaction();
+
+            $ingresos = ProduccionIngresoProceso::where('idop', $idop)
+                ->where('codigo_producto_proceso', $codigo_producto)
+                ->where('estado', 'PENDIENTE')
+                ->lockForUpdate()
+                ->get();
+
+            if ($ingresos->isEmpty()) {
+                throw new \Exception("No hay registros pendientes para este producto y OP.");
+            }
+
+            $usuario_movimiento = Auth::id() ?? 5;
+            $kardexService = app(KardexService::class);
+
+            foreach ($ingresos as $ingreso) {
+                $almacen_destino = $ingreso->codigo_almacen;
+                $codigo_prod = $ingreso->codigo_producto_proceso;
+                $cantidad_real = floatval($ingreso->cantidad);
+
+                if ($cantidad_real <= 0) continue;
+
+                $lote = $ingreso->lote_produccion;
+                $id_proceso = $ingreso->id_proceso;
+
+                $doc_ref = "PRODUCCION_PEP_GLOBAL";
+                $num_ref = "OP-{$idop}-PROC-{$id_proceso}-G";
+                $observacion_kardex = "Aprobación GLOBAL de Ingreso de Producto en Proceso (PEP)";
+
+                $ultimoKardex = DB::table('kardex')
+                    ->where('codigo_producto', $codigo_prod)
+                    ->where('codigo_almacen', $almacen_destino)
+                    ->orderBy('fecha_movimiento', 'desc')
+                    ->orderBy('id_kardex', 'desc')
+                    ->first();
+                $costoPromedioActual = $ultimoKardex?->costo_promedio ?? 0;
+
+                $costos = $kardexService->calcularCostos(
+                    $codigo_prod, $almacen_destino,
+                    $cantidad_real, $costoPromedioActual,
+                    0, 0
+                );
+
+                $movId = DB::table('movimientos_inventario')->insertGetId([
+                    'codigo_almacen' => $almacen_destino,
+                    'codigo_producto' => $codigo_prod,
+                    'lote' => $lote,
+                    'tipo_movimiento' => 'INGRESO',
+                    'cantidad' => $cantidad_real,
+                    'costo_unitario' => $costos['costo_promedio'],
+                    'total' => $costos['total_entrada'],
+                    'documento_referencia' => $doc_ref,
+                    'numero_referencia' => $num_ref,
+                    'idop' => $idop,
+                    'observaciones' => $observacion_kardex,
+                    'usuario_movimiento' => $usuario_movimiento,
+                    'fecha_movimiento' => now(),
+                    'estado' => 1,
+                    'tiene_kardex' => true
+                ]);
+
+                $registroInventario = DB::table('inventario')
+                    ->where('codigo_producto', $codigo_prod)
+                    ->where('codigo_almacen', $almacen_destino)
+                    ->where('lote', $lote)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($registroInventario) {
+                    DB::table('inventario')->where('id_inventario', $registroInventario->id_inventario)->update([
+                        'stock_actual' => $registroInventario->stock_actual + $cantidad_real,
+                        'costo_promedio' => $costos['costo_promedio'],
+                        'ultimo_costo' => $costoPromedioActual,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => $usuario_movimiento
+                    ]);
+                } else {
+                    DB::table('inventario')->insert([
+                        'codigo_producto' => $codigo_prod,
+                        'codigo_almacen' => $almacen_destino,
+                        'lote' => $lote,
+                        'stock_actual' => $cantidad_real,
+                        'stock_minimo' => 0,
+                        'stock_maximo' => 0,
+                        'costo_promedio' => $costos['costo_promedio'],
+                        'ultimo_costo' => $costoPromedioActual,
+                        'estado' => 1,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => $usuario_movimiento
+                    ]);
+                }
+
+                DB::table('kardex')->insert([
+                    'codigo_almacen'       => $almacen_destino,
+                    'codigo_producto'      => $codigo_prod,
+                    'fecha_movimiento'     => $ingreso->fecha_ingreso,
+                    'tipo_movimiento'      => 'INGRESO',
+                    'documento'            => 'RECEPCION_PEP_GLOBAL',
+                    'numero_documento'     => $num_ref,
+                    'cantidad_entrada'     => $costos['cantidad_saldo'] - ($ultimoKardex?->cantidad_saldo ?? 0),
+                    'costo_entrada'        => $costos['costo_entrada'],
+                    'total_entrada'        => $costos['total_entrada'],
+                    'cantidad_salida'      => 0,
+                    'costo_salida'         => 0,
+                    'total_salida'         => 0,
+                    'cantidad_saldo'       => $costos['cantidad_saldo'],
+                    'costo_promedio'       => $costos['costo_promedio'],
+                    'total_saldo'          => $costos['total_saldo'],
+                    'codigo_referencia_movimiento' => $movId,
+                    'lote'                 => $lote,
+                    'observaciones'        => $observacion_kardex,
+                    'usuario_registro'     => $usuario_movimiento
+                ]);
+
+                $ingreso->update([
+                    'estado' => 'APROBADO',
+                ]);
+            }
+
+            DB::commit();
+            return back()->with('success', 'Aprobación global procesada y stock actualizado correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error al procesar aprobación global: ' . $e->getMessage());
         }
     }
 
