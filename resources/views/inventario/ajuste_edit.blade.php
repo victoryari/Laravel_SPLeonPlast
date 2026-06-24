@@ -39,16 +39,16 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <!-- Lote y Costo Unitario (Lectura) -->
+                        <!-- Lote y Costo Unitario (Editables) -->
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Lote</label>
-                            <input type="text" value="{{ $ajuste->lote }}" readonly
-                                class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 text-slate-600 outline-none cursor-not-allowed">
+                            <input type="text" name="lote" value="{{ $ajuste->lote }}"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Costo Unitario (S/.)</label>
-                            <input type="text" value="{{ $ajuste->cantidad_entrada > 0 ? $ajuste->costo_entrada : $ajuste->costo_salida }}" readonly
-                                class="w-full rounded-xl border border-slate-300 px-4 py-3 bg-slate-100 text-slate-600 outline-none cursor-not-allowed">
+                            <input type="number" step="0.0001" name="costo_unitario" value="{{ $ajuste->cantidad_entrada > 0 ? $ajuste->costo_entrada : $ajuste->costo_salida }}"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-slate-700 mb-2">Cantidad</label>

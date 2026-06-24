@@ -1029,16 +1029,7 @@ class InventarioController extends Controller
                     DB::table('kardex')->where('id_kardex', $item['id'])->update(['cantidad_saldo' => $item['saldo']]);
                 }
 
-                DB::table('inventario')
-                    ->where('codigo_producto', $ajusteOriginal->codigo_producto)
-                    ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                    ->where('lote', $ajusteOriginal->lote)
-                    ->update([
-                        'stock_actual' => $saldoActual,
-                        'codigo_unidad_medida' => $request->codigo_unidad_medida,
-                        'fecha_ultimo_movimiento' => now(),
-                        'usuario_ultimo_movimiento' => Auth::id()
-                    ]);
+                $this->aplicarCambiosLoteInventario($ajusteOriginal, $request, $originalEntrada, $originalSalida, $nuevaEntrada, $nuevaSalida);
             } else {
                 $saldoAnterior = DB::table('kardex')
                     ->where('codigo_producto', $ajusteOriginal->codigo_producto)
@@ -1049,34 +1040,43 @@ class InventarioController extends Controller
 
                 $nuevo_saldo = $saldoAnterior + ($nuevaEntrada - $nuevaSalida);
 
-                DB::table('inventario')
-                    ->where('codigo_producto', $ajusteOriginal->codigo_producto)
-                    ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                    ->where('lote', $ajusteOriginal->lote)
-                    ->update([
-                        'stock_actual' => $nuevo_saldo,
-                        'codigo_unidad_medida' => $request->codigo_unidad_medida,
-                        'fecha_ultimo_movimiento' => now(),
-                        'usuario_ultimo_movimiento' => Auth::id()
-                    ]);
+                $this->aplicarCambiosLoteInventario($ajusteOriginal, $request, $originalEntrada, $originalSalida, $nuevaEntrada, $nuevaSalida);
             }
+
+            $costoEntrada = $request->tipo === 'INGRESO' && $request->filled('costo_unitario') ? $request->costo_unitario : 0;
 
             DB::table('kardex')->where('id_kardex', $id)->update([
                 'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                'lote'                 => $request->lote,
                 'cantidad_entrada'     => $request->tipo === 'INGRESO' ? $request->cantidad : 0,
                 'cantidad_salida'      => $request->tipo === 'SALIDA' ? $request->cantidad : 0,
+                'costo_entrada'        => $costoEntrada,
+                'total_entrada'        => $request->tipo === 'INGRESO' ? $request->cantidad * $costoEntrada : 0,
                 'observaciones'        => $request->observaciones,
             ]);
 
             DB::table('movimientos_inventario')
-                ->where('numero_referencia', $ajusteOriginal->numero_documento)
-                ->where('codigo_producto', $ajusteOriginal->codigo_producto)
-                ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                ->where('tipo_movimiento', $request->tipo)
-                ->update([
-                    'cantidad'      => $request->cantidad,
-                    'observaciones' => $request->observaciones,
-                ]);
+                ->updateOrInsert(
+                    [
+                        'numero_referencia' => $ajusteOriginal->numero_documento,
+                        'codigo_producto' => $ajusteOriginal->codigo_producto,
+                        'codigo_almacen' => $ajusteOriginal->codigo_almacen
+                    ],
+                    [
+                        'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                        'lote'                 => $request->lote,
+                        'tipo_movimiento'      => $request->tipo,
+                        'cantidad'             => $request->cantidad,
+                        'costo_unitario'       => $costoEntrada,
+                        'total'                => $request->tipo === 'INGRESO' ? $request->cantidad * $costoEntrada : 0,
+                        'observaciones'        => $request->observaciones,
+                        'fecha_movimiento'     => $ajusteOriginal->fecha_movimiento,
+                        'usuario_movimiento'   => Auth::id(),
+                        'estado'               => 1,
+                        'tiene_kardex'         => 1,
+                        'documento_referencia' => 'TICKET'
+                    ]
+                );
 
             // Recalcular costos para este producto/almacen
             app(KardexService::class)->recalcular(
@@ -1576,5 +1576,59 @@ class InventarioController extends Controller
         $html .= '</div>';
 
         return response()->json(['html' => $html]);
+    }
+
+    private function aplicarCambiosLoteInventario($ajusteOriginal, $request, $originalEntrada, $originalSalida, $nuevaEntrada, $nuevaSalida) {
+        $loteOriginal = $ajusteOriginal->lote ?: '';
+        $loteNuevo = $request->lote ?: '';
+
+        // 1. Revertir inventario del lote original
+        if ($loteOriginal !== '') {
+            $invOriginal = DB::table('inventario')
+                ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                ->where('lote', $loteOriginal)
+                ->lockForUpdate()->first();
+            
+            if ($invOriginal) {
+                $stockRevertido = $invOriginal->stock_actual - $originalEntrada + $originalSalida;
+                DB::table('inventario')->where('id_inventario', $invOriginal->id_inventario)
+                    ->update(['stock_actual' => $stockRevertido]);
+            }
+        }
+
+        // 2. Aplicar inventario al lote nuevo (o al mismo si no cambio)
+        if ($loteNuevo !== '') {
+            $invNuevo = DB::table('inventario')
+                ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+                ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
+                ->where('lote', $loteNuevo)
+                ->lockForUpdate()->first();
+
+            if ($invNuevo) {
+                $stockAplicado = $invNuevo->stock_actual + $nuevaEntrada - $nuevaSalida;
+                DB::table('inventario')->where('id_inventario', $invNuevo->id_inventario)
+                    ->update([
+                        'stock_actual' => $stockAplicado,
+                        'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                        'fecha_ultimo_movimiento' => now(),
+                        'usuario_ultimo_movimiento' => Auth::id()
+                    ]);
+            } else {
+                DB::table('inventario')->insert([
+                    'codigo_almacen' => $ajusteOriginal->codigo_almacen,
+                    'codigo_producto' => $ajusteOriginal->codigo_producto,
+                    'codigo_unidad_medida' => $request->codigo_unidad_medida,
+                    'lote' => $loteNuevo,
+                    'estado' => 1,
+                    'fecha_vencimiento' => now()->addYears(1),
+                    'stock_actual' => $nuevaEntrada - $nuevaSalida,
+                    'costo_promedio' => 0,
+                    'ultimo_costo' => 0,
+                    'fecha_ultimo_movimiento' => now(),
+                    'usuario_ultimo_movimiento' => Auth::id()
+                ]);
+            }
+        }
     }
 }
