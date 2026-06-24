@@ -3,6 +3,57 @@
 
 @section('content')
 <link href="/vendor/select2/select2.min.css" rel="stylesheet" />
+<style>
+    /* Custom Select2 Styling para coincidir con Tailwind */
+    .select2-container--default .select2-selection--single {
+        background-color: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        height: 3.125rem;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #334155;
+        line-height: 1.75rem;
+        padding-left: 0;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 3rem;
+        right: 0.75rem;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single,
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        outline: none;
+    }
+    .select2-dropdown {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        outline: none;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border-color: #4f46e5;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #f8fafc;
+        color: #4f46e5;
+        font-weight: 500;
+    }
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+</style>
 <div class="container mx-auto px-4 py-6 max-w-3xl">
     <x-page-header title="Registrar Merma" subtitle="Declare pérdida o molido de un producto">
         <x-slot:actions>
@@ -54,7 +105,7 @@
                     </x-form-group>
 
                     <x-form-group label="Almacén" required>
-                        <select name="codigo_almacen" id="selectAlmacen" class="input-field pointer-events-none bg-slate-100" readonly tabindex="-1">
+                        <select name="codigo_almacen" id="selectAlmacen" class="w-full rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm pointer-events-none" readonly tabindex="-1">
                             @foreach($almacenes as $a)
                                 <option value="{{ $a->codigo_almacen }}">{{ $a->descripcion }}</option>
                             @endforeach
@@ -64,12 +115,12 @@
 
                     <div id="sectionMermaEstandar" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                         <x-form-group label="Cantidad Merma Pura (Irrecuperable)">
-                            <input type="number" name="cantidad_pura" id="inputCantidadPura" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
+                            <input type="number" name="cantidad_pura" id="inputCantidadPura" step="0.01" min="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que va a la basura.</p>
                         </x-form-group>
 
                         <x-form-group label="Cantidad Recuperada (Molienda)">
-                            <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="input-field cantidad-input" placeholder="0.00">
+                            <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que se vuelve a usar.</p>
                             <div class="mt-3">
                                 <label class="inline-flex items-center cursor-pointer">
@@ -111,7 +162,7 @@
                     <input type="hidden" name="es_ensamblado" id="es_ensamblado_flag" value="0">
 
                     <x-form-group class="md:col-span-2" label="Motivo o Descripción (Opcional)">
-                        <textarea name="motivo" rows="2" class="input-field" placeholder="Ej: Máquina mal calibrada..."></textarea>
+                        <textarea name="motivo" rows="2" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm" placeholder="Ej: Máquina mal calibrada..."></textarea>
                     </x-form-group>
                 </div>
             </div>
