@@ -3,6 +3,57 @@
 
 @section('content')
 <link href="/vendor/select2/select2.min.css" rel="stylesheet" />
+<style>
+    /* Custom Select2 Styling para coincidir con Tailwind */
+    .select2-container--default .select2-selection--single {
+        background-color: #fff;
+        border: 1px solid #cbd5e1;
+        border-radius: 0.75rem;
+        height: 3.125rem;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #334155;
+        line-height: 1.75rem;
+        padding-left: 0;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 3rem;
+        right: 0.75rem;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single,
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        outline: none;
+    }
+    .select2-dropdown {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        outline: none;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border-color: #4f46e5;
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #f8fafc;
+        color: #4f46e5;
+        font-weight: 500;
+    }
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+</style>
 <div class="min-h-screen bg-slate-50 py-10 px-4">
     <div class="max-w-3xl mx-auto">
 
