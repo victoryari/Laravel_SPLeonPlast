@@ -1579,26 +1579,30 @@ class InventarioController extends Controller
     }
 
     private function aplicarCambiosLoteInventario($ajusteOriginal, $request, $originalEntrada, $originalSalida, $nuevaEntrada, $nuevaSalida) {
-        $loteOriginal = $ajusteOriginal->lote ?: '';
-        $loteNuevo = $request->lote ?: '';
+        $loteOriginal = $ajusteOriginal->lote;
+        $loteNuevo = $request->lote;
 
         // 1. Revertir inventario del lote original
-        if ($loteOriginal !== '') {
-            $invOriginal = DB::table('inventario')
-                ->where('codigo_producto', $ajusteOriginal->codigo_producto)
-                ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
-                ->where('lote', $loteOriginal)
-                ->lockForUpdate()->first();
+        $queryOriginal = DB::table('inventario')
+            ->where('codigo_producto', $ajusteOriginal->codigo_producto)
+            ->where('codigo_almacen', $ajusteOriginal->codigo_almacen);
             
-            if ($invOriginal) {
-                $stockRevertido = $invOriginal->stock_actual - $originalEntrada + $originalSalida;
-                DB::table('inventario')->where('id_inventario', $invOriginal->id_inventario)
-                    ->update(['stock_actual' => $stockRevertido]);
-            }
+        if (empty($loteOriginal)) {
+            $queryOriginal->whereNull('lote');
+        } else {
+            $queryOriginal->where('lote', $loteOriginal);
+        }
+        
+        $invOriginal = $queryOriginal->lockForUpdate()->first();
+        
+        if ($invOriginal) {
+            $stockRevertido = $invOriginal->stock_actual - $originalEntrada + $originalSalida;
+            DB::table('inventario')->where('id_inventario', $invOriginal->id_inventario)
+                ->update(['stock_actual' => $stockRevertido]);
         }
 
         // 2. Aplicar inventario al lote nuevo (o al mismo si no cambio)
-        if ($loteNuevo !== '') {
+        if (!empty($loteNuevo)) {
             $invNuevo = DB::table('inventario')
                 ->where('codigo_producto', $ajusteOriginal->codigo_producto)
                 ->where('codigo_almacen', $ajusteOriginal->codigo_almacen)
