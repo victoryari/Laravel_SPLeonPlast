@@ -261,19 +261,32 @@
             let processText = $(this).find('option:selected').text().toUpperCase();
             isEnsambladoMode = processText.includes('ENSAMBLADO');
             
-            if (isEnsambladoMode) {
+            let isTipoLimpieza = $('#tipo_registro_merma').val() === 'limpieza';
+            
+            if (isEnsambladoMode || isTipoLimpieza) {
                 $('#wrapperLimpiezaMaquina').hide();
-                $('#chkLimpiezaMaquina').prop('checked', false);
-                isLimpiezaMode = false;
+                if (isTipoLimpieza) {
+                    $('#chkLimpiezaMaquina').prop('checked', true);
+                    isLimpiezaMode = true;
+                } else {
+                    $('#chkLimpiezaMaquina').prop('checked', false);
+                    isLimpiezaMode = false;
+                }
                 
                 $('#sectionMermaEstandar').hide();
                 $('#sectionComponentesFormula').show();
                 $('#es_ensamblado_flag').val('1');
                 $('.col-action').hide();
-                $('#titleComponentes').text('Registro de Merma por Componente (Ensamblado)');
-                $('#helpTextComponentes').html('<i class="fas fa-info-circle"></i> Ingrese las cantidades a mermar de cada componente manualamente.');
+                
+                if (isEnsambladoMode) {
+                    $('#titleComponentes').text('Registro de Merma por Componente (Ensamblado)');
+                    $('#helpTextComponentes').html('<i class="fas fa-info-circle"></i> Ingrese las cantidades a mermar de cada componente manualmente.');
+                } else {
+                    $('#titleComponentes').text('Distribución de Insumos (Purga)');
+                    $('#helpTextComponentes').html('<i class="fas fa-info-circle"></i> Consumo proporcional de insumos vírgenes por purga de máquina.');
+                }
             } else {
-                $('#wrapperLimpiezaMaquina').show();
+                $('#wrapperLimpiezaMaquina').hide(); // Ya no se muestra manualmente
                 $('#chkLimpiezaMaquina').prop('checked', false);
                 isLimpiezaMode = false;
                 
