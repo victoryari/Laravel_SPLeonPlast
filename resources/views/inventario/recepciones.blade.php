@@ -478,7 +478,6 @@ function showSection(sectionId) {
         document.getElementById(id).classList.add('hidden');
     });
     document.getElementById(sectionId).classList.remove('hidden');
-    localStorage.setItem('activeRecepcionesTab', sectionId);
 }
 
 function showCards() {
@@ -486,15 +485,7 @@ function showCards() {
         document.getElementById(id).classList.add('hidden');
     });
     cardsPanel.classList.remove('hidden');
-    localStorage.removeItem('activeRecepcionesTab');
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const activeTab = localStorage.getItem('activeRecepcionesTab');
-    if (activeTab && sections.includes(activeTab)) {
-        showSection(activeTab);
-    }
-});
 
 // Manejo de Acordeones
 function toggleAccordion(id) {
