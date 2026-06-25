@@ -55,9 +55,18 @@
     }
 </style>
 <div class="container mx-auto px-4 py-6 max-w-3xl">
-    <x-page-header title="Registrar Merma" subtitle="Declare pérdida o molido de un producto">
+    @php
+        $titulos = [
+            'pura' => 'Registrar Merma Pura',
+            'molido' => 'Registrar Molido (Recuperable)',
+            'limpieza' => 'Registrar Limpieza de Máquina (Purga)',
+            'recuperado_maquina' => 'Registrar Recuperado en Máquina'
+        ];
+        $titulo = $titulos[$tipo] ?? 'Registrar Merma';
+    @endphp
+    <x-page-header title="{{ $titulo }}" subtitle="Declare pérdida o molido de un producto">
         <x-slot:actions>
-            <a href="{{ route('mermas.index') }}" class="btn-secondary">
+            <a href="{{ route('mermas.opciones') }}" class="btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver al Listado
             </a>
         </x-slot:actions>
@@ -72,6 +81,7 @@
 
     <form action="{{ route('mermas.store') }}" method="POST">
         @csrf
+        <input type="hidden" name="tipo_registro_merma" value="{{ $tipo }}" id="tipo_registro_merma">
         <x-card>
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -103,8 +113,8 @@
                             <option value="">Primero seleccione un proceso...</option>
                         </select>
                         <div class="mt-2" id="wrapperLimpiezaMaquina" style="display: none;">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="chkLimpiezaMaquina" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50">
+                            <label class="inline-flex items-center cursor-pointer {{ $tipo == 'limpieza' ? 'hidden' : '' }}">
+                                <input type="checkbox" id="chkLimpiezaMaquina" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50" {{ $tipo == 'limpieza' ? 'checked' : '' }}>
                                 <span class="ml-2 text-sm text-gray-700 font-medium">Merma por Limpieza de Máquina (Consumo proporcional de insumos)</span>
                             </label>
                         </div>
@@ -120,21 +130,24 @@
                     </x-form-group>
 
                     <div id="sectionMermaEstandar" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
-                        <x-form-group label="Cantidad Merma Pura (Irrecuperable)">
+                        @if($tipo == 'pura' || $tipo == 'limpieza')
+                        <x-form-group label="Cantidad Merma Pura (Irrecuperable)" class="md:col-span-2">
                             <input type="number" name="cantidad_pura" id="inputCantidadPura" step="0.01" min="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que va a la basura.</p>
                         </x-form-group>
+                        <input type="hidden" name="cantidad_recuperada" value="0" class="cantidad-input">
+                        @endif
 
-                        <x-form-group label="Cantidad Recuperada (Molienda)">
+                        @if($tipo == 'molido' || $tipo == 'recuperado_maquina')
+                        <input type="hidden" name="cantidad_pura" value="0" class="cantidad-input">
+                        <x-form-group label="Cantidad Recuperada (Molienda)" class="md:col-span-2">
                             <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que se vuelve a usar.</p>
-                            <div class="mt-3">
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" name="es_molido" value="1" id="chkEsMolido" class="rounded border-gray-300 text-emerald-600 shadow-sm focus:border-emerald-300 focus:ring focus:ring-offset-0 focus:ring-emerald-200 focus:ring-opacity-50">
-                                    <span class="ml-2 text-sm text-gray-700 font-medium">☑ Material recuperado ya molido en máquina</span>
-                                </label>
-                            </div>
+                            @if($tipo == 'recuperado_maquina')
+                            <input type="hidden" name="es_molido" value="1">
+                            @endif
                         </x-form-group>
+                        @endif
 
                         <div class="md:col-span-2 flex justify-between items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-lg">
                             <span class="text-sm font-medium text-indigo-800">Total a mermar: <span id="totalMermar">0.00</span></span>
@@ -190,6 +203,12 @@
                 placeholder: 'Seleccione una opción...',
                 allowClear: true
             });
+        }
+        
+        if ($('#tipo_registro_merma').val() === 'limpieza') {
+            setTimeout(() => {
+                $('#chkLimpiezaMaquina').trigger('change');
+            }, 100);
         }
 
         let maxStockDisponible = 0;

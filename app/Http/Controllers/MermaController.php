@@ -28,8 +28,18 @@ class MermaController extends Controller
         return view('mermas.index', compact('mermas', 'request'));
     }
 
-    public function create()
+    public function opciones()
     {
+        return view('mermas.opciones');
+    }
+
+    public function create(Request $request)
+    {
+        $tipo = $request->input('tipo');
+        if (!in_array($tipo, ['pura', 'molido', 'limpieza', 'recuperado_maquina'])) {
+            return redirect()->route('mermas.opciones')->with('error', 'Seleccione un tipo de merma válido.');
+        }
+
         $almacenes = Almacen::where('activo', 1)->get();
         
         $ordenes = DB::table('orden_produccion_global')
@@ -38,7 +48,7 @@ class MermaController extends Controller
             ->orderBy('idop', 'desc')
             ->get();
             
-        return view('mermas.create', compact('almacenes', 'ordenes'));
+        return view('mermas.create', compact('almacenes', 'ordenes', 'tipo'));
     }
 
     public function getProcesosPorOP(Request $request)

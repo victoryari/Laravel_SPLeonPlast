@@ -5,7 +5,7 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <x-page-header title="Mermas y Scrap" subtitle="Gestión de material defectuoso y molido">
         <x-slot:actions>
-            <a href="{{ route('mermas.create') }}" class="btn-primary">
+            <a href="{{ route('mermas.opciones') }}" class="btn-primary">
                 <i class="fas fa-plus"></i>
                 <span class="hidden sm:inline ml-2">Registrar Merma</span>
             </a>

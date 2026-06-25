@@ -204,6 +204,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // 6. Mermas y Scrap
+        Route::get('mermas/opciones', [\App\Http\Controllers\MermaController::class, 'opciones'])->name('mermas.opciones');
         Route::get('mermas/ajax/procesos-por-op', [\App\Http\Controllers\MermaController::class, 'getProcesosPorOP'])->name('mermas.procesos_por_op');
         Route::get('mermas/ajax/productos-por-op', [\App\Http\Controllers\MermaController::class, 'getProductosPorOP'])->name('mermas.productos_por_op');
         Route::get('mermas/ajax/componentes-ensamblado', [\App\Http\Controllers\MermaController::class, 'getComponentesEnsamblado'])->name('mermas.componentes_ensamblado');
