@@ -75,7 +75,9 @@
                         <tr class="hover:bg-slate-50/50 transition">
                             <td class="px-4 md:px-6 py-3 md:py-4">
                                 <div class="font-bold text-gray-900 uppercase">{{ $req->codigo }}</div>
-                                <div class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($req->fecha_creacion)->format('d/m/Y H:i') }}</div>
+                                <div class="text-xs text-gray-500" title="Fecha de Aprobación">
+                                    {{ $req->fecha_aprobacion ? \Carbon\Carbon::parse($req->fecha_aprobacion)->format('d/m/Y H:i') : \Carbon\Carbon::parse($req->fecha_requerimiento)->format('d/m/Y') }}
+                                </div>
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4">
                                 <div class="text-gray-800 text-xs space-y-1">
