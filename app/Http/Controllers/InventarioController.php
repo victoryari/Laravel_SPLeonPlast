@@ -1519,7 +1519,7 @@ class InventarioController extends Controller
             return response()->json(['error' => 'Movimiento no encontrado.'], 404);
         }
 
-        if ($kardex->documento !== 'RECEPCION_PEP' && $kardex->documento !== 'PRODUCCION' && $kardex->documento !== 'MERMA') {
+        if ($kardex->documento !== 'RECEPCION_PEP' && $kardex->documento !== 'RECEPCION_PEP_GLOBAL' && $kardex->documento !== 'PRODUCCION' && $kardex->documento !== 'MERMA') {
             return response()->json(['error' => 'El desglose de costos solo está disponible para ingresos de producción, consumos de proceso o ingresos por mermas.'], 400);
         }
 
@@ -1537,10 +1537,12 @@ class InventarioController extends Controller
             $html .= '<p class="text-sm"><strong>Proceso:</strong> ' . ($proceso->descripcion_proceso ?? 'Desconocido') . '</p>';
             $html .= '</div>';
 
+            $baseDocumento = "OP-{$idop}-PROC-{$idproceso}";
+
             $consumos = DB::table('kardex as k')
                 ->join('producto as p', 'k.codigo_producto', '=', 'p.codigo')
                 ->where('k.documento', 'PRODUCCION')
-                ->where('k.numero_documento', 'LIKE', $kardex->numero_documento . '%')
+                ->where('k.numero_documento', 'LIKE', $baseDocumento . '%')
                 ->where('k.tipo_movimiento', 'SALIDA')
                 ->where(function ($q) {
                     $q->whereNull('k.observaciones')
