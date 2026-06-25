@@ -203,8 +203,12 @@ class RequerimientoMaterialController extends Controller
         }
     }
 
-    public function aprobar($id)
+    public function aprobar(Request $request, $id)
     {
+        $request->validate([
+            'fecha_aprobacion' => 'required|date',
+        ]);
+
         try {
             DB::beginTransaction();
             $requerimiento = RequerimientoMaterial::where('id_requerimiento', $id)->lockForUpdate()->firstOrFail();
@@ -216,7 +220,7 @@ class RequerimientoMaterialController extends Controller
             $requerimiento->update([
                 'estado' => 'APROBADO',
                 'usuario_aprobacion' => Auth::id(),
-                'fecha_aprobacion' => now(),
+                'fecha_aprobacion' => $request->fecha_aprobacion,
             ]);
 
             DB::commit();
