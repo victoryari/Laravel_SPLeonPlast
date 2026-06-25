@@ -78,6 +78,7 @@ class TransferenciaAlmacenController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'fecha_transferencia'    => 'required|date',
             'codigo_almacen_origen'  => 'required|string|exists:almacen,codigo_almacen',
             'codigo_almacen_destino' => 'required|string|exists:almacen,codigo_almacen|different:codigo_almacen_origen',
             'observaciones'          => 'nullable|string',
@@ -100,7 +101,7 @@ class TransferenciaAlmacenController extends Controller
                 'numero_transferencia'   => $numero_transferencia,
                 'codigo_almacen_origen'  => $request->codigo_almacen_origen,
                 'codigo_almacen_destino' => $request->codigo_almacen_destino,
-                'fecha_transferencia'    => now(),
+                'fecha_transferencia'    => $request->fecha_transferencia,
                 'observaciones'          => $request->observaciones,
                 'estado'                 => 'COMPLETADO',
                 'usuario_registro'       => Auth::user()->id_usuario ?? 5,
@@ -120,7 +121,7 @@ class TransferenciaAlmacenController extends Controller
                 // 1. Descontar del origen
                 DB::table('inventario')->where('id_inventario', $invOrigen->id_inventario)->update([
                     'stock_actual' => DB::raw("stock_actual - {$item['cantidad']}"),
-                    'fecha_ultimo_movimiento' => now(),
+                    'fecha_ultimo_movimiento' => $request->fecha_transferencia,
                     'usuario_ultimo_movimiento' => $usuario_id
                 ]);
 
@@ -138,7 +139,7 @@ class TransferenciaAlmacenController extends Controller
                     'numero_referencia'    => $numero_transferencia,
                     'observaciones'        => "Transferencia a $destino",
                     'usuario_movimiento'   => $usuario_id,
-                    'fecha_movimiento'     => now(),
+                    'fecha_movimiento'     => $request->fecha_transferencia,
                     'estado'               => 1,
                     'tiene_kardex'         => true,
                 ]);
@@ -150,7 +151,7 @@ class TransferenciaAlmacenController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_almacen'               => $origen,
                     'codigo_producto'              => $item['codigo_producto'],
-                    'fecha_movimiento'             => now(),
+                    'fecha_movimiento'             => $request->fecha_transferencia,
                     'tipo_movimiento'              => 'SALIDA',
                     'documento'                    => 'TRANSFERENCIA',
                     'numero_documento'             => $numero_transferencia,
@@ -181,7 +182,7 @@ class TransferenciaAlmacenController extends Controller
                     DB::table('inventario')->where('id_inventario', $invDestino->id_inventario)->update([
                         'stock_actual' => DB::raw("stock_actual + {$item['cantidad']}"),
                         'estado' => 1,
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $request->fecha_transferencia,
                         'usuario_ultimo_movimiento' => $usuario_id
                     ]);
                 } else {
@@ -210,7 +211,7 @@ class TransferenciaAlmacenController extends Controller
                     'numero_referencia'    => $numero_transferencia,
                     'observaciones'        => "Recepción desde $origen",
                     'usuario_movimiento'   => $usuario_id,
-                    'fecha_movimiento'     => now(),
+                    'fecha_movimiento'     => $request->fecha_transferencia,
                     'estado'               => 1,
                     'tiene_kardex'         => true,
                 ]);
@@ -222,7 +223,7 @@ class TransferenciaAlmacenController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_almacen'               => $destino,
                     'codigo_producto'              => $item['codigo_producto'],
-                    'fecha_movimiento'             => now(),
+                    'fecha_movimiento'             => $request->fecha_transferencia,
                     'tipo_movimiento'              => 'INGRESO',
                     'documento'                    => 'TRANSFERENCIA',
                     'numero_documento'             => $numero_transferencia,

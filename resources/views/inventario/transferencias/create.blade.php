@@ -32,7 +32,11 @@
         
         <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6">
             <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 border-b pb-2">Detalles Generales</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha Transferencia</label>
+                    <input type="date" name="fecha_transferencia" value="{{ date('Y-m-d') }}" class="w-full border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50" required>
+                </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Almacén de Origen</label>
                     <select name="codigo_almacen_origen" x-model="origen" @change="fetchLotes()" class="w-full border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50" required>
