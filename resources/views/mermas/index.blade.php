@@ -1,9 +1,9 @@
 @extends('layouts.app')
-@section('title', 'Registro de Mermas y Scrap')
+@section('title', 'Registro de Mermas y Recuperados')
 
 @section('content')
 <div class="container mx-auto pb-8 md:pb-10">
-    <x-page-header title="Mermas y Scrap" subtitle="Gestión de material defectuoso y molido">
+    <x-page-header title="Mermas y Recuperados" subtitle="Gestión de material defectuoso y molido">
         <x-slot:actions>
             <a href="{{ route('mermas.opciones') }}" class="btn-primary">
                 <i class="fas fa-plus"></i>

@@ -122,7 +122,7 @@
                             </a>
                             @endif
                             
-                            <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Scrap</a>
+                            <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Recuperados</a>
                         </div>
                     </div>
                     @endif
