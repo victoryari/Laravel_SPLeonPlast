@@ -26,7 +26,7 @@
             <div class="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-6 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                 <i class="fas fa-recycle text-2xl"></i>
             </div>
-            <h3 class="text-lg font-bold text-slate-800 mb-2">Molido (Recuperable)</h3>
+            <h3 class="text-lg font-bold text-slate-800 mb-2">Recuperado para Moler</h3>
             <p class="text-sm text-slate-500">Material defectuoso que se vuelve a moler. Genera ingreso de material REC.</p>
         </a>
 
