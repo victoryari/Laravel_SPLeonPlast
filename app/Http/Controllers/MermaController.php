@@ -21,10 +21,10 @@ class MermaController extends Controller
         }
 
         if ($request->fecha) {
-            $query->whereDate('created_at', $request->fecha);
+            $query->whereDate('fecha_merma', $request->fecha);
         }
 
-        $mermas = $query->orderBy('created_at', 'desc')->paginate(10);
+        $mermas = $query->orderBy('fecha_merma', 'desc')->orderBy('created_at', 'desc')->paginate(10);
         return view('mermas.index', compact('mermas', 'request'));
     }
 
@@ -142,6 +142,7 @@ class MermaController extends Controller
     public function store(Request $request, KardexService $kardexService)
     {
         $request->validate([
+            'fecha_merma' => 'required|date',
             'id_orden_produccion' => 'required|integer',
             'codigo_producto' => 'required|exists:producto,codigo',
             'codigo_almacen' => 'required|exists:almacen,codigo_almacen',
@@ -151,6 +152,9 @@ class MermaController extends Controller
             'es_ensamblado' => 'nullable|in:0,1',
             'componentes' => 'nullable|array'
         ]);
+
+        $fechaMerma = $request->fecha_merma;
+        $fechaMov = \Carbon\Carbon::parse($fechaMerma)->format('Y-m-d') . ' ' . now()->format('H:i:s');
 
         $es_ensamblado = $request->es_ensamblado === '1';
 
@@ -241,6 +245,7 @@ class MermaController extends Controller
                     'motivo' => $request->motivo,
                     'tipo_merma' => ($totalPuraGlobal > 0 && $totalRecuperadaGlobal > 0) ? 'MIXTO' : (($totalPuraGlobal > 0) ? 'PURA' : 'RECUPERABLE'),
                     'codigo_almacen' => $request->codigo_almacen,
+                    'fecha_merma' => $fechaMerma,
                     'estado' => 'REGISTRADA',
                     'usuario_registro' => Auth::id()
                 ]);
@@ -253,7 +258,7 @@ class MermaController extends Controller
                     DB::table('kardex')->insert([
                         'codigo_producto' => $det['codigo'],
                         'codigo_almacen' => $request->codigo_almacen,
-                        'fecha_movimiento' => now(),
+                        'fecha_movimiento' => $fechaMov,
                         'tipo_movimiento' => 'SALIDA',
                         'documento' => 'MERMA',
                         'numero_documento' => $numeroDoc,
@@ -332,7 +337,7 @@ class MermaController extends Controller
                     DB::table('kardex')->insert([
                         'codigo_producto' => $codRecuperado,
                         'codigo_almacen' => $request->codigo_almacen,
-                        'fecha_movimiento' => now(),
+                        'fecha_movimiento' => $fechaMov,
                         'tipo_movimiento' => 'INGRESO',
                         'documento' => 'MERMA_RECUPERADA',
                         'numero_documento' => $numeroDoc,
@@ -403,6 +408,7 @@ class MermaController extends Controller
                 'motivo' => $request->motivo,
                 'tipo_merma' => ($pura > 0 && $recuperada > 0) ? 'MIXTO' : (($pura > 0) ? 'PURA' : 'RECUPERABLE'),
                 'codigo_almacen' => $request->codigo_almacen,
+                'fecha_merma' => $fechaMerma,
                 'estado' => 'REGISTRADA',
                 'usuario_registro' => Auth::id()
             ]);
@@ -435,7 +441,7 @@ class MermaController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_producto' => $comp->codigo_producto,
                     'codigo_almacen' => $request->codigo_almacen,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $fechaMov,
                     'tipo_movimiento' => 'SALIDA',
                     'documento' => 'MERMA',
                     'numero_documento' => $numeroDoc,
@@ -525,7 +531,7 @@ class MermaController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_producto' => $codRecuperado,
                     'codigo_almacen' => $request->codigo_almacen,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $fechaMov,
                     'tipo_movimiento' => 'INGRESO',
                     'documento' => 'MERMA',
                     'numero_documento' => $numeroDoc,

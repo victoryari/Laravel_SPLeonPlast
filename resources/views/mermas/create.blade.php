@@ -75,6 +75,12 @@
         <x-card>
             <div class="p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <x-form-group class="md:col-span-2" label="Fecha de Merma" required>
+                        <input type="date" name="fecha_merma" id="inputFechaMerma" 
+                               class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm" 
+                               value="{{ date('Y-m-d') }}" required max="{{ date('Y-m-d') }}">
+                    </x-form-group>
+
                     <x-form-group class="md:col-span-2" label="Orden de Producción (OP)" required>
                         <select name="id_orden_produccion" id="selectOP" class="w-full" required>
                             <option value="">Seleccione la OP en curso...</option>

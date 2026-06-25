@@ -48,7 +48,7 @@
                     @forelse ($mermas as $m)
                         <tr class="hover:bg-slate-50/50 transition">
                             <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
-                                {{ $m->created_at->format('d/m/Y H:i') }}
+                                {{ \Carbon\Carbon::parse($m->fecha_merma)->format('d/m/Y') }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4">
                                 <div class="font-bold text-gray-900 uppercase">

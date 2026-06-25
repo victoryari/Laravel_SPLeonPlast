@@ -13,6 +13,7 @@ class Merma extends Model
     protected $primaryKey = 'id_merma';
 
     protected $fillable = [
+        'fecha_merma',
         'codigo_producto',
         'descripcion_producto',
         'cantidad',
