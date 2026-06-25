@@ -238,6 +238,9 @@ class InventarioController extends Controller
             $idop = $ingreso->idop;
             $id_proceso = $ingreso->id_proceso;
             $usuario_movimiento = Auth::id() ?? 5;
+            $fecha_movimiento = $request->filled('fecha_recepcion') 
+                ? \Carbon\Carbon::parse($request->fecha_recepcion)->setTime(now()->hour, now()->minute, now()->second)->format('Y-m-d H:i:s') 
+                : now();
 
             $doc_ref = "PRODUCCION_PEP";
             $num_ref = "OP-{$idop}-PROC-{$id_proceso}";
@@ -280,7 +283,7 @@ class InventarioController extends Controller
                 'idop' => $idop,
                 'observaciones' => $observacion_kardex,
                 'usuario_movimiento' => $usuario_movimiento,
-                'fecha_movimiento' => now(),
+                'fecha_movimiento' => $fecha_movimiento,
                 'estado' => 1,
                 'tiene_kardex' => true
             ]);
@@ -298,7 +301,7 @@ class InventarioController extends Controller
                     'stock_actual' => $registroInventario->stock_actual + $cantidad_real,
                     'costo_promedio' => $costos['costo_promedio'],
                     'ultimo_costo' => $costoPromedioActual,
-                    'fecha_ultimo_movimiento' => now(),
+                    'fecha_ultimo_movimiento' => $fecha_movimiento,
                     'usuario_ultimo_movimiento' => $usuario_movimiento
                 ]);
                 $nuevoStockPEP = $registroInventario->stock_actual + $cantidad_real;
@@ -313,7 +316,7 @@ class InventarioController extends Controller
                     'costo_promedio' => $costos['costo_promedio'],
                     'ultimo_costo' => $costoPromedioActual,
                     'estado' => 1,
-                    'fecha_ultimo_movimiento' => now(),
+                    'fecha_ultimo_movimiento' => $fecha_movimiento,
                     'usuario_ultimo_movimiento' => $usuario_movimiento
                 ]);
                 $nuevoStockPEP = $cantidad_real;
@@ -323,7 +326,7 @@ class InventarioController extends Controller
             DB::table('kardex')->insert([
                 'codigo_almacen'       => $almacen_destino,
                 'codigo_producto'      => $codigo_prod,
-                'fecha_movimiento'     => $ingreso->fecha_ingreso,
+                'fecha_movimiento'     => $fecha_movimiento,
                 'tipo_movimiento'      => 'INGRESO',
                 'documento'            => 'RECEPCION_PEP',
                 'numero_documento'     => $num_ref,
@@ -374,6 +377,9 @@ class InventarioController extends Controller
 
             $usuario_movimiento = Auth::id() ?? 5;
             $kardexService = app(KardexService::class);
+            $fecha_movimiento = $request->filled('fecha_recepcion') 
+                ? \Carbon\Carbon::parse($request->fecha_recepcion)->setTime(now()->hour, now()->minute, now()->second)->format('Y-m-d H:i:s') 
+                : now();
 
             foreach ($ingresos as $ingreso) {
                 $almacen_destino = !empty($request->codigo_almacen) ? trim($request->codigo_almacen) : $ingreso->codigo_almacen;
@@ -416,7 +422,7 @@ class InventarioController extends Controller
                     'idop' => $idop,
                     'observaciones' => $observacion_kardex,
                     'usuario_movimiento' => $usuario_movimiento,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $fecha_movimiento,
                     'estado' => 1,
                     'tiene_kardex' => true
                 ]);
@@ -433,7 +439,7 @@ class InventarioController extends Controller
                         'stock_actual' => $registroInventario->stock_actual + $cantidad_real,
                         'costo_promedio' => $costos['costo_promedio'],
                         'ultimo_costo' => $costoPromedioActual,
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $fecha_movimiento,
                         'usuario_ultimo_movimiento' => $usuario_movimiento
                     ]);
                 } else {
@@ -447,7 +453,7 @@ class InventarioController extends Controller
                         'costo_promedio' => $costos['costo_promedio'],
                         'ultimo_costo' => $costoPromedioActual,
                         'estado' => 1,
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $fecha_movimiento,
                         'usuario_ultimo_movimiento' => $usuario_movimiento
                     ]);
                 }
@@ -455,7 +461,7 @@ class InventarioController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_almacen'       => $almacen_destino,
                     'codigo_producto'      => $codigo_prod,
-                    'fecha_movimiento'     => $ingreso->fecha_ingreso,
+                    'fecha_movimiento'     => $fecha_movimiento,
                     'tipo_movimiento'      => 'INGRESO',
                     'documento'            => 'RECEPCION_PEP_GLOBAL',
                     'numero_documento'     => $num_ref,

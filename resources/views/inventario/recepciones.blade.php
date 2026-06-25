@@ -385,6 +385,7 @@
                                                         @endif
                                                     @endforeach
                                                 </select>
+                                                <input type="date" name="fecha_recepcion" value="{{ \Carbon\Carbon::parse($primerLote->fecha_ingreso)->format('Y-m-d') }}" class="px-2 py-1 border border-emerald-200 rounded-lg text-xs text-emerald-800 bg-white outline-none focus:border-emerald-500 max-w-[120px]" title="Fecha de Recepción (Kardex)" required onclick="event.stopPropagation();">
                                                 <button type="submit" onclick="return confirm('¿Está seguro de aprobar TODOS los {{ $lotes->count() }} lotes de este color al almacén seleccionado?');" 
                                                     class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex items-center gap-2">
                                                     <i class="fas fa-check-double"></i> Aprobar Todo
@@ -422,7 +423,7 @@
                                                         <form action="{{ route('inventario.procesar_recepcion_produccion', $pep->id_ingreso) }}" method="POST">
                                                             @csrf
                                                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                                                                <div class="md:col-span-5">
+                                                                <div class="md:col-span-4">
                                                                     <label class="block text-xs font-semibold text-slate-500 mb-1">Almacén destino</label>
                                                                     <div class="relative">
                                                                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -445,7 +446,13 @@
                                                                         <span class="bg-emerald-100 border-2 border-l-0 border-emerald-200 text-emerald-700 rounded-r-lg px-3 py-1.5 font-bold text-sm">{{ $pep->codigo_unidad_medida }}</span>
                                                                     </div>
                                                                 </div>
-                                                                <div class="md:col-span-3 text-right">
+                                                                <div class="md:col-span-3">
+                                                                    <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha de Recepción</label>
+                                                                    <div class="relative">
+                                                                        <input type="date" name="fecha_recepcion" value="{{ \Carbon\Carbon::parse($pep->fecha_ingreso)->format('Y-m-d') }}" class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-sm focus:ring-2 focus:ring-emerald-500" required>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="md:col-span-2 flex justify-end gap-2 items-end">
                                                                     <button type="submit" class="w-full py-2 rounded-lg bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold shadow text-sm">
                                                                         <i class="fas fa-check mr-1"></i> Aprobar
                                                                     </button>
