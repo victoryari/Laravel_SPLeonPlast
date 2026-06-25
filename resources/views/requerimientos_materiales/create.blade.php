@@ -27,6 +27,12 @@
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
+                                <x-form-group label="Fecha de Requerimiento" required>
+                                    <input type="date" name="fecha_requerimiento" 
+                                           class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none" 
+                                           value="{{ date('Y-m-d') }}" required>
+                                </x-form-group>
+                            </div>
                             <div>
                                 <x-form-group label="Orden de Producción (opcional)">
                                     <select name="idop" id="select_idop" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none">

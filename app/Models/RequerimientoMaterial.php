@@ -14,6 +14,7 @@ class RequerimientoMaterial extends Model
 
     protected $fillable = [
         'codigo',
+        'fecha_requerimiento',
         'idop',
         'id_proceso',
         'motivo',
@@ -21,7 +22,7 @@ class RequerimientoMaterial extends Model
         'usuario_creacion',
         'usuario_aprobacion',
         'fecha_aprobacion',
-        'observaciones',
+        'observaciones'
     ];
 
     public function detalles()

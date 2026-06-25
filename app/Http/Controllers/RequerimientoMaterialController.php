@@ -44,6 +44,7 @@ class RequerimientoMaterialController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'fecha_requerimiento' => 'required|date',
             'idop' => 'nullable|exists:orden_produccion_global,idop',
             'id_proceso' => 'nullable|exists:orden_proceso,id',
             'motivo' => 'nullable|string|max:500',
@@ -61,6 +62,7 @@ class RequerimientoMaterialController extends Controller
 
             $requerimiento = RequerimientoMaterial::create([
                 'codigo' => $codigo,
+                'fecha_requerimiento' => $request->fecha_requerimiento,
                 'idop' => $request->idop,
                 'id_proceso' => $request->id_proceso,
                 'motivo' => $request->motivo,
@@ -122,6 +124,7 @@ class RequerimientoMaterialController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
+            'fecha_requerimiento' => 'required|date',
             'idop' => 'nullable|exists:orden_produccion_global,idop',
             'id_proceso' => 'nullable|exists:orden_proceso,id',
             'motivo' => 'nullable|string|max:500',
@@ -141,6 +144,7 @@ class RequerimientoMaterialController extends Controller
             }
 
             $requerimiento->update([
+                'fecha_requerimiento' => $request->fecha_requerimiento,
                 'idop' => $request->idop,
                 'id_proceso' => $request->id_proceso,
                 'motivo' => $request->motivo,
