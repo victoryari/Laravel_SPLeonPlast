@@ -88,8 +88,10 @@ class InventarioController extends Controller
         }
 
         $request->validate([
+            'fecha_ingreso' => 'required|date',
             'items.*.lote' => 'required|string|max:50'
         ], [
+            'fecha_ingreso.required' => 'Es obligatorio ingresar la fecha de ingreso.',
             'items.*.lote.required' => 'Es obligatorio ingresar el número de Lote para todos los productos recibidos.'
         ]);
 
@@ -135,7 +137,7 @@ class InventarioController extends Controller
                         'stock_actual' => $nuevo_saldo,
                         'costo_promedio' => $costos['costo_promedio'],
                         'ultimo_costo' => $precio_unitario,
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $request->fecha_ingreso,
                         'usuario_ultimo_movimiento' => Auth::id(),
                         'fecha_vencimiento' => !empty($fecha_vencimiento) ? $fecha_vencimiento : ($registroInventario->fecha_vencimiento ?? null)
                     ]
@@ -146,7 +148,7 @@ class InventarioController extends Controller
                     $kardexId = DB::table('kardex')->insertGetId([
                         'codigo_almacen'   => $codigo_almacen,
                         'codigo_producto'  => $codigo_producto,
-                        'fecha_movimiento' => now(),
+                        'fecha_movimiento' => $request->fecha_ingreso,
                         'tipo_movimiento'  => 'INGRESO',
                         'documento'        => $compra->tipo_documento,
                         'numero_documento' => $compra->serie_documento . '-' . $compra->numero_documento,
@@ -179,7 +181,7 @@ class InventarioController extends Controller
                         'observaciones'        => 'Recepción de compra',
                         'usuario_movimiento'   => Auth::id(),
                         'tiene_kardex'         => 1,
-                        'fecha_movimiento'     => now(),
+                        'fecha_movimiento'     => $request->fecha_ingreso,
                         'estado'               => 1,
                     ]);
                 }
@@ -474,6 +476,7 @@ class InventarioController extends Controller
 
                 $ingreso->update([
                     'estado' => 'APROBADO',
+                    'codigo_almacen' => $almacen_destino
                 ]);
             }
 

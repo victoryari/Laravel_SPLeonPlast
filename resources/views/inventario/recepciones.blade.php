@@ -137,6 +137,12 @@
                         <div id="compra-{{ $compra->id_compra }}" class="hidden border-t bg-slate-50">
                             <form action="{{ route('inventario.procesar_recepcion', $compra->id_compra) }}" method="POST" class="p-6">
                                 @csrf
+                                <div class="flex justify-end mb-4">
+                                    <div class="flex items-center gap-3 bg-white border border-slate-200 px-4 py-2 rounded-xl">
+                                        <label class="text-xs font-bold text-slate-600 uppercase">Fecha Ingreso a Almacén:</label>
+                                        <input type="date" name="fecha_ingreso" value="{{ date('Y-m-d') }}" class="border-none focus:ring-0 text-sm font-bold text-slate-800 bg-transparent" required>
+                                    </div>
+                                </div>
                                 <div class="space-y-4">
                                     @foreach($compra->detalles as $detalle)
                                         <div class="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
