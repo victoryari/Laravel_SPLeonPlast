@@ -131,16 +131,20 @@
 
                     <div id="sectionMermaEstandar" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                         @if($tipo == 'pura' || $tipo == 'limpieza')
-                        <x-form-group label="Cantidad Merma Pura (Irrecuperable)" class="md:col-span-2">
+                        <x-form-group label="Cantidad Merma Pura (Irrecuperable)" class="{{ $tipo == 'limpieza' ? 'md:col-span-1' : 'md:col-span-2' }}">
                             <input type="number" name="cantidad_pura" id="inputCantidadPura" step="0.01" min="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que va a la basura.</p>
                         </x-form-group>
-                        <input type="hidden" name="cantidad_recuperada" value="0" class="cantidad-input">
+                        @if($tipo == 'pura')
+                        <input type="hidden" name="cantidad_recuperada" value="0" id="inputCantidadRecuperada" class="cantidad-input">
+                        @endif
                         @endif
 
+                        @if($tipo == 'molido' || $tipo == 'recuperado_maquina' || $tipo == 'limpieza')
                         @if($tipo == 'molido' || $tipo == 'recuperado_maquina')
-                        <input type="hidden" name="cantidad_pura" value="0" class="cantidad-input">
-                        <x-form-group label="Cantidad Recuperada (Molienda)" class="md:col-span-2">
+                        <input type="hidden" name="cantidad_pura" value="0" id="inputCantidadPura" class="cantidad-input">
+                        @endif
+                        <x-form-group label="Cantidad Recuperada (Molienda)" class="{{ $tipo == 'limpieza' ? 'md:col-span-1' : 'md:col-span-2' }}">
                             <input type="number" name="cantidad_recuperada" id="inputCantidadRecuperada" step="0.01" min="0" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm cantidad-input" placeholder="0.00">
                             <p class="text-[10px] text-slate-500 mt-1">Material que se vuelve a usar.</p>
                             @if($tipo == 'recuperado_maquina')
@@ -273,7 +277,11 @@
                     isLimpiezaMode = false;
                 }
                 
-                $('#sectionMermaEstandar').hide();
+                if (isTipoLimpieza) {
+                    $('#sectionMermaEstandar').show();
+                } else {
+                    $('#sectionMermaEstandar').hide();
+                }
                 $('#sectionComponentesFormula').show();
                 $('#es_ensamblado_flag').val('1');
                 $('.col-action').hide();
