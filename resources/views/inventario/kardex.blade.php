@@ -132,8 +132,9 @@
                             {{ \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/Y H:i') }}
                         </td>
                         <td class="p-3 border-r border-slate-100 font-semibold text-slate-800">
+                            <span class="text-xs text-indigo-600 block mb-0.5">{{ $mov->codigo_producto }}</span>
                             {{ $mov->producto }}
-                            <p class="text-[10px] text-slate-400">{{ $mov->almacen }}</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">{{ $mov->almacen }}</p>
                         </td>
                         <td class="p-3 border-r border-slate-100 text-center">
                             @php
