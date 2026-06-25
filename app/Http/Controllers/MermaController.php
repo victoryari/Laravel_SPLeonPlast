@@ -200,30 +200,43 @@ class MermaController extends Controller
                     if ($cantidadTotal <= 0) continue;
 
                     $compProducto = Producto::findOrFail($cod);
-                    $inv = DB::table('inventario')
+                    $invs = DB::table('inventario')
                         ->where('codigo_producto', $cod)
                         ->where('codigo_almacen', $request->codigo_almacen)
+                        ->where('stock_actual', '>', 0)
+                        ->orderBy('fecha_vencimiento', 'asc')
+                        ->orderBy('lote', 'asc')
                         ->lockForUpdate()
-                        ->first();
+                        ->get();
 
-                    if (!$inv || $inv->stock_actual < $cantidadTotal) {
-                        throw new \Exception("Stock insuficiente del componente {$cod} ({$compProducto->descripcion}) en el almacén {$request->codigo_almacen}. Se requieren {$cantidadTotal}.");
+                    $saldoRequerido = $cantidadTotal;
+                    foreach ($invs as $inv) {
+                        if ($saldoRequerido <= 0) break;
+
+                        $consumoParcial = min($saldoRequerido, $inv->stock_actual);
+                        $costoSalida = $inv->costo_promedio;
+                        $totalSalida = round($consumoParcial * $costoSalida, 2);
+
+                        $propPura = ($cantidadTotal > 0) ? ($pura / $cantidadTotal) * $consumoParcial : 0;
+                        $propRec = ($cantidadTotal > 0) ? ($recuperada / $cantidadTotal) * $consumoParcial : 0;
+
+                        $totalPuraGlobal += $propPura;
+                        $totalRecuperadaGlobal += $propRec;
+                        $totalValorSalidaGlobal += $totalSalida;
+
+                        $detallesKardex[] = [
+                            'codigo' => $cod,
+                            'cantidad' => $consumoParcial,
+                            'costo' => $costoSalida,
+                            'total' => $totalSalida,
+                            'inv' => $inv
+                        ];
+                        $saldoRequerido -= $consumoParcial;
                     }
 
-                    $costoSalida = $inv->costo_promedio;
-                    $totalSalida = round($cantidadTotal * $costoSalida, 2);
-
-                    $totalPuraGlobal += $pura;
-                    $totalRecuperadaGlobal += $recuperada;
-                    $totalValorSalidaGlobal += $totalSalida;
-
-                    $detallesKardex[] = [
-                        'codigo' => $cod,
-                        'cantidad' => $cantidadTotal,
-                        'costo' => $costoSalida,
-                        'total' => $totalSalida,
-                        'inv' => $inv
-                    ];
+                    if ($saldoRequerido > 0) {
+                        throw new \Exception("Stock insuficiente del componente {$cod} ({$compProducto->descripcion}) en el almacén {$request->codigo_almacen}. Faltan {$saldoRequerido}.");
+                    }
                 }
 
                 $cantidadTotalGlobal = $totalPuraGlobal + $totalRecuperadaGlobal;
@@ -271,6 +284,7 @@ class MermaController extends Controller
                         'cantidad_saldo' => $nuevoStock,
                         'costo_promedio' => $det['inv']->costo_promedio,
                         'total_saldo' => $nuevoStock * $det['inv']->costo_promedio,
+                        'lote' => $det['inv']->lote,
                         'observaciones' => "SALIDA PROPORCIONAL POR LIMPIEZA OP-{$request->id_orden_produccion} MERMA $numeroDoc",
                         'usuario_registro' => Auth::id()
                     ]);
@@ -421,50 +435,63 @@ class MermaController extends Controller
                 
                 if ($cantidadConsumir <= 0) continue;
 
-                $inv = DB::table('inventario')
+                $invs = DB::table('inventario')
                     ->where('codigo_producto', $comp->codigo_producto)
                     ->where('codigo_almacen', $request->codigo_almacen)
+                    ->where('stock_actual', '>', 0)
+                    ->orderBy('fecha_vencimiento', 'asc')
+                    ->orderBy('lote', 'asc')
                     ->lockForUpdate()
-                    ->first();
+                    ->get();
 
-                if (!$inv || $inv->stock_actual < $cantidadConsumir) {
-                    throw new \Exception("Stock insuficiente de materia prima {$comp->codigo_producto} ({$comp->descripcion_producto}) en el almacén {$request->codigo_almacen} para cubrir la merma. Se requieren {$cantidadConsumir}.");
+                $saldoRequerido = $cantidadConsumir;
+
+                foreach ($invs as $inv) {
+                    if ($saldoRequerido <= 0) break;
+
+                    $consumoParcial = min($saldoRequerido, $inv->stock_actual);
+                    $costoSalida = $inv->costo_promedio;
+                    $totalSalida = round($consumoParcial * $costoSalida, 2);
+                    $costoTotalMerma += $totalSalida;
+                    
+                    $nuevoStock = $inv->stock_actual - $consumoParcial;
+
+                    // SALIDA de materia prima
+                    DB::table('kardex')->insert([
+                        'codigo_producto' => $comp->codigo_producto,
+                        'codigo_almacen' => $request->codigo_almacen,
+                        'fecha_movimiento' => $fechaMov,
+                        'tipo_movimiento' => 'SALIDA',
+                        'documento' => 'MERMA',
+                        'numero_documento' => $numeroDoc,
+                        'cantidad_entrada' => 0,
+                        'costo_entrada' => 0,
+                        'total_entrada' => 0,
+                        'cantidad_salida' => $consumoParcial,
+                        'costo_salida' => $costoSalida,
+                        'total_salida' => $totalSalida,
+                        'cantidad_saldo' => $nuevoStock,
+                        'costo_promedio' => $inv->costo_promedio,
+                        'total_saldo' => $nuevoStock * $inv->costo_promedio,
+                        'lote' => $inv->lote,
+                        'observaciones' => "CONSUMO VIRGEN POR MERMA OP-{$request->id_orden_produccion}",
+                        'usuario_registro' => Auth::id()
+                    ]);
+
+                    DB::table('inventario')
+                        ->where('id_inventario', $inv->id_inventario)
+                        ->update([
+                            'stock_actual' => $nuevoStock,
+                            'fecha_ultimo_movimiento' => now(),
+                            'usuario_ultimo_movimiento' => Auth::id()
+                        ]);
+
+                    $saldoRequerido -= $consumoParcial;
                 }
 
-                $costoSalida = $inv->costo_promedio;
-                $totalSalida = round($cantidadConsumir * $costoSalida, 2);
-                $costoTotalMerma += $totalSalida;
-                
-                $nuevoStock = $inv->stock_actual - $cantidadConsumir;
-
-                // SALIDA de materia prima
-                DB::table('kardex')->insert([
-                    'codigo_producto' => $comp->codigo_producto,
-                    'codigo_almacen' => $request->codigo_almacen,
-                    'fecha_movimiento' => $fechaMov,
-                    'tipo_movimiento' => 'SALIDA',
-                    'documento' => 'MERMA',
-                    'numero_documento' => $numeroDoc,
-                    'cantidad_entrada' => 0,
-                    'costo_entrada' => 0,
-                    'total_entrada' => 0,
-                    'cantidad_salida' => $cantidadConsumir,
-                    'costo_salida' => $costoSalida,
-                    'total_salida' => $totalSalida,
-                    'cantidad_saldo' => $nuevoStock,
-                    'costo_promedio' => $inv->costo_promedio,
-                    'total_saldo' => $nuevoStock * $inv->costo_promedio,
-                    'observaciones' => "CONSUMO VIRGEN POR MERMA OP-{$request->id_orden_produccion}",
-                    'usuario_registro' => Auth::id()
-                ]);
-
-                DB::table('inventario')
-                    ->where('id_inventario', $inv->id_inventario)
-                    ->update([
-                        'stock_actual' => $nuevoStock,
-                        'fecha_ultimo_movimiento' => now(),
-                        'usuario_ultimo_movimiento' => Auth::id()
-                    ]);
+                if ($saldoRequerido > 0) {
+                    throw new \Exception("Stock insuficiente de materia prima {$comp->codigo_producto} ({$comp->descripcion_producto}) en el almacén {$request->codigo_almacen} para cubrir la merma. Faltan {$saldoRequerido}.");
+                }
             }
 
             $costoUnitarioMerma = $cantidadTotalMerma > 0 ? round($costoTotalMerma / $cantidadTotalMerma, 6) : 0;
