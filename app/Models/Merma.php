@@ -39,7 +39,7 @@ class Merma extends Model
 
     public function ordenProduccion()
     {
-        return $this->belongsTo(OrdenProduccion::class, 'id_orden_produccion', 'id_orden_produccion');
+        return $this->belongsTo(OrdenProduccion::class, 'id_orden_produccion', 'idop');
     }
 
     public function usuarioRegistro()

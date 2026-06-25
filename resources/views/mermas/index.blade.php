@@ -36,6 +36,7 @@
                 <thead>
                     <tr class="bg-slate-50 text-slate-600 border-b border-gray-200 text-[11px] md:text-xs">
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">Fecha</th>
+                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">OP</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">Producto Origen</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">Almacén</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-center">Tipo</th>
@@ -49,6 +50,13 @@
                         <tr class="hover:bg-slate-50/50 transition">
                             <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
                                 {{ \Carbon\Carbon::parse($m->fecha_merma)->format('d/m/Y') }}
+                            </td>
+                            <td class="px-4 md:px-6 py-3 md:py-4 text-gray-800 font-medium whitespace-nowrap">
+                                @if($m->ordenProduccion)
+                                    OP-{{ $m->ordenProduccion->codigo_op }}
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4">
                                 <div class="font-bold text-gray-900 uppercase">
@@ -89,7 +97,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron registros de mermas.</td>
+                            <td colspan="8" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron registros de mermas.</td>
                         </tr>
                     @endforelse
                 </tbody>

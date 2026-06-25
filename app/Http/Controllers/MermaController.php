@@ -11,7 +11,7 @@ class MermaController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Merma::with(['producto', 'almacen', 'usuarioRegistro']);
+        $query = Merma::with(['producto', 'almacen', 'usuarioRegistro', 'ordenProduccion']);
         
         if ($request->search) {
             $query->where(function($q) use ($request) {
