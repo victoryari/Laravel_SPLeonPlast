@@ -33,6 +33,23 @@
     <form action="{{ route('inventario.despachos.store_atender', $requerimiento->id_requerimiento) }}" method="POST" id="formAtender">
         @csrf
 
+        <x-card class="mb-6">
+            <div class="p-4 flex items-center justify-between bg-slate-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-full text-blue-600">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Fecha de Despacho</h3>
+                        <p class="text-xs text-slate-500">Esta fecha se utilizará para todos los movimientos de Kardex generados.</p>
+                    </div>
+                </div>
+                <div>
+                    <input type="datetime-local" name="fecha_despacho" value="{{ now()->format('Y-m-d\TH:i') }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" required>
+                </div>
+            </div>
+        </x-card>
+
         @forelse($lineas as $index => $linea)
         @php $det = $linea['detalle']; @endphp
         <x-card class="mb-4">

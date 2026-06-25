@@ -98,6 +98,7 @@ class DespachoRequerimientoController extends Controller
         }
 
         $request->validate([
+            'fecha_despacho' => 'required|date',
             'lotes' => 'required|array|min:1',
             'lotes.*.id_detalle' => 'required|exists:detalle_requerimientos_materiales,id_detalle',
             'lotes.*.codigo_almacen_origen' => 'required|exists:almacen,codigo_almacen',
@@ -144,7 +145,7 @@ class DespachoRequerimientoController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_almacen' => $item['codigo_almacen_origen'],
                     'codigo_producto' => $detalle->codigo_producto,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $request->fecha_despacho,
                     'tipo_movimiento' => 'SALIDA',
                     'documento' => 'REQUERIMIENTO',
                     'numero_documento' => $requerimiento->codigo,
@@ -171,7 +172,7 @@ class DespachoRequerimientoController extends Controller
                     'total' => $costosSalida['total_salida'],
                     'documento_referencia' => 'REQUERIMIENTO',
                     'numero_referencia' => $requerimiento->codigo,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $request->fecha_despacho,
                     'usuario_movimiento' => Auth::id(),
                     'estado' => 1,
                 ]);
@@ -180,7 +181,7 @@ class DespachoRequerimientoController extends Controller
                     ->where('id_inventario', $inventarioOrigen->id_inventario)
                     ->update([
                         'stock_actual' => $inventarioOrigen->stock_actual - $cantidad,
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $request->fecha_despacho,
                         'usuario_ultimo_movimiento' => Auth::id(),
                     ]);
 
@@ -203,7 +204,7 @@ class DespachoRequerimientoController extends Controller
                 DB::table('kardex')->insert([
                     'codigo_almacen' => $item['codigo_almacen_destino'],
                     'codigo_producto' => $detalle->codigo_producto,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $request->fecha_despacho,
                     'tipo_movimiento' => 'INGRESO',
                     'documento' => 'REQUERIMIENTO',
                     'numero_documento' => $requerimiento->codigo,
@@ -230,7 +231,7 @@ class DespachoRequerimientoController extends Controller
                     'total' => $costosIngreso['total_entrada'],
                     'documento_referencia' => 'REQUERIMIENTO',
                     'numero_referencia' => $requerimiento->codigo,
-                    'fecha_movimiento' => now(),
+                    'fecha_movimiento' => $request->fecha_despacho,
                     'usuario_movimiento' => Auth::id(),
                     'estado' => 1,
                 ]);
@@ -242,7 +243,7 @@ class DespachoRequerimientoController extends Controller
                             'stock_actual' => $invDestino->stock_actual + $cantidad,
                             'estado' => 1,
                             'costo_promedio' => $costosIngreso['costo_promedio'],
-                            'fecha_ultimo_movimiento' => now(),
+                            'fecha_ultimo_movimiento' => $request->fecha_despacho,
                             'usuario_ultimo_movimiento' => Auth::id(),
                         ]);
                 } else {
@@ -253,7 +254,7 @@ class DespachoRequerimientoController extends Controller
                         'stock_actual' => $cantidad,
                         'costo_promedio' => $costosIngreso['costo_promedio'],
                         'ultimo_costo' => $costosSalida['costo_salida'],
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $request->fecha_despacho,
                         'usuario_ultimo_movimiento' => Auth::id(),
                     ]);
                 }
@@ -266,11 +267,12 @@ class DespachoRequerimientoController extends Controller
                     ]);
                 }
 
-                DespachoRequerimientoLote::create([
+                DB::table('despacho_requerimiento_lotes')->insert([
                     'id_detalle' => $detalle->id_detalle,
                     'id_requerimiento' => $requerimiento->id_requerimiento,
                     'lote' => $item['lote'],
                     'cantidad' => $cantidad,
+                    'fecha_despacho' => $request->fecha_despacho,
                 ]);
 
                 $detalle->increment('cantidad_atendida', $cantidad);
