@@ -230,6 +230,27 @@
         }
     });
 
+    // Auto-distribuir cantidades al cargar la página
+    document.querySelectorAll('.input-lote-cant').forEach(function(input) {
+        if (input.value !== '') return;
+
+        const max = parseFloat(input.getAttribute('data-max')) || 0;
+        const saldo = parseFloat(input.getAttribute('data-saldo')) || 0;
+        const idDetalle = input.getAttribute('data-id-detalle');
+
+        let totalLinea = 0;
+        document.querySelectorAll(`.input-lote-cant[data-id-detalle="${idDetalle}"]`).forEach(function(inp) {
+            totalLinea += parseFloat(inp.value) || 0;
+        });
+
+        const faltante = saldo - totalLinea;
+        if (faltante > 0) {
+            const asignar = Math.min(faltante, max);
+            input.value = asignar.toFixed(2);
+            input.dispatchEvent(new Event('input'));
+        }
+    });
+
     document.querySelectorAll('.omitir-linea-checkbox').forEach(function(checkbox) {
         toggleLineaState(checkbox);
         checkbox.addEventListener('change', function() {
