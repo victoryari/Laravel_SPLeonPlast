@@ -45,7 +45,7 @@
                     </div>
                 </div>
                 <div>
-                    <input type="datetime-local" name="fecha_despacho" value="{{ now()->format('Y-m-d\TH:i') }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" required>
+                    <input type="date" name="fecha_despacho" value="{{ now()->format('Y-m-d') }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" required>
                 </div>
             </div>
         </x-card>
