@@ -1487,13 +1487,47 @@ class InventarioController extends Controller
                         ->update(['estado' => 'PENDIENTE']);
                     $mensaje = 'Movimiento extornado. El Producto en Proceso ha vuelto a estar PENDIENTE en el Registro de Recepciones.';
                 }
+            } elseif ($movimientoOriginal->documento === 'REQUERIMIENTO' && $movimientoOriginal->tipo_movimiento === 'SALIDA') {
+                $reqCodigo = $movimientoOriginal->numero_documento;
+                $reqProducto = $movimientoOriginal->codigo_producto;
+                
+                $requerimiento = DB::table('requerimientos_materiales')->where('codigo', $reqCodigo)->first();
+                if ($requerimiento) {
+                    $detalle = DB::table('detalle_requerimientos_materiales')
+                        ->where('id_requerimiento', $requerimiento->id_requerimiento)
+                        ->where('codigo_producto', $reqProducto)
+                        ->first();
+                        
+                    if ($detalle) {
+                        $nuevaCantidad = max(0, $detalle->cantidad_atendida - $cantEntradaExtorno);
+                        DB::table('detalle_requerimientos_materiales')
+                            ->where('id_detalle', $detalle->id_detalle)
+                            ->update(['cantidad_atendida' => $nuevaCantidad]);
+                            
+                        // Actualizar estado del requerimiento
+                        $detalles = DB::table('detalle_requerimientos_materiales')->where('id_requerimiento', $requerimiento->id_requerimiento)->get();
+                        $todasAtendidas = true;
+                        $algunaAtendida = false;
+                        foreach ($detalles as $d) {
+                            if ($d->cantidad_atendida < $d->cantidad_solicitada) {
+                                $todasAtendidas = false;
+                            }
+                            if ($d->cantidad_atendida > 0) {
+                                $algunaAtendida = true;
+                            }
+                        }
+                        $nuevoEstado = $todasAtendidas ? 'ATENDIDO_TOTAL' : ($algunaAtendida ? 'ATENDIDO_PARCIAL' : 'APROBADO');
+                        DB::table('requerimientos_materiales')->where('id_requerimiento', $requerimiento->id_requerimiento)->update(['estado' => $nuevoEstado]);
+                        $mensaje = 'Movimiento extornado. El requerimiento se ha actualizado y vuelve a estar pendiente de atención.';
+                    }
+                }
             } else {
                 // Buscamos la compra que coincida con el número de documento del Kardex
                 // numero_documento en Kardex es 'SERIE-CORRELATIVO' (Ej: F001-123)
                 $docKardex = $movimientoOriginal->numero_documento;
 
                 // Mejora: Evitamos fallos por espacios en blanco accidentales en la base de datos
-                $compraAfectada = Compra::whereRaw("REPLACE(CONCAT(serie_documento, '-', numero_documento), ' ', '') = ?", [str_replace(' ', '', $docKardex)])
+                $compraAfectada = \App\Models\Compra::whereRaw("REPLACE(CONCAT(serie_documento, '-', numero_documento), ' ', '') = ?", [str_replace(' ', '', $docKardex)])
                     ->first();
 
                 if ($compraAfectada) {
