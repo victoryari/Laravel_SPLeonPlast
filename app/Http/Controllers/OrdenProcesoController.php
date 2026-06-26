@@ -612,6 +612,10 @@ class OrdenProcesoController extends Controller
             }
 
             // Flujo Producción
+            $fecha_movimiento_general = now();
+            if (count($componentes) > 0 && !empty($componentes[0]['fecha_inicio'])) {
+                $fecha_movimiento_general = $componentes[0]['fecha_inicio'] . ' ' . ($componentes[0]['hora_inicio'] ?? now()->format('H:i:s'));
+            }
             $faltantes = [];
             $cantidades_agrupadas = [];
             $total_insumos_ingresados = 0;
@@ -794,7 +798,7 @@ class OrdenProcesoController extends Controller
                         'componente_origen_id' => $idComponente,
                         'observaciones' => 'Consumo proceso',
                         'usuario_movimiento' => $usuario_id,
-                        'fecha_movimiento' => now(),
+                        'fecha_movimiento' => $fecha_movimiento_general,
                         'estado' => 1
                     ]);
                     
@@ -819,7 +823,7 @@ class OrdenProcesoController extends Controller
                     DB::table('inventario')->where('id_inventario', $lote->id_inventario)->update([
                         'stock_actual' => $nuevo_stock,
                         'estado' => ($nuevo_stock > 0 ? 1 : 0),
-                        'fecha_ultimo_movimiento' => now(),
+                        'fecha_ultimo_movimiento' => $fecha_movimiento_general,
                         'usuario_ultimo_movimiento' => $usuario_id
                     ]);
                     
@@ -850,7 +854,7 @@ class OrdenProcesoController extends Controller
                     'codigo_almacen'       => $resumen['almacen'],
                     'codigo_producto'      => $resumen['producto'],
                     'lote'                 => $resumen['lote'],
-                    'fecha_movimiento'     => now(),
+                    'fecha_movimiento'     => $fecha_movimiento_general,
                     'tipo_movimiento'      => 'SALIDA',
                     'documento'            => 'PRODUCCION',
                     'numero_documento'     => $numero_referencia,
@@ -895,7 +899,7 @@ class OrdenProcesoController extends Controller
                         'codigo_unidad_medida' => $g['unidad'],
                         'codigo_almacen' => 'ALM-PEP',
                         'lote_produccion' => $lote_pep,
-                        'fecha_ingreso' => now(),
+                        'fecha_ingreso' => $fecha_movimiento_general,
                         'usuario_registro' => $usuario_id,
                         'estado' => 'PENDIENTE',
                         'codigo_molde' => $codigo_molde_op,
@@ -925,7 +929,7 @@ class OrdenProcesoController extends Controller
                         'codigo_unidad_medida' => $unidad_pr,
                         'codigo_almacen' => 'ALM-PEP',
                         'lote_produccion' => $lote_pr,
-                        'fecha_ingreso' => now(),
+                        'fecha_ingreso' => $fecha_movimiento_general,
                         'usuario_registro' => $usuario_id,
                         'codigo_molde' => $codigo_molde_op,
                         'descripcion_molde' => $descripcion_molde_op
