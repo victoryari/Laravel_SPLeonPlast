@@ -1499,10 +1499,18 @@ class InventarioController extends Controller
                         ->first();
                         
                     if ($detalle) {
-                        $nuevaCantidad = max(0, $detalle->cantidad_atendida - $cantEntradaExtorno);
+                        // Recalcular la cantidad atendida real sumando todas las SALIDAS menos todos los EXTORNOS de salidas de este requerimiento
+                        $totalSalidas = DB::table('kardex')
+                            ->where('documento', 'REQUERIMIENTO')
+                            ->where('numero_documento', $reqCodigo)
+                            ->where('codigo_producto', $reqProducto)
+                            ->where('tipo_movimiento', 'SALIDA')
+                            ->whereRaw("COALESCE(observaciones, '') NOT LIKE '%[EXTORNADO]%'")
+                            ->sum('cantidad_salida');
+                            
                         DB::table('detalle_requerimientos_materiales')
                             ->where('id_detalle', $detalle->id_detalle)
-                            ->update(['cantidad_atendida' => $nuevaCantidad]);
+                            ->update(['cantidad_atendida' => $totalSalidas]);
                             
                         // Actualizar estado del requerimiento
                         $detalles = DB::table('detalle_requerimientos_materiales')->where('id_requerimiento', $requerimiento->id_requerimiento)->get();
