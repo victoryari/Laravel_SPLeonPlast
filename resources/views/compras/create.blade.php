@@ -227,9 +227,9 @@
         return m ? m[1] : text;
     }
 
-    function generarTemplateHTML(idx, codigo, nombre) {
+    function generarTemplateHTML(idx, codigo, nombre, um) {
         let opcionesAlmacen = almacenesData.map(a => `<option value="${a.codigo}" ${a.codigo === 'ALM04' ? 'selected' : ''}>${a.descripcion}</option>`).join('');
-        let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}">${u.codigo}</option>`).join('');
+        let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}" ${u.codigo === um ? 'selected' : ''}>${u.codigo}</option>`).join('');
         return `
         <tr class="fila-producto">
             <td class="p-1">
@@ -294,7 +294,8 @@
 
         const idx = filaIdx++;
         const nombre = getProductName(producto.text);
-        const html = generarTemplateHTML(idx, codigo, nombre);
+        const um = producto.codigo_unidad_medida || 'CAJ';
+        const html = generarTemplateHTML(idx, codigo, nombre, um);
         tablaBody.insertAdjacentHTML('beforeend', html);
     }
 
