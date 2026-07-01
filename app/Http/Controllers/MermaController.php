@@ -57,6 +57,7 @@ class MermaController extends Controller
         
         $procesos = DB::table('orden_proceso')
             ->where('idop', $idop)
+            ->where('estado', 1)
             ->select('id', 'descripcion_proceso', 'estado_avance', 'observaciones')
             ->orderBy('secuencia')
             ->get();
