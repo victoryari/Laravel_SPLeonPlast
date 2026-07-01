@@ -62,7 +62,14 @@
             'limpieza' => 'Registrar Limpieza de Máquina (Purga)',
             'recuperado_maquina' => 'Registrar Recuperado en Máquina'
         ];
+        $textosBoton = [
+            'pura' => 'Registrar Merma',
+            'molido' => 'Registrar Molido',
+            'limpieza' => 'Registrar Limpieza',
+            'recuperado_maquina' => 'Registrar Recuperado'
+        ];
         $titulo = $titulos[$tipo] ?? 'Registrar Merma';
+        $textoBoton = $textosBoton[$tipo] ?? 'Registrar Merma';
     @endphp
     <x-page-header title="{{ $titulo }}" subtitle="Declare pérdida o molido de un producto">
         <x-slot:actions>
@@ -191,7 +198,7 @@
             </div>
             <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
                 <button type="submit" class="btn-primary">
-                    <i class="fas fa-save"></i> Registrar Merma
+                    <i class="fas fa-save"></i> {{ $textoBoton }}
                 </button>
             </div>
         </x-card>
