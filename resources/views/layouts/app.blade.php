@@ -121,8 +121,6 @@
                                 <i class="fas fa-exchange-alt mr-1 text-blue-300"></i> Transferencias
                             </a>
                             @endif
-                            
-                            <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Recuperados</a>
                         </div>
                     </div>
                     @endif
@@ -147,7 +145,7 @@
                     </div>
                     @endif
 
-                    @if(Auth::user()->hasAnyAccess(['produccion.ordenes.index']))
+                    @if(Auth::user()->hasAnyAccess(['produccion.ordenes.index', 'mermas.index']))
                     <div>
                         <button type="button" id="btnProduccion" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
@@ -170,6 +168,12 @@
                             <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-route w-5"></i>
                                 Rutas de Producción
                             </a>
+                            @endif
+                            @if(Auth::user()->hasAccess('mermas.index'))
+                            <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Recuperados</a>
+                            @endif
+                            @if(Auth::user()->hasAccess('produccion.ingresos'))
+                            <a href="{{ route('produccion.ingresos') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.ingresos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-industry w-5 text-emerald-300"></i> Ingresos de Producción</a>
                             @endif
                         </div>
                     </div>
@@ -364,9 +368,9 @@
         const menuInventario = document.getElementById('menuInventario');
         const iconInventario = document.getElementById('iconInventario');
 
-        const inventarioSlugs = ['/inventario', 'recepciones', 'ajuste', 'extornos', 'alertas', 'despachos', 'mermas', 'transferencias'];
+        const inventarioSlugs = ['/inventario', 'recepciones', 'ajuste', 'extornos', 'alertas', 'despachos', 'transferencias'];
 
-        if (inventarioSlugs.some(slug => currentUrl.includes(slug))) {
+        if (inventarioSlugs.some(slug => currentUrl.includes(slug)) && !currentUrl.includes('kardex')) {
             menuInventario?.classList.remove('hidden');
             menuInventario?.classList.add('flex');
             iconInventario?.classList.add('rotate-180');
@@ -385,7 +389,7 @@
         const menuProduccion = document.getElementById('menuProduccion');
         const iconProduccion = document.getElementById('iconProduccion');
 
-        const produccionSlugs = ['ordenes', 'requerimientos-materiales', 'rutas-produccion'];
+        const produccionSlugs = ['ordenes', 'requerimientos-materiales', 'rutas-produccion', 'mermas', 'ingresos'];
 
         if (produccionSlugs.some(slug => currentUrl.includes(slug))) {
             menuProduccion?.classList.remove('hidden');

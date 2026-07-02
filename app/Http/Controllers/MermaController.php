@@ -41,6 +41,7 @@ class MermaController extends Controller
         }
 
         $almacenes = Almacen::where('activo', 1)->get();
+        $trabajadores = DB::table('trabajador')->where('estado', 1)->orderBy('nombre')->get();
         
         $ordenes = DB::table('orden_produccion_global')
             ->where('activo', 1)
@@ -48,7 +49,7 @@ class MermaController extends Controller
             ->orderBy('idop', 'desc')
             ->get();
             
-        return view('mermas.create', compact('almacenes', 'ordenes', 'tipo'));
+        return view('mermas.create', compact('almacenes', 'ordenes', 'tipo', 'trabajadores'));
     }
 
     public function getProcesosPorOP(Request $request)
@@ -160,6 +161,9 @@ class MermaController extends Controller
             'cantidad_pura' => 'nullable|numeric|min:0',
             'cantidad_recuperada' => 'nullable|numeric|min:0',
             'motivo' => 'nullable|string|max:255',
+            'hora_inicio' => 'nullable|date_format:H:i',
+            'hora_fin' => 'nullable|date_format:H:i',
+            'codigo_trabajador' => 'nullable|string|max:50',
             'es_ensamblado' => 'nullable|in:0,1',
             'componentes' => 'nullable|array'
         ]);
@@ -270,6 +274,9 @@ class MermaController extends Controller
                     'tipo_merma' => ($totalPuraGlobal > 0 && $totalRecuperadaGlobal > 0) ? 'MIXTO' : (($totalPuraGlobal > 0) ? 'PURA' : 'RECUPERABLE'),
                     'codigo_almacen' => $request->codigo_almacen,
                     'fecha_merma' => $fechaMerma,
+                    'hora_inicio' => $request->hora_inicio,
+                    'hora_fin' => $request->hora_fin,
+                    'codigo_trabajador' => $request->codigo_trabajador,
                     'estado' => 'REGISTRADA',
                     'usuario_registro' => Auth::id()
                 ]);
@@ -284,7 +291,7 @@ class MermaController extends Controller
                         'codigo_almacen' => $request->codigo_almacen,
                         'fecha_movimiento' => $fechaMov,
                         'tipo_movimiento' => 'SALIDA',
-                        'documento' => 'MERMA',
+                        'documento' => 'LIMPIEZA',
                         'numero_documento' => $numeroDoc,
                         'cantidad_entrada' => 0,
                         'costo_entrada' => 0,
@@ -364,7 +371,7 @@ class MermaController extends Controller
                         'codigo_almacen' => $request->codigo_almacen,
                         'fecha_movimiento' => $fechaMov,
                         'tipo_movimiento' => 'INGRESO',
-                        'documento' => 'MERMA_RECUPERADA',
+                        'documento' => 'RECICLADO DE LIMPIEZA',
                         'numero_documento' => $numeroDoc,
                         'cantidad_entrada' => $totalRecuperadaGlobal,
                         'costo_entrada' => $costoRecicladoGlobal,
@@ -434,6 +441,9 @@ class MermaController extends Controller
                 'tipo_merma' => ($pura > 0 && $recuperada > 0) ? 'MIXTO' : (($pura > 0) ? 'PURA' : 'RECUPERABLE'),
                 'codigo_almacen' => $request->codigo_almacen,
                 'fecha_merma' => $fechaMerma,
+                'hora_inicio' => $request->hora_inicio,
+                'hora_fin' => $request->hora_fin,
+                'codigo_trabajador' => $request->codigo_trabajador,
                 'estado' => 'REGISTRADA',
                 'usuario_registro' => Auth::id()
             ]);
@@ -473,7 +483,7 @@ class MermaController extends Controller
                         'codigo_almacen' => $request->codigo_almacen,
                         'fecha_movimiento' => $fechaMov,
                         'tipo_movimiento' => 'SALIDA',
-                        'documento' => 'MERMA',
+                        'documento' => ($pura > 0 && $recuperada <= 0) ? 'MERMA PURA' : ($request->has('es_molido') ? 'RECUPERADO MOLIDO' : 'RECICLADO INYECCION'),
                         'numero_documento' => $numeroDoc,
                         'cantidad_entrada' => 0,
                         'costo_entrada' => 0,
@@ -571,7 +581,7 @@ class MermaController extends Controller
                     'codigo_almacen' => $request->codigo_almacen,
                     'fecha_movimiento' => $fechaMov,
                     'tipo_movimiento' => 'INGRESO',
-                    'documento' => 'MERMA',
+                    'documento' => $esMolido ? 'RECUPERADO MOLIDO' : 'RECICLADO INYECCION',
                     'numero_documento' => $numeroDoc,
                     'cantidad_entrada' => $recuperada,
                     'costo_entrada' => $costoReciclado,
@@ -683,5 +693,140 @@ class MermaController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error al anular la merma: ' . $e->getMessage());
         }
+    }
+
+    public function detalle($id)
+    {
+        $merma = Merma::with(['ordenProduccion', 'trabajador'])->findOrFail($id);
+        
+        $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+        
+        $movimientos = DB::table('kardex')
+            ->where('numero_documento', $numeroDoc)
+            ->where('tipo_movimiento', '!=', 'EXTORNO') // We skip extornos to only show what the merma initially did
+            ->orderBy('id_kardex', 'asc')
+            ->get();
+            
+        return view('mermas.detalle', compact('merma', 'movimientos'));
+    }
+
+    public function reportePdf($idop)
+    {
+        $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+        
+        if (!$op) {
+            return back()->with('error', 'Orden de Producción no encontrada.');
+        }
+
+        $mermas = Merma::with('trabajador')->where('id_orden_produccion', $idop)->get();
+
+        $numeroDocs = $mermas->map(function($m) {
+            return 'MERMA-' . str_pad($m->id_merma, 6, '0', STR_PAD_LEFT);
+        });
+
+        $kardexDocs = DB::table('kardex')
+            ->whereIn('numero_documento', $numeroDocs)
+            ->select('numero_documento', 'documento')
+            ->get();
+
+        $ingresos = DB::table('produccion_ingresos_proceso')
+            ->where('idop', $idop)
+            ->get();
+
+        // Para obtener el operario y hora inicio de los ingresos, buscamos en los componentes del proceso
+        $componentes = DB::table('componentes_orden_produccion_global')
+            ->where('idop', $idop)
+            ->select('id_proceso', 'descripcion_trabajador', 'hora_inicio', 'hora_fin', 'codigo_formula_produccion')
+            ->get();
+
+        $registros = collect();
+
+        foreach ($mermas as $m) {
+            $color = '-';
+            if (strpos(strtoupper($m->descripcion_producto), 'COLOR ') !== false) {
+                $parts = explode('COLOR ', strtoupper($m->descripcion_producto));
+                $color = trim($parts[1] ?? '-');
+            }
+
+            $prefix = '[MERMA]';
+            $motivoText = $m->tipo_merma;
+
+            $numeroDoc = 'MERMA-' . str_pad($m->id_merma, 6, '0', STR_PAD_LEFT);
+            $esLimpieza = $kardexDocs->where('numero_documento', $numeroDoc)
+                ->whereIn('documento', ['LIMPIEZA', 'RECICLADO DE LIMPIEZA'])
+                ->isNotEmpty();
+
+            if ($esLimpieza) {
+                $prefix = '[LIMPIEZA]';
+                $motivoText = 'RECICLADO DE LIMPIEZA';
+            } elseif ($m->tipo_merma === 'RECUPERABLE') {
+                $prefix = '[RECICLADO]';
+                $motivoText = 'RECICLADO INYECCION';
+            } elseif ($m->tipo_merma === 'MOLIDO') {
+                $prefix = '[MOLIDO]';
+                $motivoText = 'RECUPERADO MOLIDO';
+            } elseif ($m->tipo_merma === 'MIXTO' || strpos(strtolower($m->motivo ?? ''), 'limpieza') !== false) {
+                $prefix = '[LIMPIEZA]';
+                $motivoText = 'RECICLADO DE LIMPIEZA';
+            }
+
+            $finalMotivo = $motivoText . ($m->motivo ? ' - ' . $m->motivo : '');
+
+            $registros->push((object)[
+                'fecha' => $m->fecha_merma,
+                'hora_inicio' => $m->hora_inicio,
+                'hora_fin' => $m->hora_fin,
+                'trabajador_nombre' => $m->trabajador->nombre ?? $m->codigo_trabajador,
+                'cantidad' => $m->cantidad,
+                'motivo' => $finalMotivo,
+                'tipo' => 'MERMA',
+                'prefix' => $prefix,
+                'color' => $color,
+                'timestamp' => \Carbon\Carbon::parse($m->fecha_merma . ' ' . ($m->hora_inicio ?? '00:00:00'))->timestamp
+            ]);
+        }
+
+        foreach ($ingresos as $i) {
+            $fecha = \Carbon\Carbon::parse($i->fecha_ingreso)->format('Y-m-d');
+            
+            // Buscar datos del operario en los componentes del mismo proceso
+            $comp = $componentes->where('id_proceso', $i->id_proceso)->first();
+            
+            $hora_ini = $comp->hora_inicio ?? null;
+            $hora_fin = $comp->hora_fin ?? \Carbon\Carbon::parse($i->fecha_ingreso)->format('H:i:s');
+            $trabajador = $comp->descripcion_trabajador ?? 'Administrador';
+
+            $color = '-';
+            if (strpos(strtoupper($i->descripcion_producto_proceso), 'COLOR ') !== false) {
+                $parts = explode('COLOR ', strtoupper($i->descripcion_producto_proceso));
+                $color = trim($parts[1] ?? '-');
+            }
+
+            $registros->push((object)[
+                'fecha' => $fecha,
+                'hora_inicio' => $hora_ini,
+                'hora_fin' => $hora_fin,
+                'trabajador_nombre' => $trabajador,
+                'cantidad' => $i->cantidad,
+                'motivo' => 'PRODUCCION INYECTADA (' . $i->descripcion_producto_proceso . ')',
+                'tipo' => 'INGRESO',
+                'color' => $color,
+                'timestamp' => \Carbon\Carbon::parse($fecha . ' ' . ($hora_ini ?? '00:00:00'))->timestamp
+            ]);
+        }
+
+        // Ordenar cronológicamente
+        $registros = $registros->sortBy('timestamp')->values();
+
+        $kilosPorColor = $registros->where('tipo', 'INGRESO')->sum('cantidad'); 
+
+        $data = [
+            'op' => $op,
+            'registros' => $registros,
+            'kilosPorColor' => $kilosPorColor
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('mermas.pdf.reporte', $data)->setPaper('a4', 'landscape');
+        return $pdf->download('Reporte_Produccion_OP_'.$op->codigo_op.'.pdf');
     }
 }

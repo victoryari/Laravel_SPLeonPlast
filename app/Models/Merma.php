@@ -14,6 +14,9 @@ class Merma extends Model
 
     protected $fillable = [
         'fecha_merma',
+        'hora_inicio',
+        'hora_fin',
+        'codigo_trabajador',
         'codigo_producto',
         'descripcion_producto',
         'cantidad',
@@ -45,5 +48,10 @@ class Merma extends Model
     public function usuarioRegistro()
     {
         return $this->belongsTo(Usuario::class, 'usuario_registro', 'id_usuario');
+    }
+
+    public function trabajador()
+    {
+        return $this->belongsTo(Trabajador::class, 'codigo_trabajador', 'codigo');
     }
 }

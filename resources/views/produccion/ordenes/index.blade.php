@@ -89,10 +89,15 @@
                                     <x-badge color="yellow">{{ $o->estado ?? 'PENDIENTE' }}</x-badge>
                                 @endif
                             </td>
-                            <td class="p-4 border-r border-slate-200 text-center">
+                            <td class="p-4 border-r border-slate-200 text-center space-x-2">
                                 <a href="{{ route('ordenes.procesos.index', $o->idop) }}" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-primary hover:bg-primary-dark shadow-sm transition-colors">
                                     <i class="fas fa-cogs mr-1"></i> Procesos
                                 </a>
+                                @if(Auth::user()->hasAccess('mermas.index'))
+                                <a href="{{ route('mermas.reporte_pdf', $o->idop) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 shadow-sm transition-colors" title="Imprimir Hoja de Control de Producción">
+                                    <i class="fas fa-file-pdf mr-1"></i> Reporte
+                                </a>
+                                @endif
                             </td>
                         </tr>
                     @empty

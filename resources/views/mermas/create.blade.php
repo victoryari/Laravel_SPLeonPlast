@@ -127,6 +127,23 @@
                         </div>
                     </x-form-group>
 
+                    <x-form-group class="md:col-span-2" label="Trabajador (Opcional)">
+                        <select name="codigo_trabajador" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm">
+                            <option value="">Seleccione trabajador...</option>
+                            @foreach($trabajadores as $t)
+                                <option value="{{ $t->codigo }}">{{ $t->nombre }}</option>
+                            @endforeach
+                        </select>
+                    </x-form-group>
+
+                    <x-form-group class="md:col-span-1" label="Hora Inicio (Opcional)">
+                        <input type="time" name="hora_inicio" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm">
+                    </x-form-group>
+
+                    <x-form-group class="md:col-span-1" label="Hora Fin (Opcional)">
+                        <input type="time" name="hora_fin" class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-sm">
+                    </x-form-group>
+
                     <x-form-group label="Almacén" required>
                         <select name="codigo_almacen" id="selectAlmacen" class="w-full rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all shadow-sm pointer-events-none" readonly tabindex="-1">
                             @foreach($almacenes as $a)
@@ -234,6 +251,7 @@
             
             $selectProc.empty().append('<option value="">Seleccione el proceso...</option>');
             $selectProd.empty().append('<option value="">Primero seleccione un proceso...</option>');
+            $selectProd.closest('.md\\:col-span-2').show();
             $('#selectAlmacen').val('');
             maxStockDisponible = 0;
             actualizarValidacionStock();
@@ -325,8 +343,10 @@
                     type: 'GET',
                     data: { idop: idop, id_proceso: id_proceso },
                     success: function(data) {
+                        let $formGroup = $selectProd.closest('.md\\:col-span-2');
                         if(data.length === 0) {
                             $selectProd.empty().append('<option value="">No hay productos con stock para este proceso</option>');
+                            $formGroup.show();
                         } else {
                             $.each(data, function(index, item) {
                                 $selectProd.append(
@@ -337,11 +357,19 @@
                                         .text(item.codigo + ' - ' + item.descripcion + ' (Stock: ' + parseFloat(item.stock_actual).toFixed(2) + ')')
                                 );
                             });
+                            
+                            if (data.length === 1) {
+                                $selectProd.val(data[0].codigo).trigger('change');
+                                $formGroup.hide();
+                            } else {
+                                $formGroup.show();
+                            }
                         }
                     }
                 });
             } else {
                 $selectProd.prop('disabled', true).empty().append('<option value="">Primero seleccione un proceso...</option>');
+                $selectProd.closest('.md\\:col-span-2').show();
             }
         });
 

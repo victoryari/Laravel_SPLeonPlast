@@ -7,7 +7,7 @@
         <x-slot:actions>
             <a href="{{ route('mermas.opciones') }}" class="btn-primary">
                 <i class="fas fa-plus"></i>
-                <span class="hidden sm:inline ml-2">Registrar Merma</span>
+                <span class="hidden sm:inline ml-2">Registrar Merma o Recuperado</span>
             </a>
         </x-slot:actions>
     </x-page-header>
@@ -83,6 +83,9 @@
                                 S/ {{ number_format($m->costo_total, 2) }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
+                                <button type="button" class="text-blue-500 hover:text-blue-700 p-1 mr-2" title="Visualizar Merma" onclick="verMerma({{ $m->id_merma }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
                                 @if($m->estado !== 'ANULADA')
                                     <form action="{{ route('mermas.anular', $m->id_merma) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Está seguro de anular esta merma? Esta acción revertirá los movimientos de inventario y no se puede deshacer.');">
                                         @csrf
@@ -108,4 +111,42 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Visualizar -->
+<div id="modalVisualizar" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900 bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl m-4 max-h-[90vh] flex flex-col">
+        <div class="px-6 py-4 border-b flex justify-between items-center shrink-0">
+            <h3 class="text-lg font-bold text-gray-800">Detalle de Merma</h3>
+            <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div class="p-6 overflow-y-auto" id="modalContenido">
+            <div class="text-center py-4"><i class="fas fa-spinner fa-spin text-2xl text-primary"></i> Cargando...</div>
+        </div>
+        <div class="px-6 py-4 border-t bg-gray-50 flex justify-end shrink-0 rounded-b-xl">
+            <button onclick="cerrarModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow-sm transition">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function verMerma(id) {
+        document.getElementById('modalVisualizar').classList.remove('hidden');
+        document.getElementById('modalContenido').innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-3xl text-primary mb-3"></i><p class="text-gray-500">Cargando detalles...</p></div>';
+        
+        let url = '{{ route("mermas.detalle", ":id") }}'.replace(':id', id);
+        
+        fetch(url)
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('modalContenido').innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('modalContenido').innerHTML = '<div class="text-red-500 py-4 text-center">Error al cargar la información.</div>';
+            });
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalVisualizar').classList.add('hidden');
+    }
+</script>
 @endsection

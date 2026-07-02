@@ -18,7 +18,7 @@
                 <i class="fas fa-trash-alt text-2xl"></i>
             </div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">Merma Pura</h3>
-            <p class="text-sm text-slate-500">Material irrecuperable que va a la basura. Genera salida del inventario.</p>
+            <p class="text-sm text-slate-500">Material irrecuperable que va para desecho. Genera salida del inventario.</p>
         </a>
 
         <!-- Tarjeta: Molido -->
@@ -27,7 +27,7 @@
                 <i class="fas fa-recycle text-2xl"></i>
             </div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">Recuperado para Moler</h3>
-            <p class="text-sm text-slate-500">Material defectuoso que se vuelve a moler. Genera ingreso de material REC.</p>
+            <p class="text-sm text-slate-500">Material defectuoso (cascara, colada, ramales) que se vuelve a moler. Genera ingreso de material RECICLADO.</p>
         </a>
 
         <!-- Tarjeta: Limpieza -->
@@ -45,7 +45,7 @@
                 <i class="fas fa-cogs text-2xl"></i>
             </div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">Recuperado Molido</h3>
-            <p class="text-sm text-slate-500">Material ya molido directamente en la máquina. Genera ingreso de MO07.</p>
+            <p class="text-sm text-slate-500">Material ya molido directamente en la máquina. Genera ingreso de producto con codigo MO07-XXX.</p>
         </a>
     </div>
 </div>

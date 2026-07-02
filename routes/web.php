@@ -202,20 +202,15 @@ Route::middleware('auth')->group(function () {
             Route::get('/despachos/{id}/atender', [DespachoRequerimientoController::class, 'atender'])->name('inventario.despachos.atender');
             Route::post('/despachos/{id}/store-atender', [DespachoRequerimientoController::class, 'storeAtender'])->name('inventario.despachos.store_atender');
         });
-
-        // 6. Mermas y Scrap
-        Route::get('mermas/opciones', [\App\Http\Controllers\MermaController::class, 'opciones'])->name('mermas.opciones');
-        Route::get('mermas/ajax/procesos-por-op', [\App\Http\Controllers\MermaController::class, 'getProcesosPorOP'])->name('mermas.procesos_por_op');
-        Route::get('mermas/ajax/productos-por-op', [\App\Http\Controllers\MermaController::class, 'getProductosPorOP'])->name('mermas.productos_por_op');
-        Route::get('mermas/ajax/componentes-ensamblado', [\App\Http\Controllers\MermaController::class, 'getComponentesEnsamblado'])->name('mermas.componentes_ensamblado');
-        Route::resource('mermas', \App\Http\Controllers\MermaController::class)->only(['index', 'create', 'store']);
-        Route::post('mermas/{id}/anular', [\App\Http\Controllers\MermaController::class, 'anular'])->name('mermas.anular');
     });
 
     // =========================================================
     // MÓDULO DE PRODUCCIÓN
     // =========================================================
     Route::prefix('produccion')->group(function () {
+        // Ingresos de Producción (PEP)
+        Route::get('ingresos', [\App\Http\Controllers\InventarioController::class, 'recepcionesProduccion'])->name('produccion.ingresos');
+
         // Órdenes de Producción
         Route::resource('ordenes', OrdenProduccionController::class)->names([
             'index' => 'produccion.ordenes.index',
@@ -238,6 +233,16 @@ Route::middleware('auth')->group(function () {
         Route::post('ordenes/{orden}/procesos/{proceso}/finalizar', [OrdenProcesoController::class, 'finalizar'])->name('ordenes.procesos.finalizar');
         Route::get('api/formulas/composicion', [OrdenProcesoController::class, 'getFormulaComponents'])->name('api.formulas.composicion');
         Route::get('api/verificar-stock', [OrdenProcesoController::class, 'verificarStock'])->name('api.verificar_stock');
+        
+        // Mermas y Scrap
+        Route::get('mermas/opciones', [\App\Http\Controllers\MermaController::class, 'opciones'])->name('mermas.opciones');
+        Route::get('mermas/ajax/procesos-por-op', [\App\Http\Controllers\MermaController::class, 'getProcesosPorOP'])->name('mermas.procesos_por_op');
+        Route::get('mermas/ajax/productos-por-op', [\App\Http\Controllers\MermaController::class, 'getProductosPorOP'])->name('mermas.productos_por_op');
+        Route::get('mermas/ajax/componentes-ensamblado', [\App\Http\Controllers\MermaController::class, 'getComponentesEnsamblado'])->name('mermas.componentes_ensamblado');
+        Route::resource('mermas', \App\Http\Controllers\MermaController::class)->only(['index', 'create', 'store']);
+        Route::get('mermas/{id}/detalle', [\App\Http\Controllers\MermaController::class, 'detalle'])->name('mermas.detalle');
+        Route::get('mermas/reporte-pdf/{idop}', [\App\Http\Controllers\MermaController::class, 'reportePdf'])->name('mermas.reporte_pdf');
+        Route::post('mermas/{id}/anular', [\App\Http\Controllers\MermaController::class, 'anular'])->name('mermas.anular');
     });
 
     // =========================================================

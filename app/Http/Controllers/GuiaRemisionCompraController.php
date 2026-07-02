@@ -20,8 +20,8 @@ class GuiaRemisionCompraController extends Controller
 
         $query = GuiaRemisionCompra::with('datosProveedor', 'creador')
             ->withSum('detalles', 'cantidad')
-            ->whereDate('fecha_registro', '>=', $fecha_desde)
-            ->whereDate('fecha_registro', '<=', $fecha_hasta);
+            ->whereDate('fecha_emision', '>=', $fecha_desde)
+            ->whereDate('fecha_emision', '<=', $fecha_hasta);
 
         if ($request->filled('search')) {
             $search = $request->search;

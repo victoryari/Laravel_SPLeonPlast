@@ -448,7 +448,9 @@
                     } else {
                         cell.classList.add('text-red-600');
                         row.classList.add('bg-red-50');
-                        faltantes.push(prod + ' (req: ' + req.toFixed(2) + ', disp: ' + stock.toFixed(2) + ')');
+                        const descInput = row.querySelector('.c-prod-search');
+                        const prodName = (descInput && descInput.value) ? descInput.value : prod;
+                        faltantes.push(prodName + ' (req: ' + req.toFixed(2) + ', disp: ' + stock.toFixed(2) + ')');
                     }
                 });
 
@@ -725,7 +727,7 @@
             </td>
             
             <td class="px-2 py-2 align-middle relative">
-                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Material/Actividad..." value="${item.codigo_producto||''}">
+                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Material/Actividad..." value="${item.codigo_producto ? item.codigo_producto + (item.descripcion_producto ? ' - ' + item.descripcion_producto : '') : ''}">
                 <input type="hidden" class="c-prod" value="${item.codigo_producto||''}">
                 <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
             </td>

@@ -17,8 +17,8 @@ class DespachoRequerimientoController extends Controller
         $fecha_hasta = $request->input('fecha_hasta', now()->endOfMonth()->toDateString());
 
         $query = RequerimientoMaterial::with(['detalles', 'creador'])
-            ->whereDate('fecha_creacion', '>=', $fecha_desde)
-            ->whereDate('fecha_creacion', '<=', $fecha_hasta);
+            ->whereDate('fecha_requerimiento', '>=', $fecha_desde)
+            ->whereDate('fecha_requerimiento', '<=', $fecha_hasta);
             
         if ($tab === 'atendidos') {
             $query->whereIn('estado', ['ATENDIDO_TOTAL']);

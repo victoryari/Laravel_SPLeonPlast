@@ -51,7 +51,18 @@ class InventarioController extends Controller
             ->where('estado', 'PENDIENTE')
             ->orderBy('fecha_compra', 'asc')
             ->get();
-            
+
+        $guiasPendientes = GuiaRemisionCompra::with(['datosProveedor', 'detalles.producto'])
+            ->whereIn('estado', ['RECIBIDA', 'FACTURADA'])
+            ->orderBy('fecha_emision', 'asc')
+            ->get();
+
+        $almacenes = Almacen::where('activo', 1)->get();
+        return view('inventario.recepciones', compact('comprasPendientes', 'guiasPendientes', 'almacenes'));
+    }
+
+    // 2.0.0 RECEPCIONES DE PRODUCCION (PEP)
+    public function recepcionesProduccion() {
         $produccionPendientes = ProduccionIngresoProceso::where('estado', 'PENDIENTE')
             ->orderBy('fecha_ingreso', 'asc')
             ->get();
@@ -60,13 +71,8 @@ class InventarioController extends Controller
             return $opGroup->groupBy('codigo_producto_proceso');
         });
 
-        $guiasPendientes = GuiaRemisionCompra::with(['datosProveedor', 'detalles.producto'])
-            ->whereIn('estado', ['RECIBIDA', 'FACTURADA'])
-            ->orderBy('fecha_emision', 'asc')
-            ->get();
-
         $almacenes = Almacen::where('activo', 1)->get();
-        return view('inventario.recepciones', compact('comprasPendientes', 'produccionPendientes', 'produccionPendientesAgrupada', 'guiasPendientes', 'almacenes'));
+        return view('produccion.ingresos.index', compact('produccionPendientesAgrupada', 'almacenes'));
     }
 
     // 2.0.1 HISTORIAL DE RECEPCIONES
