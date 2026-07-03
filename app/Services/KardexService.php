@@ -173,7 +173,6 @@ class KardexService
                 ->where('codigo_producto', $codigoProducto)
                 ->where('codigo_almacen', $codigoAlmacen)
                 ->update([
-                    'stock_actual'   => $ultimo->cantidad_saldo,
                     'costo_promedio' => $ultimo->costo_promedio,
                 ]);
         }

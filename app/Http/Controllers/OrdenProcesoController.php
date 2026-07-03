@@ -351,6 +351,18 @@ class OrdenProcesoController extends Controller
         $registrados = ComponenteOrdenProduccion::where('id_proceso', $id)->where('estado', 1)->orderBy('id_op_componentes', 'desc')->get();
         $tiene_componentes = ($registrados->count() > 0);
 
+        // Agrupar por fórmula y fecha de creación (Cargas)
+        $cargas_agrupadas = collect();
+        if ($es_inyectado) {
+            $cargas_agrupadas = $registrados->groupBy(function($item) {
+                // If it doesn't have a formula, group it as MANUAL
+                $formula = $item->codigo_formula_produccion ?? 'MANUAL';
+                // Group by minute to bundle the transaction
+                $time = \Carbon\Carbon::parse($item->created_at)->format('Y-m-d H:i');
+                return $formula . '_' . $time;
+            });
+        }
+
         $tipos_producto = DB::table('tipo_producto')->select('codigo', 'descripcion')->where('estado', 1)->get();
         
         $colores = DB::table('color')->select('codigo', 'descripcion')->where('activo', 1)->get();
@@ -414,7 +426,7 @@ class OrdenProcesoController extends Controller
 
         return view('produccion.procesos.ejecucion', compact(
             'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_molido',
-            'formulas_disponibles', 'registrados', 'tiene_componentes', 'tipos_producto',
+            'formulas_disponibles', 'registrados', 'cargas_agrupadas', 'tiene_componentes', 'tipos_producto',
             'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen'
         ));
     }
@@ -536,6 +548,9 @@ class OrdenProcesoController extends Controller
         $componentes = json_decode($request->componentes_json ?? '[]', true);
         
         if (empty($componentes)) {
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'No hay datos para guardar.'], 422);
+            }
             return back()->with('error', 'No hay datos para guardar.');
         }
 
@@ -604,10 +619,14 @@ class OrdenProcesoController extends Controller
                         'hora_inicio_maquina' => $comp['hora_inicio_maquina'] ?? $comp['hora_inicio'],
                         'fecha_fin_maquina' => $comp['fecha_fin_maquina'] ?? $comp['fecha_fin'],
                         'hora_fin_maquina' => $comp['hora_fin_maquina'] ?? $comp['hora_fin'],
-                        'estado' => 1
+                        'estado' => 1,
+                        'tipo_operacion' => $request->input('tipo_operacion_origen', 'inyectado')
                     ]);
                 }
                 DB::commit();
+                if ($request->ajax()) {
+                    return response()->json(['success' => true, 'message' => 'Actividades registradas correctamente.']);
+                }
                 return back()->with('success', 'Actividades registradas correctamente.');
             }
 
@@ -684,7 +703,8 @@ class OrdenProcesoController extends Controller
                             'formula' => $codigo_formula,
                             'color' => $codigo_color,
                             'cant' => 0,
-                            'unidad' => $comp['codigo_unidad_medida'] ?? 'KG'
+                            'unidad' => $comp['codigo_unidad_medida'] ?? 'KG',
+                            'ids_componentes' => []
                         ];
                     }
                     $grupos_pep[$key]['cant'] += $cantidad;
@@ -699,7 +719,8 @@ class OrdenProcesoController extends Controller
                                 'formula' => null,
                                 'color' => $codigo_color,
                                 'cant' => 0,
-                                'unidad' => $comp['codigo_unidad_medida'] ?? 'KG'
+                                'unidad' => $comp['codigo_unidad_medida'] ?? 'KG',
+                                'ids_componentes' => []
                             ];
                         }
                         $grupos_pep[$key]['cant'] += $cantidad;
@@ -723,7 +744,8 @@ class OrdenProcesoController extends Controller
                                     'formula' => null,
                                     'color' => $codigo_color,
                                     'cant' => 0,
-                                    'unidad' => $comp['codigo_unidad_medida'] ?? 'KG'
+                                    'unidad' => $comp['codigo_unidad_medida'] ?? 'KG',
+                                    'ids_componentes' => []
                                 ];
                             }
                             $grupos_pep[$key]['cant'] += $cantidad;
@@ -759,8 +781,15 @@ class OrdenProcesoController extends Controller
                     'hora_inicio_maquina' => $comp['hora_inicio_maquina'] ?? $comp['hora_inicio'],
                     'fecha_fin_maquina' => $comp['fecha_fin_maquina'] ?? $comp['fecha_fin'],
                     'hora_fin_maquina' => $comp['hora_fin_maquina'] ?? $comp['hora_fin'],
-                    'estado' => 1
+                    'estado' => 1,
+                    'tipo_operacion' => $request->input('tipo_operacion_origen', 'inyectado'),
                 ]);
+
+                if (isset($key) && isset($grupos_pep[$key])) {
+                    $grupos_pep[$key]['ids_componentes'][] = $componente->id_op_componentes;
+                }
+                unset($key);
+
                 $idComponente = $componente->id_op_componentes;
 
                 $cantidad_restante = $cantidad;
@@ -886,26 +915,142 @@ class OrdenProcesoController extends Controller
                 }
             }
 
+            $tipo_op_origen = $request->input('tipo_operacion_origen', 'inyectado');
+            $almacen_origen = $request->input('codigo_almacen_consumo', 'ALM-PEP');
+            $es_merma = in_array($tipo_op_origen, ['limpieza', 'merma_pura', 'recuperado_molido', 'recuperado_maquina']);
+
+            $costo_total_consumos = 0;
+            foreach ($consumosResumen as $res) {
+                $costo_total_consumos += round($res['total_costo'], 2);
+            }
+
             $ingresos_creados = 0;
             foreach ($grupos_pep as $g) {
                 if ($g['cant'] > 0 && !isset($productos_manuales[$g['codigo_pep']])) {
                     $lote_pep = $this->generarCodigoPEP($g['codigo_pep'], $g['color'], $id);
-                    DB::table('produccion_ingresos_proceso')->insert([
-                        'idop' => $idop,
-                        'id_proceso' => $id,
-                        'codigo_producto_proceso' => $g['codigo_pep'],
-                        'descripcion_producto_proceso' => $g['descripcion_pep'],
-                        'cantidad' => $g['cant'],
-                        'codigo_unidad_medida' => $g['unidad'],
-                        'codigo_almacen' => 'ALM-PEP',
-                        'lote_produccion' => $lote_pep,
-                        'fecha_ingreso' => $fecha_movimiento_general,
-                        'usuario_registro' => $usuario_id,
-                        'estado' => 'PENDIENTE',
-                        'codigo_molde' => $codigo_molde_op,
-                        'descripcion_molde' => $descripcion_molde_op
-                    ]);
-                    $ingresos_creados++;
+                    
+                    if (!empty($g['ids_componentes'])) {
+                        DB::table('componentes_orden_produccion_global')
+                            ->whereIn('id_op_componentes', $g['ids_componentes'])
+                            ->update(['lote_produccion_pep' => $lote_pep]);
+                    }
+
+                    if ($es_merma) {
+                        $tipoMerma = 'RECUPERABLE';
+                        if ($tipo_op_origen === 'limpieza') $tipoMerma = 'MIXTO';
+                        if (str_contains($tipo_op_origen, 'molido')) $tipoMerma = 'MOLIDO';
+
+                        $motivoM = 'RECICLADO INYECCION';
+                        if ($tipo_op_origen === 'limpieza') $motivoM = 'RECICLADO DE LIMPIEZA';
+
+                        $costo_unitario_merma = round($costo_total_consumos / $g['cant'], 6);
+
+                        $id_merma = DB::table('mermas')->insertGetId([
+                            'fecha_merma' => \Carbon\Carbon::parse($fecha_movimiento_general)->format('Y-m-d'),
+                            'hora_inicio' => $componentes[0]['hora_inicio'] ?? null,
+                            'hora_fin' => $componentes[0]['hora_fin'] ?? null,
+                            'codigo_trabajador' => $componentes[0]['codigo_trabajador'] ?? null,
+                            'codigo_producto' => $g['codigo_pep'],
+                            'descripcion_producto' => $g['descripcion_pep'],
+                            'cantidad' => $g['cant'],
+                            'costo_unitario' => $costo_unitario_merma,
+                            'costo_total' => $costo_total_consumos,
+                            'motivo' => $motivoM,
+                            'tipo_merma' => $tipoMerma,
+                            'codigo_almacen' => $almacen_origen,
+                            'id_orden_produccion' => $idop,
+                            'estado' => 1,
+                            'usuario_registro' => $usuario_id,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+
+                        // Generar el ingreso a Kardex de la Merma (REC-)
+                        $param = DB::table('parametros_sistema')->where('codigo_parametro', 'PORCENTAJE_COSTO_RECICLADO')->first();
+                        $porcentaje = $param ? (float) $param->valor : 0.8;
+                        
+                        $costoReciclado = $costo_unitario_merma * $porcentaje;
+                        $totalEntradaRec = round($g['cant'] * $costoReciclado, 2);
+
+                        $codRecuperado = 'REC-' . $g['codigo_pep'];
+                        $prodPrincipal = DB::table('producto')->where('codigo', $g['codigo_pep'])->first();
+
+                        DB::table('producto')->updateOrInsert(
+                            ['codigo' => $codRecuperado],
+                            [
+                                'descripcion' => 'RECUPERADO - ' . $g['descripcion_pep'],
+                                'codigo_tipo_producto' => $prodPrincipal->codigo_tipo_producto ?? 'PEP',
+                                'codigo_unidad_medida' => $prodPrincipal->codigo_unidad_medida ?? 'KG',
+                                'estado' => 1
+                            ]
+                        );
+
+                        DB::table('inventario')->updateOrInsert(
+                            ['codigo_producto' => $codRecuperado, 'codigo_almacen' => $almacen_origen],
+                            ['stock_minimo' => 0, 'stock_maximo' => 0]
+                        );
+
+                        $invRec = DB::table('inventario')
+                            ->where('codigo_producto', $codRecuperado)
+                            ->where('codigo_almacen', $almacen_origen)
+                            ->first();
+
+                        $saldoAnteriorRec = $invRec->stock_actual ?? 0;
+                        $costoPromAnteriorRec = $invRec->costo_promedio ?? 0;
+                        $nuevoSaldoRec = $saldoAnteriorRec + $g['cant'];
+                        $nuevoTotalSaldoRec = ($saldoAnteriorRec * $costoPromAnteriorRec) + $totalEntradaRec;
+                        $nuevoCostoPromRec = $nuevoSaldoRec > 0 ? round($nuevoTotalSaldoRec / $nuevoSaldoRec, 6) : 0;
+
+                        DB::table('inventario')
+                            ->where('codigo_producto', $codRecuperado)
+                            ->where('codigo_almacen', $almacen_origen)
+                            ->update([
+                                'stock_actual' => $nuevoSaldoRec,
+                                'costo_promedio' => $nuevoCostoPromRec,
+                                'fecha_ultimo_movimiento' => now(),
+                                'usuario_ultimo_movimiento' => $usuario_id
+                            ]);
+
+                        $numeroDocMerma = 'MERMA-' . str_pad($id_merma, 6, '0', STR_PAD_LEFT);
+
+                        DB::table('kardex')->insert([
+                            'codigo_producto' => $codRecuperado,
+                            'codigo_almacen' => $almacen_origen,
+                            'fecha_movimiento' => $fecha_movimiento_general,
+                            'tipo_movimiento' => 'INGRESO',
+                            'documento' => $motivoM,
+                            'numero_documento' => $numeroDocMerma,
+                            'cantidad_entrada' => $g['cant'],
+                            'costo_entrada' => $costoReciclado,
+                            'total_entrada' => $totalEntradaRec,
+                            'cantidad_salida' => 0,
+                            'costo_salida' => 0,
+                            'total_salida' => 0,
+                            'cantidad_saldo' => $nuevoSaldoRec,
+                            'costo_promedio' => $nuevoCostoPromRec,
+                            'total_saldo' => round($nuevoSaldoRec * $nuevoCostoPromRec, 6),
+                            'observaciones' => "INGRESO DE MATERIAL RECUPERADO DE MERMA OP-{$idop}",
+                            'usuario_registro' => $usuario_id
+                        ]);
+
+                    } else {
+                        DB::table('produccion_ingresos_proceso')->insert([
+                            'idop' => $idop,
+                            'id_proceso' => $id,
+                            'codigo_producto_proceso' => $g['codigo_pep'],
+                            'descripcion_producto_proceso' => $g['descripcion_pep'],
+                            'cantidad' => $g['cant'],
+                            'codigo_unidad_medida' => $g['unidad'],
+                            'codigo_almacen' => 'ALM-PEP',
+                            'lote_produccion' => $lote_pep,
+                            'fecha_ingreso' => $fecha_movimiento_general,
+                            'usuario_registro' => $usuario_id,
+                            'estado' => 'PENDIENTE',
+                            'codigo_molde' => $codigo_molde_op,
+                            'descripcion_molde' => $descripcion_molde_op
+                        ]);
+                        $ingresos_creados++;
+                    }
                 }
             }
 
@@ -942,11 +1087,17 @@ class OrdenProcesoController extends Controller
             })->update(['estado_avance' => 'EN_PROCESO']);
 
             DB::commit();
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados."]);
+            }
             return back()->with('success', "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados.");
             
         } catch (\Exception $e) {
             \Log::error('Error en storeComponentes: ' . $e->getMessage() . ' Trace: ' . $e->getTraceAsString());
             DB::rollBack();
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Error al procesar: ' . $e->getMessage()], 422);
+            }
             return back()->with('error', 'Error al procesar: ' . $e->getMessage());
         }
     }
@@ -1569,19 +1720,70 @@ class OrdenProcesoController extends Controller
             }
 
             if ($codigo_pep) {
-                $pepRow = DB::table('produccion_ingresos_proceso')
-                    ->where('id_proceso', $id)
-                    ->where('codigo_producto_proceso', $codigo_pep)
-                    ->first();
-                if ($pepRow) {
-                    if ($pepRow->estado === 'APROBADO') {
-                        throw new \Exception("No se puede eliminar el componente porque el PEP asociado ya fue recibido en almacén.");
+                // Si el componente tiene un lote_produccion_pep vinculado (nuevo flujo)
+                if (!empty($componente->lote_produccion_pep)) {
+                    $pepRow = DB::table('produccion_ingresos_proceso')
+                        ->where('id_proceso', $id)
+                        ->where('lote_produccion', $componente->lote_produccion_pep)
+                        ->first();
+                    
+                    if ($pepRow) {
+                        if ($pepRow->estado === 'APROBADO') {
+                            throw new \Exception("No se puede eliminar el componente porque el PEP asociado ya fue recibido en almacén.");
+                        }
+                        
+                        $nuevaCantidadPEP = max(0, $pepRow->cantidad - $componente->cantidad);
+                        if ($nuevaCantidadPEP <= 0) {
+                            DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->delete();
+                        } else {
+                            DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->update(['cantidad' => $nuevaCantidadPEP]);
+                        }
                     }
-                    $nuevaCantidadPEP = max(0, $pepRow->cantidad - $componente->cantidad);
-                    if ($nuevaCantidadPEP <= 0) {
-                        DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->delete();
-                    } else {
-                        DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->update(['cantidad' => $nuevaCantidadPEP]);
+                } else {
+                    // Flujo antiguo por si hay datos heredados
+                    // RECALCULAR TOTAL ACTIVO
+                    $totalActivoFormula = DB::table('componentes_orden_produccion_global')
+                        ->where('id_proceso', $id)
+                        ->where(function($q) use ($codigo_pep, $componente) {
+                            if (!empty($componente->codigo_formula_produccion)) {
+                                $q->where('codigo_formula_produccion', $componente->codigo_formula_produccion);
+                            } else {
+                                $q->where('codigo_tipo_producto', 'PEP')
+                                  ->where('codigo_producto', $componente->codigo_producto);
+                            }
+                        })
+                        ->where('estado', 1)
+                        ->where('id_op_componentes', '!=', $id_componente) // Excluir el que estamos borrando
+                        ->sum('cantidad') ?? 0;
+
+                    // TOTAL EN PEP APROBADOS
+                    $totalAprobado = DB::table('produccion_ingresos_proceso')
+                        ->where('id_proceso', $id)
+                        ->where('codigo_producto_proceso', $codigo_pep)
+                        ->where('estado', 'APROBADO')
+                        ->sum('cantidad') ?? 0;
+
+                    // LO QUE DEBERIA QUEDAR PENDIENTE
+                    $deberiaEstarPendiente = max(0, $totalActivoFormula - $totalAprobado);
+
+                    // ACTUALIZAR ROWS PENDIENTES
+                    $pendientes = DB::table('produccion_ingresos_proceso')
+                        ->where('id_proceso', $id)
+                        ->where('codigo_producto_proceso', $codigo_pep)
+                        ->where('estado', 'PENDIENTE')
+                        ->orderBy('id_ingreso', 'desc')
+                        ->get();
+
+                    $restante = $deberiaEstarPendiente;
+                    foreach ($pendientes as $p) {
+                        if ($restante >= $p->cantidad) {
+                            $restante -= $p->cantidad;
+                        } elseif ($restante > 0) {
+                            DB::table('produccion_ingresos_proceso')->where('id_ingreso', $p->id_ingreso)->update(['cantidad' => $restante]);
+                            $restante = 0;
+                        } else {
+                            DB::table('produccion_ingresos_proceso')->where('id_ingreso', $p->id_ingreso)->delete();
+                        }
                     }
                 }
             }
@@ -1635,5 +1837,141 @@ class OrdenProcesoController extends Controller
     private function generarCodigoPEP($codigo, $color, $proceso_id) {
         $base = $codigo . '-' . ($color ?: 'SC') . '-P' . $proceso_id . '-' . date('YmdHis');
         return substr(preg_replace('/[^A-Za-z0-9\-]/', '', $base), 0, 45);
+    }
+
+    public function storeEjecucionAgrupada(Request $request, $idop, $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $usuario_id = Auth::user()->id_usuario ?? 5;
+            $batch_id = mt_rand(1000, 9999);
+
+            $tipo_operacion = $request->input('tipo_operacion', 'inyectado'); 
+            $codigo_formula = $request->input('codigo_formula');
+            $cantidad_total = floatval($request->input('cantidad_total'));
+            $codigo_centro_trabajo = $request->input('codigo_centro_trabajo');
+            $codigo_molde = $request->input('codigo_molde');
+            $codigo_trabajador = $request->input('codigo_trabajador');
+            $fecha = $request->input('fecha');
+            $hora_inicio = $request->input('hora_inicio');
+            $hora_fin = $request->input('hora_fin');
+            $codigo_almacen_consumo = $request->input('codigo_almacen_consumo');
+
+            $proceso = OrdenProceso::findOrFail($id);
+            if ($proceso->estado_avance === 'COMPLETADO') {
+                throw new \Exception("No se pueden registrar componentes en un proceso COMPLETADO.");
+            }
+
+            // 1. Obtener los componentes de la fórmula
+            $request_formula = new Request();
+            $request_formula->merge([
+                'codigo_formula' => $codigo_formula,
+                'codigo_molde' => $codigo_molde,
+                'codigo_almacen' => $codigo_almacen_consumo
+            ]);
+            $response = $this->getFormulaComponents($request_formula);
+            $formula_data = json_decode($response->getContent(), true);
+
+            if (!isset($formula_data['success']) || !$formula_data['success']) {
+                throw new \Exception("No se pudo obtener la fórmula: " . ($formula_data['message'] ?? ''));
+            }
+
+            $componentes_formula = $formula_data['componentes'];
+            
+            // Si es Molido o Ensamblado o Limpieza, necesitamos el peso total para sacar proporción (KG)
+            $pesoTotalFormula = 0;
+            $es_ensamblado_molido = in_array($tipo_operacion, ['recuperado_molido', 'recuperado_maquina']) || ($proceso->codigo_proceso == '3'); // 3 = ensamblado
+            $es_limpieza = ($tipo_operacion === 'limpieza');
+            
+            // Primer pase: Filtrar y calcular el peso total de los componentes que quedan
+            $componentes_a_procesar = [];
+            foreach ($componentes_formula as $comp) {
+                if ($es_limpieza) {
+                    $desc = strtoupper($comp['descripcion_producto'] ?? '');
+                    $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO');
+                    if ($esPigmento) {
+                        continue; // Ignorar el colorante
+                    }
+                }
+                $componentes_a_procesar[] = $comp;
+                if ($es_ensamblado_molido || $es_limpieza) {
+                    $pesoTotalFormula += floatval($comp['cantidad_nominal']);
+                }
+            }
+
+            // Segundo pase: Preparar los componentes a insertar con la distribución correcta
+            $componentes_a_insertar = [];
+            foreach ($componentes_a_procesar as $comp) {
+                $cant = floatval($comp['cantidad_nominal']);
+                $um = $comp['codigo_unidad_medida'];
+
+                if ($es_ensamblado_molido || $es_limpieza) {
+                    if ($pesoTotalFormula > 0) {
+                        $cant = $cantidad_total * ($cant / $pesoTotalFormula);
+                    } else {
+                        $cant = 0;
+                    }
+                    $um = 'KG';
+                } else {
+                    $cant = $cantidad_total * $cant;
+                    if ($um === 'GR') {
+                        $cant = $cant / 1000;
+                        $um = 'KG';
+                    }
+                }
+
+                if ($cant > 0) {
+                    $componentes_a_insertar[] = [
+                        'codigo_producto' => $comp['codigo_producto'],
+                        'cantidad' => $cant,
+                        'codigo_unidad_medida' => $um,
+                        'codigo_molde' => $comp['codigo_molde'] ?? $codigo_molde,
+                        'codigo_tipo_producto' => $comp['codigo_tipo_producto']
+                    ];
+                }
+            }
+
+            // 2. Construir el arreglo en formato de la función original
+            $componentes_payload = [];
+            foreach ($componentes_a_insertar as $comp) {
+                $componentes_payload[] = [
+                    'codigo_producto' => $comp['codigo_producto'],
+                    'cantidad' => $comp['cantidad'],
+                    'codigo_unidad_medida' => $comp['codigo_unidad_medida'],
+                    'codigo_molde' => $comp['codigo_molde'],
+                    'codigo_tipo_producto' => $comp['codigo_tipo_producto'],
+                    'codigo_centro_trabajo' => $codigo_centro_trabajo,
+                    'codigo_trabajador' => $codigo_trabajador,
+                    'fecha_inicio' => $fecha,
+                    'fecha_fin' => $fecha,
+                    'hora_inicio' => $hora_inicio,
+                    'hora_fin' => $hora_fin,
+                    'fecha_inicio_maquina' => $fecha,
+                    'hora_inicio_maquina' => $hora_inicio,
+                    'fecha_fin_maquina' => $fecha,
+                    'hora_fin_maquina' => $hora_fin,
+                    'codigo_formula' => $codigo_formula, // Importante para la agrupación
+                    'codigo_color' => $request->input('codigo_color') // Color from UI
+                ];
+            }
+            
+            DB::commit();
+
+            // Fake Request para delegar a storeComponentes
+            $fakeRequest = new Request();
+            $fakeRequest->merge([
+                'componentes_json' => json_encode($componentes_payload),
+                'codigo_almacen_consumo' => $codigo_almacen_consumo,
+                'tipo_operacion_origen' => $tipo_operacion // Pasamos el tipo de operación para distinguir Limpieza/Merma
+            ]);
+            $fakeRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // Force AJAX
+
+            return $this->storeComponentes($fakeRequest, $idop, $id);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 422);
+        }
     }
 }

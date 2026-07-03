@@ -28,6 +28,19 @@ class RoleMiddleware
         $routeName = $request->route()->getName();
         
         if ($routeName) {
+            // 1. Primero intentar buscar el nombre exacto de la ruta en la base de datos
+            $hasExactAccess = \Illuminate\Support\Facades\DB::table('roles')
+                ->where('roles.nombre', $usuarioRol)
+                ->join('rol_modulo', 'roles.id', '=', 'rol_modulo.rol_id')
+                ->join('modulos', 'modulos.id', '=', 'rol_modulo.modulo_id')
+                ->where('modulos.slug', $routeName)
+                ->exists();
+
+            if ($hasExactAccess) {
+                return $next($request);
+            }
+
+            // 2. Si no es exacto, aplicar lógica de fallback para rutas anidadas (.create, .store, etc.)
             $parts = explode('.', $routeName);
             $slugToCheck = $parts[0] . '.index';
             
@@ -39,12 +52,28 @@ class RoleMiddleware
                     $slugToCheck = 'inventario.ajuste';
                 } elseif (in_array($parts[1], ['extornos', 'procesar_extorno'])) {
                     $slugToCheck = 'inventario.extornos';
+                } elseif ($parts[1] === 'despachos') {
+                    $slugToCheck = 'requerimientos_materiales.atender';
+                } elseif ($parts[1] === 'transferencias') {
+                    $slugToCheck = 'inventario.transferencias.index';
+                } elseif ($parts[1] === 'alertas_stock') {
+                    $slugToCheck = 'inventario.alertas_stock';
                 } else {
                     $slugToCheck = 'inventario.' . $parts[1];
                 }
+            } elseif ($parts[0] === 'terceros' && isset($parts[1])) {
+                $slugToCheck = 'terceros.' . $parts[1] . '.index';
+            } elseif ($parts[0] === 'reportes' && isset($parts[1])) {
+                if ($parts[1] === 'trazabilidad') {
+                    $slugToCheck = 'reportes.trazabilidad';
+                } else {
+                    $slugToCheck = 'reportes.index';
+                }
+            } elseif ($parts[0] === 'admin' && isset($parts[1]) && $parts[1] === 'rutas_produccion') {
+                $slugToCheck = 'admin.rutas_produccion.index';
             }
 
-            // Validar acceso dinámico contra la base de datos
+            // Validar acceso dinámico contra la base de datos con el fallback
             $hasAccess = \Illuminate\Support\Facades\DB::table('roles')
                 ->where('roles.nombre', $usuarioRol)
                 ->join('rol_modulo', 'roles.id', '=', 'rol_modulo.rol_id')

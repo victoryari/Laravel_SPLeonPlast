@@ -100,7 +100,7 @@
                         </button>
 
                         <div id="menuInventario" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
-                            @if(in_array(Auth::user()->rol, ['Administrador', 'Supervisor', 'Almacenero']))
+                            @if(Auth::user()->hasAccess('requerimientos_materiales.atender') || Auth::user()->hasAccess('inventario.despachos'))
                             <a href="{{ route('inventario.despachos.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.despachos*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
                                 <i class="fas fa-box-open mr-1 text-indigo-300"></i> Despachos a Producción
                             </a>
@@ -116,7 +116,7 @@
 
                             @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exchange-alt mr-1.5"></i>Extornos</a>@endif
 
-                            @if(in_array(Auth::user()->rol, ['Administrador', 'Supervisor']))
+                            @if(Auth::user()->hasAccess('inventario.transferencias.index'))
                             <a href="{{ route('inventario.transferencias.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.transferencias*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
                                 <i class="fas fa-exchange-alt mr-1 text-blue-300"></i> Transferencias
                             </a>
@@ -145,7 +145,7 @@
                     </div>
                     @endif
 
-                    @if(Auth::user()->hasAnyAccess(['produccion.ordenes.index', 'mermas.index']))
+                    @if(Auth::user()->hasAnyAccess(['produccion.ordenes.index', 'mermas.index', 'produccion.ingresos', 'requerimientos_materiales.index']))
                     <div>
                         <button type="button" id="btnProduccion" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
@@ -165,6 +165,8 @@
                             <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-tasks w-5"></i>
                                 Órdenes de Producción
                             </a>
+                            @endif
+                            @if(Auth::user()->hasAccess('admin.rutas_produccion.index'))
                             <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-route w-5"></i>
                                 Rutas de Producción
                             </a>
@@ -186,11 +188,13 @@
                     </a>
                     @endif
 
-                    @if(Auth::user()->hasAccess('terceros.salidas.index') || Auth::user()->rol_id == 1)
+                    @if(Auth::user()->hasAccess('terceros.salidas.index'))
                     <a href="{{ route('terceros.salidas.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('terceros.salidas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-truck-loading w-6"></i>
                         <span>Terceros - Envíos</span>
                     </a>
+                    @endif
+                    @if(Auth::user()->hasAccess('terceros.liquidacion.index'))
                     <a href="{{ route('terceros.liquidacion.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('terceros.liquidacion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-balance-scale w-6"></i>
                         <span>Terceros</span>
@@ -202,6 +206,8 @@
                         <i class="fas fa-file-invoice-dollar w-6"></i>
                         <span>Reportes</span>
                     </a>
+                    @endif
+                    @if(Auth::user()->hasAccess('reportes.trazabilidad'))
                     <a href="{{ route('reportes.trazabilidad') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.trazabilidad') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-project-diagram w-6"></i>
                         <span>Trazabilidad</span>

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <div class="container mx-auto pb-8 md:pb-10">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -26,17 +27,41 @@
     <!-- Cargador de Fórmulas -->
     @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido) && $estado_proceso_actual !== 'COMPLETADO')
     <div class="bg-white rounded-xl shadow-md border-t-4 border-orange-500 mb-6 overflow-hidden">
-        <div class="bg-slate-50 border-b border-gray-200 px-6 py-4 flex items-center">
-            <h2 class="text-lg font-bold text-slate-800">
-                <i class="fas fa-flask mr-2 text-orange-500"></i>{{ $es_molido ? 'Cargar Fórmula de Molido' : ($es_ensamblado ? 'Cargar Fórmula de Ensamblado' : ($es_inyectado ? 'Cargar Fórmula (Mezclado Directo)' : 'Cargar Fórmula de Mezclado')) }}
-            </h2>
+        <div class="bg-slate-50 border-b border-gray-200">
+            @if($es_inyectado)
+            <ul class="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200" id="op-tabs">
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('inyectado')" class="inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-gray-200 rounded-t-lg active" id="tab-inyectado">Producción (Inyectado)</a>
+                </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-merma_pura">Merma Pura</a>
+                </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('recuperado_molido')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-recuperado_molido">Recuperado para Moler</a>
+                </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('limpieza')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-limpieza">Limpieza/Purga</a>
+                </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-recuperado_maquina">Recup. Máquina</a>
+                </li>
+            </ul>
+            @else
+            <div class="px-6 py-4 flex items-center">
+                <h2 class="text-lg font-bold text-slate-800">
+                    <i class="fas fa-flask mr-2 text-orange-500"></i>{{ $es_molido ? 'Cargar Fórmula de Molido' : ($es_ensamblado ? 'Cargar Fórmula de Ensamblado' : 'Cargar Fórmula de Mezclado') }}
+                </h2>
+            </div>
+            @endif
         </div>
         <div class="p-6 bg-white">
+            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado ? 'inyectado' : '' }}">
+            
             <div class="flex flex-wrap items-end gap-4">
                 
                 @if($es_inyectado || $es_ensamblado || $es_molido)
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">{{ $es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)') }}</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_centro">{{ $es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)') }}</label>
                     <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
@@ -61,7 +86,7 @@
                 @endif
                 
                 <div class="flex-1 min-w-50">
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado ? 'Producto a Ensamblar' : 'Seleccione Fórmula') }}</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_formula">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado ? 'Producto a Ensamblar' : 'Fórmula/Color') }}</label>
                     <select id="formula_selector" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($formulas_disponibles as $fm)
@@ -107,8 +132,8 @@
 
                 <div class="flex-1"></div>
 
-                <button type="button" onclick="cargarComponentes()" class="px-5 py-2 {{ $es_inyectado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition">
-                    <i class="fas fa-box-open mr-2"></i>Cargar
+                <button type="button" onclick="cargarEjecucionAgrupada()" class="px-5 py-2 {{ $es_inyectado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition" id="btn_cargar">
+                    <i class="fas fa-box-open mr-2"></i>Cargar Inyectado
                 </button>
             </div>
 
@@ -174,14 +199,106 @@
                                 @if($es_inyectado) <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Molde</th> @endif
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cant.</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">U.M.</th>
-                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Stock Disp.</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Trabajador</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hora In/Fin (Hombre)</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hora In/Fin (Máquina)</th>
+                                <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Observación</th>
                                 <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="tbody_items" class="bg-white divide-y divide-gray-200">
+                            @if($es_inyectado && isset($cargas_agrupadas))
+                                @foreach($cargas_agrupadas as $key => $grupo)
+                                    @php
+                                        // Extraer datos comunes del primer componente del grupo
+                                        $first = $grupo->first();
+                                        $esManual = str_contains($key, 'MANUAL');
+                                        
+                                        // Obtener nombre del color basado en el producto asociado a la formula
+                                        $nombreColorDisplay = null;
+                                        if(!$esManual && !empty($first->codigo_formula_produccion)) {
+                                            $prodAsociado = \DB::table('producto')->where('codigo', $first->codigo_formula_produccion)->first();
+                                            if($prodAsociado && !empty($prodAsociado->codigo_color)) {
+                                                $colorDb = \DB::table('color')->where('codigo', $prodAsociado->codigo_color)->first();
+                                                $nombreColorDisplay = $colorDb ? $colorDb->descripcion : $prodAsociado->codigo_color;
+                                            }
+                                        }
+
+                                        // Total de KG sumando la cantidad base o nominal, es una aproximacion visual
+                                        $totalKG = $grupo->sum('cantidad');
+                                    @endphp
+                                    <tr id="row_grupo_{{ $loop->index }}" class="bg-slate-50 border-l-4 border-l-primary">
+                                        <td class="px-3 py-3 whitespace-nowrap">
+                                            <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                {{ $esManual ? 'MANUAL' : 'CARGA' }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-3">
+                                            <div class="text-sm text-gray-900 font-bold">
+                                                {{ $nombreColorDisplay ?? ($first->descripcion_formula_produccion ?? 'Registro Manual') }}
+                                                @if($first->codigo_color)
+                                                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] bg-gray-200 text-gray-700">{{ $first->codigo_color }}</span>
+                                                @endif
+                                            </div>
+                                            <div class="text-[10px] text-gray-500">{{ $first->codigo_formula_produccion ?? 'N/A' }}</div>
+                                        </td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_centro_trabajo }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_molde ?? 'N/A' }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{{ number_format($totalKG, 2) }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">KG</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_trabajador }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->hora_inicio }} - {{ $first->hora_fin }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->hora_inicio_maquina }} - {{ $first->hora_fin_maquina }}</td>
+                                        @php
+                                            $bgLabel = 'bg-blue-100 text-blue-800';
+                                            $textLabel = 'PRODUCCIÓN';
+                                            if($first->codigo_tipo_producto === 'ACT' || $first->codigo_tipo_producto === 'MANUAL') { $bgLabel = 'bg-teal-100 text-teal-800'; $textLabel = 'ACTIVIDAD'; }
+                                            elseif($first->tipo_operacion === 'limpieza') { $bgLabel = 'bg-red-100 text-red-800'; $textLabel = 'LIMPIEZA'; }
+                                            elseif(str_contains($first->tipo_operacion ?? '', 'merma')) { $bgLabel = 'bg-orange-100 text-orange-800'; $textLabel = 'MERMA'; }
+                                            elseif(str_contains($first->tipo_operacion ?? '', 'molido') || str_contains($first->tipo_operacion ?? '', 'maquina')) { $bgLabel = 'bg-purple-100 text-purple-800'; $textLabel = 'RECICLADO'; }
+                                        @endphp
+                                        <td class="px-3 py-3 text-center whitespace-nowrap">
+                                            <span class="px-2 py-1 text-[10px] font-semibold rounded-full {{ $bgLabel }}">{{ $textLabel }}</span>
+                                        </td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-center text-sm font-medium">
+                                            <button type="button" onclick="toggleDetallesCarga('{{ $loop->index }}')" class="text-slate-500 hover:text-primary mr-2" title="Ver Detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <!-- Filas de detalle ocultas por defecto -->
+                                    @foreach($grupo as $r)
+                                    <tr id="row_display_{{ $r->id_op_componentes }}" class="bg-white detalle-carga-{{ $loop->parent->index }} hidden" style="background-color: #f8fafc;">
+                                        <td class="px-3 py-2 whitespace-nowrap pl-8 border-l-4 border-l-slate-300">
+                                            <span class="px-2 py-1 inline-flex text-[10px] leading-5 font-semibold rounded-full bg-slate-200 text-slate-800">
+                                                {{ $r->codigo_tipo_producto }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <div class="text-xs text-gray-900 font-medium">{{ $r->descripcion_producto }}</div>
+                                            <div class="text-[9px] text-gray-500">{{ $r->codigo_producto }}</div>
+                                        </td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_centro_trabajo }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_molde }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-gray-700">{{ number_format($r->cantidad, 4) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_unidad_medida }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_trabajador }}</td>
+                                        <td colspan="2" class="px-3 py-2 text-xs text-gray-400">Detalle Interno</td>
+                                        <td class="px-3 py-2 text-center text-xs text-gray-400">—</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-center text-xs font-medium">
+                                            @if($estado_proceso_actual !== 'COMPLETADO')
+                                            <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-primary hover:text-primary mr-2" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" onclick="eliminarRegistrado({{ $r->id_op_componentes }})" class="text-red-500 hover:text-red-700" title="Desactivar">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                @endforeach
+                            @else
                             @foreach($registrados as $r)
                             <tr id="row_display_{{ $r->id_op_componentes }}" class="bg-slate-50">
                                 <td class="px-3 py-2 whitespace-nowrap">
@@ -197,10 +314,20 @@
                                 @if($es_inyectado) <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_molde }}</td> @endif
                                 <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{{ number_format($r->cantidad, 2) }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_unidad_medida }}</td>
-                                <td class="px-3 py-2 text-center text-sm text-gray-400">—</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_trabajador }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio }} - {{ $r->hora_fin }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio_maquina }} - {{ $r->hora_fin_maquina }}</td>
+                                @php
+                                    $bgLabelR = 'bg-blue-100 text-blue-800';
+                                    $textLabelR = 'PRODUCCIÓN';
+                                    if($r->codigo_tipo_producto === 'ACT' || $r->codigo_tipo_producto === 'MANUAL') { $bgLabelR = 'bg-teal-100 text-teal-800'; $textLabelR = 'ACTIVIDAD'; }
+                                    elseif($r->tipo_operacion === 'limpieza') { $bgLabelR = 'bg-red-100 text-red-800'; $textLabelR = 'LIMPIEZA'; }
+                                    elseif(str_contains($r->tipo_operacion ?? '', 'merma')) { $bgLabelR = 'bg-orange-100 text-orange-800'; $textLabelR = 'MERMA'; }
+                                    elseif(str_contains($r->tipo_operacion ?? '', 'molido') || str_contains($r->tipo_operacion ?? '', 'maquina')) { $bgLabelR = 'bg-purple-100 text-purple-800'; $textLabelR = 'RECICLADO'; }
+                                @endphp
+                                <td class="px-3 py-2 text-center whitespace-nowrap">
+                                    <span class="px-2 py-1 text-[10px] font-semibold rounded-full {{ $bgLabelR }}">{{ $textLabelR }}</span>
+                                </td>
                                 <td class="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
                                     @if($estado_proceso_actual !== 'COMPLETADO')
                                     <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-primary hover:text-primary mr-2" title="Editar">
@@ -288,10 +415,11 @@
                                                 Cancelar
                                             </button>
                                         </div>
-                                    </div>
+                                    </form>
                                 </td>
                             </tr>
                             @endforeach
+                            @endif
                         </tbody>
                     </table>
                 </div>
@@ -674,7 +802,19 @@
         });
     }
 
-    function agregarFilaManual() { agregarFila({}); }
+    function agregarFilaManual() { 
+        const fechaGlobal = document.getElementById('fecha_global') ? document.getElementById('fecha_global').value : '';
+        const horaIni = document.getElementById('hora_ini_global') ? document.getElementById('hora_ini_global').value : '';
+        const horaFin = document.getElementById('hora_fin_global') ? document.getElementById('hora_fin_global').value : '';
+        const trabajador = document.getElementById('trabajador_global') ? document.getElementById('trabajador_global').value : '';
+
+        agregarFila({
+            fecha: fechaGlobal,
+            hora_ini: horaIni,
+            hora_fin: horaFin,
+            codigo_trabajador: trabajador
+        }); 
+    }
 
     function agregarFilaProductoResultante() {
         const tbody = document.getElementById('tbody_resultantes');
@@ -907,6 +1047,125 @@
         if(confirm('¿Finalizar proceso? Ya no podrá agregar más materiales y cambiará a estado COMPLETADO.')) {
             document.getElementById('form_finalizar').submit(); 
         }
+    }
+
+    function toggleDetallesCarga(index) {
+        const rows = document.querySelectorAll('.detalle-carga-' + index);
+        rows.forEach(r => r.classList.toggle('hidden'));
+    }
+
+    function switchOpTab(tabName) {
+        document.getElementById('tipo_operacion').value = tabName;
+        const tabs = ['inyectado', 'merma_pura', 'recuperado_molido', 'limpieza', 'recuperado_maquina'];
+        tabs.forEach(t => {
+            const el = document.getElementById('tab-' + t);
+            if (el) {
+                if (t === tabName) {
+                    el.className = 'inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-gray-200 rounded-t-lg active';
+                } else {
+                    el.className = 'inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50 text-gray-500';
+                }
+            }
+        });
+
+        const btn = document.getElementById('btn_cargar');
+        const lblFormula = document.getElementById('lbl_formula');
+        
+        if (tabName === 'inyectado') {
+            btn.innerHTML = '<i class="fas fa-box-open mr-2"></i>Cargar Inyectado';
+            btn.className = 'px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-md shadow-sm transition';
+            lblFormula.innerText = 'Fórmula/Color';
+        } else if (tabName === 'merma_pura') {
+            btn.innerHTML = '<i class="fas fa-trash-alt mr-2"></i>Registrar Merma';
+            btn.className = 'px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md shadow-sm transition';
+            lblFormula.innerText = 'Color de Cáscara Original';
+        } else if (tabName === 'recuperado_molido') {
+            btn.innerHTML = '<i class="fas fa-recycle mr-2"></i>Registrar Molido';
+            btn.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-sm transition';
+            lblFormula.innerText = 'Fórmula Original';
+        } else if (tabName === 'limpieza') {
+            btn.innerHTML = '<i class="fas fa-broom mr-2"></i>Registrar Purga';
+            btn.className = 'px-5 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-md shadow-sm transition';
+            lblFormula.innerText = 'Color Purgado';
+        } else if (tabName === 'recuperado_maquina') {
+            btn.innerHTML = '<i class="fas fa-cogs mr-2"></i>Reg. Rec. Máquina';
+            btn.className = 'px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition';
+            lblFormula.innerText = 'Fórmula Original';
+        }
+    }
+
+    function cargarEjecucionAgrupada() {
+        const inputTipo = document.getElementById('tipo_operacion');
+        if (!inputTipo || !inputTipo.value) {
+            // Fallback al flujo anterior si es mezclado/ensamblado
+            cargarComponentes();
+            return;
+        }
+        
+        const tipo_operacion = inputTipo.value;
+        const formula = document.getElementById('formula_selector').value;
+        const cantidad = document.getElementById('cantidad_global').value;
+        const molde = document.getElementById('molde_global') ? document.getElementById('molde_global').value : '';
+        const centro = document.getElementById('centro_global') ? document.getElementById('centro_global').value : '';
+        const trabajador = document.getElementById('trabajador_global').value;
+        const fecha = document.getElementById('fecha_global').value;
+        const hora_ini = document.getElementById('hora_ini_global').value;
+        const hora_fin = document.getElementById('hora_fin_global').value;
+        const almacen = document.getElementById('codigo_almacen_consumo') ? document.getElementById('codigo_almacen_consumo').value : '';
+        
+        // No enviamos el codigo_color con el texto completo para evitar Data Too Long
+        let color = '';
+
+        if (!formula || !cantidad || !trabajador || !centro) {
+            Swal.fire('Atención', 'Seleccione fórmula, centro, trabajador y cantidad.', 'warning');
+            return;
+        }
+
+        const payload = {
+            _token: '{{ csrf_token() }}',
+            tipo_operacion: tipo_operacion,
+            codigo_formula: formula,
+            cantidad_total: cantidad,
+            codigo_molde: molde,
+            codigo_centro_trabajo: centro,
+            codigo_trabajador: trabajador,
+            fecha: fecha,
+            hora_inicio: hora_ini,
+            hora_fin: hora_fin,
+            codigo_almacen_consumo: almacen,
+            codigo_color: color
+        };
+
+        Swal.fire({
+            title: 'Registrando...',
+            text: 'Validando stock y registrando transacción',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        fetch(`{{ route('ordenes.procesos.ejecucion_agrupada.store', [$orden->idop, $proceso->id]) }}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                Swal.fire('Éxito', data.message, 'success').then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', data.message || 'Error al guardar.', 'error');
+            }
+        })
+        .catch(e => {
+            console.error(e);
+            Swal.fire('Error', 'Ocurrió un error en el servidor.', 'error');
+        });
     }
 </script>
 @endsection

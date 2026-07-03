@@ -228,6 +228,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('procesos/{proceso}', [OrdenProcesoController::class, 'destroy'])->name('ordenes.procesos.destroy');
         Route::get('ordenes/{orden}/procesos/{proceso}/ejecutar', [OrdenProcesoController::class, 'ejecutar'])->name('ordenes.procesos.ejecutar');
         Route::post('ordenes/{orden}/procesos/{proceso}/componentes', [OrdenProcesoController::class, 'storeComponentes'])->name('ordenes.procesos.componentes.store');
+        Route::post('ordenes/{orden}/procesos/{proceso}/ejecucion-agrupada', [OrdenProcesoController::class, 'storeEjecucionAgrupada'])->name('ordenes.procesos.ejecucion_agrupada.store');
         Route::delete('ordenes/{orden}/procesos/{proceso}/componentes/{componente}', [OrdenProcesoController::class, 'destroyComponente'])->name('ordenes.procesos.componentes.destroy');
         Route::put('ordenes/{orden}/procesos/{proceso}/componentes/{componente}', [OrdenProcesoController::class, 'updateComponente'])->name('ordenes.procesos.componentes.update');
         Route::post('ordenes/{orden}/procesos/{proceso}/finalizar', [OrdenProcesoController::class, 'finalizar'])->name('ordenes.procesos.finalizar');

@@ -37,7 +37,7 @@ class MermaController extends Controller
     {
         $tipo = $request->input('tipo');
         if (!in_array($tipo, ['pura', 'molido', 'limpieza', 'recuperado_maquina'])) {
-            return redirect()->route('mermas.opciones')->with('error', 'Seleccione un tipo de merma válido.');
+            return redirect()->route('mermas.opciones')->with('error', 'Seleccione un tipo de merma vÃ¡lido.');
         }
 
         $almacenes = Almacen::where('activo', 1)->get();
@@ -136,8 +136,8 @@ class MermaController extends Controller
                     $join->where('produccion_ingresos_proceso.id_proceso', '=', $id_proceso);
                 }
             })
-            // Se elimina la restricción de stock > 0 porque la merma descuenta de la materia prima, 
-            // no del producto generado (el cual pudo haber sido transferido a otro almacén).
+            // Se elimina la restricciÃ³n de stock > 0 porque la merma descuenta de la materia prima, 
+            // no del producto generado (el cual pudo haber sido transferido a otro almacÃ©n).
             ->select(
                 'producto.codigo', 
                 'producto.descripcion', 
@@ -191,7 +191,7 @@ class MermaController extends Controller
                 }
             }
             if (!$hasMerma) {
-                return back()->with('error', 'Debe ingresar al menos una cantidad mayor a 0 en algún componente.');
+                return back()->with('error', 'Debe ingresar al menos una cantidad mayor a 0 en algÃºn componente.');
             }
         }
 
@@ -250,7 +250,7 @@ class MermaController extends Controller
                     }
 
                     if ($saldoRequerido > 0) {
-                        throw new \Exception("Stock insuficiente del componente {$cod} ({$compProducto->descripcion}) en el almacén {$request->codigo_almacen}. Faltan {$saldoRequerido}.");
+                        throw new \Exception("Stock insuficiente del componente {$cod} ({$compProducto->descripcion}) en el almacÃ©n {$request->codigo_almacen}. Faltan {$saldoRequerido}.");
                     }
                 }
 
@@ -382,7 +382,7 @@ class MermaController extends Controller
                         'cantidad_saldo' => $nuevoStockRec,
                         'costo_promedio' => $nuevoCostoPromedio,
                         'total_saldo' => $nuevoStockRec * $nuevoCostoPromedio,
-                        'observaciones' => "RECUPERACIÓN POR LIMPIEZA OP-{$request->id_orden_produccion} MERMA $numeroDoc",
+                        'observaciones' => "RECUPERACIÃ“N POR LIMPIEZA OP-{$request->id_orden_produccion} MERMA $numeroDoc",
                         'usuario_registro' => Auth::id()
                     ]);
                 }
@@ -391,23 +391,23 @@ class MermaController extends Controller
                 return redirect()->route('mermas.index')->with('success', 'Merma de Ensamblado registrada exitosamente.');
             }
 
-            // ================== FLUJO INYECTADO (ESTÁNDAR) ==================
+            // ================== FLUJO INYECTADO (ESTÃNDAR) ==================
             
             $productoOrigen = Producto::findOrFail($request->codigo_producto);
 
-            // Obtener el proceso de la OP que generó este producto
+            // Obtener el proceso de la OP que generÃ³ este producto
             $procesoIngreso = DB::table('produccion_ingresos_proceso')
                 ->where('idop', $request->id_orden_produccion)
                 ->where('codigo_producto_proceso', $request->codigo_producto)
                 ->first();
 
             if (!$procesoIngreso) {
-                return back()->with('error', 'No se encontró el proceso de producción para este producto en la OP seleccionada.');
+                return back()->with('error', 'No se encontrÃ³ el proceso de producciÃ³n para este producto en la OP seleccionada.');
             }
 
             $cantidadPlanificadaPEP = (float) $procesoIngreso->cantidad;
             if ($cantidadPlanificadaPEP <= 0) {
-                return back()->with('error', 'La cantidad planificada del proceso es inválida.');
+                return back()->with('error', 'La cantidad planificada del proceso es invÃ¡lida.');
             }
 
             // Factor de consumo proporcional
@@ -435,7 +435,7 @@ class MermaController extends Controller
                 'codigo_producto' => $request->codigo_producto,
                 'descripcion_producto' => $productoOrigen->descripcion,
                 'cantidad' => $cantidadTotalMerma,
-                'costo_unitario' => 0, // Se actualizará al final
+                'costo_unitario' => 0, // Se actualizarÃ¡ al final
                 'costo_total' => 0,
                 'motivo' => $request->motivo,
                 'tipo_merma' => ($pura > 0 && $recuperada > 0) ? 'MIXTO' : (($pura > 0) ? 'PURA' : 'RECUPERABLE'),
@@ -511,7 +511,7 @@ class MermaController extends Controller
                 }
 
                 if ($saldoRequerido > 0) {
-                    throw new \Exception("Stock insuficiente de materia prima {$comp->codigo_producto} ({$comp->descripcion_producto}) en el almacén {$request->codigo_almacen} para cubrir la merma. Faltan {$saldoRequerido}.");
+                    throw new \Exception("Stock insuficiente de materia prima {$comp->codigo_producto} ({$comp->descripcion_producto}) en el almacÃ©n {$request->codigo_almacen} para cubrir la merma. Faltan {$saldoRequerido}.");
                 }
             }
 
@@ -608,7 +608,7 @@ class MermaController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('mermas.index')->with('success', 'Merma registrada exitosamente consumiendo materiales vírgenes de la OP.');
+            return redirect()->route('mermas.index')->with('success', 'Merma registrada exitosamente consumiendo materiales vÃ­rgenes de la OP.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -650,7 +650,7 @@ class MermaController extends Controller
                     // Revertir ingreso -> restar stock
                     $nuevoStock = $inv->stock_actual - $mov->cantidad_entrada;
                     if ($nuevoStock < 0) {
-                        throw new \Exception("No se puede anular porque el stock del producto {$mov->codigo_producto} quedaría en negativo.");
+                        throw new \Exception("No se puede anular porque el stock del producto {$mov->codigo_producto} quedarÃ­a en negativo.");
                     }
                 }
                 
@@ -715,7 +715,7 @@ class MermaController extends Controller
         $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
         
         if (!$op) {
-            return back()->with('error', 'Orden de Producción no encontrada.');
+            return back()->with('error', 'Orden de ProducciÃ³n no encontrada.');
         }
 
         $mermas = Merma::with('trabajador')->where('id_orden_produccion', $idop)->get();
@@ -736,7 +736,7 @@ class MermaController extends Controller
         // Para obtener el operario y hora inicio de los ingresos, buscamos en los componentes del proceso
         $componentes = DB::table('componentes_orden_produccion_global')
             ->where('idop', $idop)
-            ->select('id_proceso', 'descripcion_trabajador', 'hora_inicio', 'hora_fin', 'codigo_formula_produccion')
+            ->select('id_proceso', 'descripcion_trabajador', 'hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin', 'codigo_formula_produccion', 'lote_produccion_pep', 'descripcion_producto')
             ->get();
 
         $registros = collect();
@@ -787,13 +787,33 @@ class MermaController extends Controller
         }
 
         foreach ($ingresos as $i) {
-            $fecha = \Carbon\Carbon::parse($i->fecha_ingreso)->format('Y-m-d');
+            $fechaObj = \Carbon\Carbon::parse($i->fecha_ingreso);
+            $fecha = $fechaObj->format('Y-m-d');
             
-            // Buscar datos del operario en los componentes del mismo proceso
-            $comp = $componentes->where('id_proceso', $i->id_proceso)->first();
+            // Buscar datos del operario en los componentes del mismo proceso, idealmente cercanos en tiempo
+            // Ya que hay mÃºltiples agrupaciones, usamos el componente que mÃ¡s se aproxime o el primero
+            $comp = $componentes->where('lote_produccion_pep', $i->lote_produccion)->first();
+            if (!$comp) {
+                $comp = $componentes->where('id_proceso', $i->id_proceso)->first();
+            }
             
-            $hora_ini = $comp->hora_inicio ?? null;
-            $hora_fin = $comp->hora_fin ?? \Carbon\Carbon::parse($i->fecha_ingreso)->format('H:i:s');
+            $hora_ini = $fechaObj->format('H:i'); 
+            
+            if ($comp && $comp->hora_inicio) {
+                $hora_ini = \Carbon\Carbon::parse($comp->hora_inicio)->format('H:i');
+            }
+            
+            if ($comp && $comp->hora_fin) {
+                $hora_fin = \Carbon\Carbon::parse($comp->hora_fin)->format('H:i');
+            } else {
+                $hora_fin = \Carbon\Carbon::parse($i->fecha_ingreso)->addMinutes(5)->format('H:i');
+            }
+            
+            if ($comp && $comp->fecha_inicio) {
+                $fechaObj = \Carbon\Carbon::parse($comp->fecha_inicio . ' ' . ($comp->hora_inicio ?? '00:00:00'));
+                $fecha = $fechaObj->format('Y-m-d');
+            }
+
             $trabajador = $comp->descripcion_trabajador ?? 'Administrador';
 
             $color = '-';
@@ -811,11 +831,33 @@ class MermaController extends Controller
                 'motivo' => 'PRODUCCION INYECTADA (' . $i->descripcion_producto_proceso . ')',
                 'tipo' => 'INGRESO',
                 'color' => $color,
-                'timestamp' => \Carbon\Carbon::parse($fecha . ' ' . ($hora_ini ?? '00:00:00'))->timestamp
+                'timestamp' => $fechaObj->timestamp
             ]);
         }
 
-        // Ordenar cronológicamente
+        // Actividades manuales y tiempos
+        $actividades = DB::table('componentes_orden_produccion_global')
+            ->where('idop', $idop)
+            ->where('estado', 1)
+            ->whereIn('codigo_tipo_producto', ['ACT', 'MANUAL'])
+            ->get();
+
+        foreach ($actividades as $act) {
+            $fechaObj = \Carbon\Carbon::parse($act->fecha_inicio . ' ' . $act->hora_inicio);
+            $registros->push((object)[
+                'fecha' => \Carbon\Carbon::parse($act->fecha_inicio)->format('Y-m-d'),
+                'hora_inicio' => \Carbon\Carbon::parse($act->hora_inicio)->format('H:i'),
+                'hora_fin' => \Carbon\Carbon::parse($act->hora_fin)->format('H:i'),
+                'trabajador_nombre' => $act->descripcion_trabajador ?? '-',
+                'cantidad' => $act->cantidad,
+                'motivo' => $act->descripcion_producto ?? 'Registro Manual',
+                'tipo' => 'ACTIVIDAD',
+                'color' => '-',
+                'timestamp' => $fechaObj->timestamp
+            ]);
+        }
+
+        // Ordenar cronolÃ³gicamente
         $registros = $registros->sortBy('timestamp')->values();
 
         $kilosPorColor = $registros->where('tipo', 'INGRESO')->sum('cantidad'); 

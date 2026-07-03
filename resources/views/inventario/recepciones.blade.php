@@ -304,20 +304,24 @@
 
 <script>
 const sections = ['section-compras', 'section-guias'];
+const cardsPanel = document.getElementById('cards-panel');
 
 function showSection(sectionId) {
-    cardsPanel.classList.add('hidden');
+    if (cardsPanel) cardsPanel.classList.add('hidden');
     sections.forEach(id => {
-        document.getElementById(id).classList.add('hidden');
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
     });
-    document.getElementById(sectionId).classList.remove('hidden');
+    const sec = document.getElementById(sectionId);
+    if (sec) sec.classList.remove('hidden');
 }
 
 function showCards() {
     sections.forEach(id => {
-        document.getElementById(id).classList.add('hidden');
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
     });
-    cardsPanel.classList.remove('hidden');
+    if (cardsPanel) cardsPanel.classList.remove('hidden');
 }
 
 // Manejo de Acordeones

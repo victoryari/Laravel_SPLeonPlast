@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Rol;
 use App\Models\Modulo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class RolController extends Controller
 {
@@ -38,6 +39,8 @@ class RolController extends Controller
             $rol->modulos()->sync($request->modulos);
         }
 
+        Cache::forget('permisos_rol_' . $rol->nombre);
+
         return redirect()->route('roles.index')->with('success', 'Rol creado exitosamente.');
     }
 
@@ -64,6 +67,8 @@ class RolController extends Controller
 
         $role->modulos()->sync($request->input('modulos', []));
 
+        Cache::forget('permisos_rol_' . $role->nombre);
+        
         return redirect()->route('roles.index')->with('success', 'Rol actualizado exitosamente.');
     }
 
@@ -77,7 +82,10 @@ class RolController extends Controller
             return redirect()->route('roles.index')->with('error', 'El rol de Administrador principal no puede ser eliminado.');
         }
 
+        $nombre = $role->nombre;
         $role->delete();
+        
+        Cache::forget('permisos_rol_' . $nombre);
 
         return redirect()->route('roles.index')->with('success', 'Rol eliminado exitosamente.');
     }

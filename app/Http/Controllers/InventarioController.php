@@ -1587,7 +1587,15 @@ class InventarioController extends Controller
 
             $baseDocumento = "OP-{$idop}-PROC-{$idproceso}";
 
-            $consumos = DB::table('kardex as k')
+            $idsComponentes = [];
+            if (!empty($kardex->lote)) {
+                $idsComponentes = DB::table('componentes_orden_produccion_global')
+                    ->where('lote_produccion_pep', $kardex->lote)
+                    ->pluck('id_op_componentes')
+                    ->toArray();
+            }
+
+            $consumosQuery = DB::table('kardex as k')
                 ->join('producto as p', 'k.codigo_producto', '=', 'p.codigo')
                 ->where('k.documento', 'PRODUCCION')
                 ->where('k.numero_documento', 'LIKE', $baseDocumento . '%')
@@ -1595,9 +1603,14 @@ class InventarioController extends Controller
                 ->where(function ($q) {
                     $q->whereNull('k.observaciones')
                       ->orWhere('k.observaciones', 'NOT LIKE', '%[EXTORNADO]%');
-                })
-                ->select('p.descripcion', 'k.lote', 'k.cantidad_salida as cantidad', 'k.costo_salida as costo_unitario', 'k.total_salida as total')
-                ->get();
+                });
+
+            if (!empty($idsComponentes)) {
+                $consumosQuery->join('movimientos_inventario as m', 'k.codigo_referencia_movimiento', '=', 'm.id_movimiento')
+                              ->whereIn('m.componente_origen_id', $idsComponentes);
+            }
+
+            $consumos = $consumosQuery->select('p.descripcion', 'k.lote', 'k.cantidad_salida as cantidad', 'k.costo_salida as costo_unitario', 'k.total_salida as total')->get();
 
             // Forzamos siempre el cálculo dinámico por proceso para evitar 
             // mezclar costos de diferentes procesos de la misma OP
@@ -1610,10 +1623,15 @@ class InventarioController extends Controller
                 $costo_hora_hombre = DB::table('parametros_sistema')->where('codigo_parametro', 'COSTO_HORA_HOMBRE')->value('valor') ?? 0;
                 $costo_hora_maquina = DB::table('parametros_sistema')->where('codigo_parametro', 'COSTO_HORA_MAQUINA')->value('valor') ?? 0;
 
-                $componentes_op = DB::table('componentes_orden_produccion_global')
-                    ->where('id_proceso', $idproceso) // Filtramos por el proceso actual para mayor exactitud
-                    ->where('estado', 1)
-                    ->get();
+                $componentesQuery = DB::table('componentes_orden_produccion_global')
+                    ->where('id_proceso', $idproceso)
+                    ->where('estado', 1);
+                    
+                if (!empty($idsComponentes)) {
+                    $componentesQuery->whereIn('id_op_componentes', $idsComponentes);
+                }
+
+                $componentes_op = $componentesQuery->get();
 
                 $horas_hombre_total = 0;
                 $costo_mano_obra = 0;

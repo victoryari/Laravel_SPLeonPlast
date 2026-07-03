@@ -121,6 +121,8 @@
                 <td class="text-left">
                     @if($reg->tipo == 'INGRESO')
                         <strong style="color: #5cb85c;">[PRODUCCIÓN]</strong> 
+                    @elseif($reg->tipo == 'ACTIVIDAD')
+                        <strong style="color: #14b8a6;">[ACTIVIDAD]</strong> 
                     @else
                         <strong style="color: #d9534f;">{{ $reg->prefix ?? '[MERMA]' }}</strong> 
                     @endif
