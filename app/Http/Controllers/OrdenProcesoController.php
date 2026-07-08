@@ -21,31 +21,34 @@ class OrdenProcesoController extends Controller
             ->orderBy('secuencia', 'asc')
             ->get();
             
-        // Calculate components count per process
+        // Batch: load all componentes for all procesos in one query
+        $procesoIds = $procesos->pluck('id')->toArray();
+        $componentesPorProceso = DB::table('componentes_orden_produccion_global')
+            ->whereIn('id_proceso', $procesoIds)
+            ->where(function($query) {
+                $query->where('estado', 1)->orWhereNull('estado');
+            })
+            ->get(['id_proceso', 'descripcion_producto', 'descripcion_color', 'descripcion_formula_produccion'])
+            ->groupBy('id_proceso');
+
+        // Batch: load all proceso descriptions in one query
+        $codigoProcesos = $procesos->pluck('codigo_proceso')->unique()->toArray();
+        $descPorCodigo = DB::table('proceso_produccion')
+            ->whereIn('codigo', $codigoProcesos)
+            ->pluck('descripcion', 'codigo');
+
         foreach ($procesos as $proceso) {
-            $componentes = DB::table('componentes_orden_produccion_global')
-                ->where('id_proceso', $proceso->id)
-                ->where(function($query) {
-                    $query->where('estado', 1)->orWhereNull('estado');
-                })
-                ->get(['descripcion_producto', 'descripcion_color', 'descripcion_formula_produccion']);
+            $componentes = $componentesPorProceso->get($proceso->id, collect());
                 
             $proceso->total_componentes = $componentes->count();
             
-            // Obtener el nombre de la fórmula única usada en este proceso
             $formulas = $componentes->pluck('descripcion_formula_produccion')
-                ->filter(function($val) { return !empty($val) && $val != 'N/A'; })
+                ->filter(fn($val) => !empty($val) && $val != 'N/A')
                 ->unique();
                 
-            if ($formulas->count() > 0) {
-                $proceso->nombres_componentes = $formulas->implode(' / ');
-            } else {
-                $proceso->nombres_componentes = null;
-            }
+            $proceso->nombres_componentes = $formulas->count() > 0 ? $formulas->implode(' / ') : null;
                 
-            // Fetch the process description (if not already stored) or use Eloquent relationships later
-            $desc = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('descripcion');
-            $proceso->proceso_desc = $desc ?? $proceso->descripcion_proceso;
+            $proceso->proceso_desc = $descPorCodigo[$proceso->codigo_proceso] ?? $proceso->descripcion_proceso;
         }
         
         return view('produccion.procesos.index', compact('orden', 'procesos'));
@@ -348,7 +351,7 @@ class OrdenProcesoController extends Controller
             ->orderBy('codigo')
             ->get();
 
-        $registrados = ComponenteOrdenProduccion::where('id_proceso', $id)->where('estado', 1)->orderBy('id_op_componentes', 'desc')->get();
+        $registrados = ComponenteOrdenProduccion::where('id_proceso', $id)->where('estado', 1)->orderBy('fecha_inicio', 'asc')->orderBy('hora_inicio', 'asc')->get();
         $tiene_componentes = ($registrados->count() > 0);
 
         // Agrupar por fórmula y fecha de creación (Cargas)
@@ -357,9 +360,9 @@ class OrdenProcesoController extends Controller
             $cargas_agrupadas = $registrados->groupBy(function($item) {
                 // If it doesn't have a formula, group it as MANUAL
                 $formula = $item->codigo_formula_produccion ?? 'MANUAL';
-                // Group by minute to bundle the transaction
-                $time = \Carbon\Carbon::parse($item->created_at)->format('Y-m-d H:i');
-                return $formula . '_' . $time;
+                // Group by creation minute and exact execution times to keep batches together but separate independent records
+                $createdAtMinute = \Carbon\Carbon::parse($item->created_at)->format('Y-m-d H:i');
+                return $formula . '_' . $item->fecha_inicio . '_' . $item->hora_inicio . '_' . $item->hora_fin . '_' . $createdAtMinute;
             });
         }
 
@@ -424,10 +427,34 @@ class OrdenProcesoController extends Controller
         $almacenes = DB::table('almacen')->where('activo', 1)->get();
         $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
 
+        // Intentar deducir el producto resultante basado en el proceso actual
+        $descOrden = $orden->descripcion_producto_proceso;
+        $descProcesoActual = $proceso->proceso_desc ?? $proceso->descripcion_proceso;
+        
+        $words = explode(' ', $descOrden);
+        if (count($words) > 1) {
+            array_pop($words); // Quitar la última palabra (ej. TROQUELADO)
+            $baseName = implode(' ', $words);
+        } else {
+            $baseName = $descOrden;
+        }
+        
+        $descSugerida = trim($baseName . ' ' . $descProcesoActual);
+
+        $producto_sugerido = DB::table('producto')
+            ->where('es_producto_proceso', 1)
+            ->where(function($q) use ($descOrden, $descSugerida) {
+                $q->where('descripcion', $descSugerida)
+                  ->orWhere('descripcion', $descOrden);
+            })
+            // Priorizar el que coincida exactamente con la descripcion sugerida del proceso
+            ->orderByRaw("CASE WHEN descripcion = ? THEN 1 ELSE 2 END", [$descSugerida])
+            ->first();
+
         return view('produccion.procesos.ejecucion', compact(
             'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_molido',
             'formulas_disponibles', 'registrados', 'cargas_agrupadas', 'tiene_componentes', 'tipos_producto',
-            'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen'
+            'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen', 'producto_sugerido'
         ));
     }
 
@@ -585,9 +612,14 @@ class OrdenProcesoController extends Controller
             $es_actividad = ($proceso->codigo_proceso == '1');
 
             if ($es_actividad) {
+                $codigosActividad = collect($componentes)->pluck('codigo_producto')->unique()->filter()->values()->toArray();
+                $descActividades = DB::table('actividad_produccion')->whereIn('codigo', $codigosActividad)->pluck('descripcion', 'codigo');
+                $codigosTrabajadorAct = collect($componentes)->pluck('codigo_trabajador')->unique()->filter()->values()->toArray();
+                $descTrabajadorAct = DB::table('trabajador')->whereIn('codigo', $codigosTrabajadorAct)->pluck('nombre', 'codigo');
+
                 foreach ($componentes as $comp) {
                     $codigo_act = $comp['codigo_producto'];
-                    $desc_act = DB::table('actividad_produccion')->where('codigo', $codigo_act)->value('descripcion');
+                    $desc_act = $descActividades[$codigo_act] ?? '';
                     
                     $codigo_trabajador = !empty($comp['codigo_trabajador']) ? $comp['codigo_trabajador'] : null;
 
@@ -607,7 +639,7 @@ class OrdenProcesoController extends Controller
                         'codigo_producto' => $codigo_act,
                         'descripcion_producto' => $desc_act,
                         'codigo_trabajador' => $codigo_trabajador,
-                        'descripcion_trabajador' => DB::table('trabajador')->where('codigo', $codigo_trabajador)->value('nombre'),
+                        'descripcion_trabajador' => $codigo_trabajador ? ($descTrabajadorAct[$codigo_trabajador] ?? '') : null,
                         'codigo_unidad_medida' => 'UNI',
                         'descripcion_unidad_medida' => 'UNIDADES',
                         'cantidad' => 1,
@@ -679,6 +711,25 @@ class OrdenProcesoController extends Controller
             $productos_resultantes_arr = json_decode($request->productos_resultantes_json ?? '[]', true);
             $has_manual_products = count($productos_resultantes_arr) > 0;
 
+            // Pre-cargar catálogos para eliminar N+1 en descripciones (8 queries por componente)
+            $todosCodigosTipoProducto = collect($componentes)->pluck('codigo_tipo_producto')->unique()->filter()->push('MTP')->values()->toArray();
+            $todosCodigosProducto = collect($componentes)->pluck('codigo_producto')->unique()->filter()->values()->toArray();
+            $todosCodigosCentroTrabajo = collect($componentes)->pluck('codigo_centro_trabajo')->unique()->filter()->values()->toArray();
+            $todosCodigosMolde = collect($componentes)->pluck('codigo_molde')->unique()->filter()->values()->toArray();
+            $todosCodigosTrabajador = collect($componentes)->pluck('codigo_trabajador')->unique()->filter()->values()->toArray();
+            $todosCodigosUnidad = collect($componentes)->pluck('codigo_unidad_medida')->unique()->filter()->push('KG')->values()->toArray();
+            $todosCodigosColor = collect($componentes)->pluck('codigo_color')->unique()->filter()->values()->toArray();
+            $todosCodigosFormula = collect($componentes)->pluck('codigo_formula')->unique()->filter()->values()->toArray();
+
+            $descTipoProducto = DB::table('tipo_producto')->whereIn('codigo', $todosCodigosTipoProducto)->pluck('descripcion', 'codigo');
+            $descProducto = DB::table('producto')->whereIn('codigo', $todosCodigosProducto)->pluck('descripcion', 'codigo');
+            $descCentroTrabajo = DB::table('centro_trabajo_produccion')->whereIn('codigo', $todosCodigosCentroTrabajo)->pluck('descripcion', 'codigo');
+            $descMolde = DB::table('molde')->whereIn('codigo', $todosCodigosMolde)->pluck('descripcion', 'codigo');
+            $descTrabajador = DB::table('trabajador')->whereIn('codigo', $todosCodigosTrabajador)->pluck('nombre', 'codigo');
+            $descUnidad = DB::table('unidad_medida')->whereIn('codigo', $todosCodigosUnidad)->pluck('descripcion', 'codigo');
+            $descColor = DB::table('color')->whereIn('codigo', $todosCodigosColor)->pluck('descripcion', 'codigo');
+            $descFormula = DB::table('formula_produccion')->whereIn('codigo', $todosCodigosFormula)->pluck('descripcion', 'codigo');
+
             foreach ($componentes as $comp) {
                 $codigo_producto = $comp['codigo_producto'];
                 $cantidad = floatval($comp['cantidad']);
@@ -699,7 +750,7 @@ class OrdenProcesoController extends Controller
                     if (!isset($grupos_pep[$key])) {
                         $grupos_pep[$key] = [
                             'codigo_pep' => $codigo_pep,
-                            'descripcion_pep' => DB::table('producto')->where('codigo', $codigo_pep)->value('descripcion'),
+                            'descripcion_pep' => $descProducto[$codigo_pep] ?? '',
                             'formula' => $codigo_formula,
                             'color' => $codigo_color,
                             'cant' => 0,
@@ -715,7 +766,7 @@ class OrdenProcesoController extends Controller
                         if (!isset($grupos_pep[$key])) {
                             $grupos_pep[$key] = [
                                 'codigo_pep' => $codigo_pep,
-                                'descripcion_pep' => DB::table('producto')->where('codigo', $codigo_pep)->value('descripcion'),
+                                'descripcion_pep' => $descProducto[$codigo_pep] ?? '',
                                 'formula' => null,
                                 'color' => $codigo_color,
                                 'cant' => 0,
@@ -726,13 +777,13 @@ class OrdenProcesoController extends Controller
                         $grupos_pep[$key]['cant'] += $cantidad;
                     }
                 } elseif (!$has_manual_products && !empty($comp['codigo_tipo_producto']) && $comp['codigo_tipo_producto'] !== 'ACT') {
-                    $op = DB::table('orden_produccion_global')->where('idop', $idop)->first();
-                    if ($op && !empty($op->descripcion_producto_proceso)) {
+                    $opR = DB::table('orden_produccion_global')->where('idop', $idop)->first(['descripcion_producto_proceso']);
+                    if ($opR && !empty($opR->descripcion_producto_proceso)) {
                         $producto_pep = DB::table('producto')
-                            ->where('descripcion', $op->descripcion_producto_proceso)
+                            ->where('descripcion', $opR->descripcion_producto_proceso)
                             ->where('codigo_tipo_producto', 'PEP')
                             ->where('estado', 1)
-                            ->first();
+                            ->first(['codigo']);
                         $codigo_pep = $producto_pep ? $producto_pep->codigo : null;
                         
                         if ($codigo_pep) {
@@ -740,7 +791,7 @@ class OrdenProcesoController extends Controller
                             if (!isset($grupos_pep[$key])) {
                                 $grupos_pep[$key] = [
                                     'codigo_pep' => $codigo_pep,
-                                    'descripcion_pep' => DB::table('producto')->where('codigo', $codigo_pep)->value('descripcion'),
+                                    'descripcion_pep' => $descProducto[$codigo_pep] ?? '',
                                     'formula' => null,
                                     'color' => $codigo_color,
                                     'cant' => 0,
@@ -757,22 +808,22 @@ class OrdenProcesoController extends Controller
                     'idop' => $idop,
                     'id_proceso' => $id,
                     'codigo_tipo_producto' => $comp['codigo_tipo_producto'] ?? 'MTP',
-                    'descripcion_tipo_producto' => DB::table('tipo_producto')->where('codigo', $comp['codigo_tipo_producto'] ?? 'MTP')->value('descripcion'),
+                    'descripcion_tipo_producto' => $descTipoProducto[$comp['codigo_tipo_producto'] ?? 'MTP'] ?? '',
                     'codigo_producto' => $codigo_producto,
-                    'descripcion_producto' => DB::table('producto')->where('codigo', $codigo_producto)->value('descripcion'),
+                    'descripcion_producto' => $descProducto[$codigo_producto] ?? '',
                     'codigo_centro_trabajo' => $codigo_centro_trabajo,
-                    'descripcion_centro_trabajo' => DB::table('centro_trabajo_produccion')->where('codigo', $codigo_centro_trabajo)->value('descripcion'),
+                    'descripcion_centro_trabajo' => $codigo_centro_trabajo ? ($descCentroTrabajo[$codigo_centro_trabajo] ?? '') : null,
                     'codigo_molde' => $codigo_molde,
-                    'descripcion_molde' => DB::table('molde')->where('codigo', $codigo_molde)->value('descripcion'),
+                    'descripcion_molde' => $codigo_molde ? ($descMolde[$codigo_molde] ?? '') : null,
                     'codigo_trabajador' => $codigo_trabajador,
-                    'descripcion_trabajador' => DB::table('trabajador')->where('codigo', $codigo_trabajador)->value('nombre'),
+                    'descripcion_trabajador' => $codigo_trabajador ? ($descTrabajador[$codigo_trabajador] ?? '') : null,
                     'codigo_unidad_medida' => $comp['codigo_unidad_medida'] ?? 'KG',
-                    'descripcion_unidad_medida' => DB::table('unidad_medida')->where('codigo', $comp['codigo_unidad_medida'] ?? 'KG')->value('descripcion'),
+                    'descripcion_unidad_medida' => $descUnidad[$comp['codigo_unidad_medida'] ?? 'KG'] ?? '',
                     'cantidad' => $cantidad,
                     'codigo_color' => $codigo_color,
-                    'descripcion_color' => DB::table('color')->where('codigo', $codigo_color)->value('descripcion'),
+                    'descripcion_color' => $codigo_color ? ($descColor[$codigo_color] ?? '') : null,
                     'codigo_formula_produccion' => $codigo_formula,
-                    'descripcion_formula_produccion' => DB::table('formula_produccion')->where('codigo', $codigo_formula)->value('descripcion'),
+                    'descripcion_formula_produccion' => $codigo_formula ? ($descFormula[$codigo_formula] ?? '') : null,
                     'fecha_inicio' => $comp['fecha_inicio'],
                     'fecha_fin' => $comp['fecha_fin'],
                     'hora_inicio' => $comp['hora_inicio'],

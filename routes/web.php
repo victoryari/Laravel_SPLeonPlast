@@ -197,7 +197,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // 5. Despachos (Atención de Requerimientos)
-        Route::middleware('role:Administrador,Supervisor,Almacenero')->group(function () {
+        Route::middleware('role:Administrador,Supervisor,ALMACEN')->group(function () {
             Route::get('/despachos', [DespachoRequerimientoController::class, 'index'])->name('inventario.despachos.index');
             Route::get('/despachos/{id}/atender', [DespachoRequerimientoController::class, 'atender'])->name('inventario.despachos.atender');
             Route::post('/despachos/{id}/store-atender', [DespachoRequerimientoController::class, 'storeAtender'])->name('inventario.despachos.store_atender');
@@ -264,7 +264,21 @@ Route::middleware('auth')->group(function () {
             ->where('estado', 1)
             ->sum('cantidad');
 
-        return view('supervisor.dashboard', compact('ordenesActivas', 'pendientesValidar', 'produccionDia'));
+        $ordenesRecientes = DB::table('orden_produccion_global')
+            ->where('activo', 1)
+            ->orderBy('fecha', 'desc')
+            ->limit(5)
+            ->get();
+
+        $recepcionesPendientes = DB::table('produccion_ingresos_proceso')
+            ->join('producto', 'produccion_ingresos_proceso.codigo_producto_proceso', '=', 'producto.codigo')
+            ->select('produccion_ingresos_proceso.*', 'producto.descripcion as descripcion_producto_proceso')
+            ->where('produccion_ingresos_proceso.estado', 'PENDIENTE')
+            ->orderBy('produccion_ingresos_proceso.fecha_ingreso', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('supervisor.dashboard', compact('ordenesActivas', 'pendientesValidar', 'produccionDia', 'ordenesRecientes', 'recepcionesPendientes'));
     })->name('supervisor.dashboard')->middleware('role:Supervisor');
 
     Route::get('/especialista/dashboard', function () {
@@ -272,8 +286,50 @@ Route::middleware('auth')->group(function () {
         $totalComposiciones = DB::table('composicion_formula')->count();
         $totalProductos = DB::table('producto')->where('estado', 1)->count();
         $totalProcesos = DB::table('proceso_produccion')->where('estado', 1)->count();
-        return view('especialista.dashboard', compact('totalFormulas', 'totalComposiciones', 'totalProductos', 'totalProcesos'));
+
+        $ultimasFormulas = DB::table('formula_produccion')
+            ->where('estado', 1)
+            ->orderBy('fecha_creacion', 'desc')
+            ->limit(5)
+            ->get();
+
+        $composicionesCount = DB::table('composicion_formula')
+            ->whereIn('codigo_formula', $ultimasFormulas->pluck('codigo'))
+            ->selectRaw('codigo_formula, COUNT(*) as total')
+            ->groupBy('codigo_formula')
+            ->pluck('total', 'codigo_formula');
+
+        return view('especialista.dashboard', compact('totalFormulas', 'totalComposiciones', 'totalProductos', 'totalProcesos', 'ultimasFormulas', 'composicionesCount'));
     })->name('especialista.dashboard')->middleware('role:Especialista');
+
+    Route::get('/almacen/dashboard', function () {
+        $reqsPendientes = DB::table('requerimientos_materiales')
+            ->whereIn('estado', ['APROBADO', 'ATENDIDO_PARCIAL'])
+            ->count();
+
+        $alertasStock = DB::table('inventario')
+            ->where('stock_actual', '<', DB::raw('stock_minimo'))
+            ->count();
+
+        $recepcionesPend = DB::table('produccion_ingresos_proceso')
+            ->where('estado', 'PENDIENTE')
+            ->count();
+
+        $ultimosReqs = DB::table('requerimientos_materiales')
+            ->whereIn('estado', ['APROBADO', 'ATENDIDO_PARCIAL', 'ATENDIDO_TOTAL'])
+            ->orderBy('fecha_requerimiento', 'desc')
+            ->limit(5)
+            ->get();
+
+        $ultimosKardex = DB::table('kardex')
+            ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
+            ->select('kardex.*', 'producto.descripcion as nombre_producto')
+            ->orderBy('fecha_movimiento', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('almacen.dashboard', compact('reqsPendientes', 'alertasStock', 'recepcionesPend', 'ultimosReqs', 'ultimosKardex'));
+    })->name('almacen.dashboard')->middleware('role:ALMACEN');
 
     // =========================================================
     // MÓDULO DE REPORTES

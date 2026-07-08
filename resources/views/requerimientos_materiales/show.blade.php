@@ -184,12 +184,12 @@
                             </form>
                         @endif
 
-                        @if($requerimiento->estado === 'PENDIENTE' && Auth::user()->rol === 'Administrador')
+                        @if($requerimiento->estado === 'PENDIENTE' && Auth::user()->hasAccess('requerimientos_materiales.aprobar'))
                             <div class="bg-slate-700 p-3 rounded-xl mb-3 border border-slate-600">
                                 <form action="{{ route('requerimientos_materiales.aprobar', $requerimiento->id_requerimiento) }}" method="POST" onsubmit="return confirm('¿Está seguro de aprobar este requerimiento con la fecha indicada?')">
                                     @csrf
                                     <label class="block text-[10px] text-slate-300 mb-1 font-semibold uppercase tracking-wider">Fecha Aprobación</label>
-                                    <input type="datetime-local" name="fecha_aprobacion" value="{{ now()->format('Y-m-d\TH:i') }}" class="w-full p-2 mb-3 rounded-lg text-sm text-slate-800 border-none focus:ring-green-500" required>
+                                    <input type="date" name="fecha_aprobacion" value="{{ now()->format('Y-m-d') }}" class="w-full p-2 mb-3 rounded-lg text-sm bg-slate-50 text-slate-900 border border-slate-300 focus:ring-green-500 focus:border-green-500 shadow-inner" required>
                                     <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg transition flex items-center justify-center gap-2">
                                         <i class="fas fa-check"></i> Aprobar
                                     </button>

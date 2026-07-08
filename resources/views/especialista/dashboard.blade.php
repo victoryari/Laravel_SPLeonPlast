@@ -73,13 +73,12 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @forelse(DB::table('formula_produccion')->where('estado', 1)->orderBy('fecha_creacion', 'desc')->limit(5)->get() as $fm)
-                        @php $count = DB::table('composicion_formula')->where('codigo_formula', $fm->codigo)->count(); @endphp
+                        @forelse($ultimasFormulas as $fm)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2 font-medium">{{ $fm->codigo }}</td>
                             <td class="px-4 py-2">{{ $fm->descripcion }}</td>
                             <td class="px-4 py-2">
-                                <x-badge color="slate">{{ $count }} items</x-badge>
+                                <x-badge color="slate">{{ $composicionesCount[$fm->codigo] ?? 0 }} items</x-badge>
                             </td>
                         </tr>
                         @empty

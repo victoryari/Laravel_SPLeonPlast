@@ -109,188 +109,186 @@ class DespachoRequerimientoController extends Controller
 
         $kardexService = app(KardexService::class);
 
+        // Pre-agrupar lotes por id_detalle para lockear cada fila una sola vez
+        $lotesPorDetalle = collect($request->lotes)->groupBy('id_detalle');
+
         DB::beginTransaction();
         try {
+            $cantidadAtendidaPorDetalle = [];
+            $todosCompletos = true;
 
-            foreach ($request->lotes as $item) {
-                if ($item['codigo_almacen_origen'] === $item['codigo_almacen_destino']) {
-                    throw new \Exception("El almacén de origen y destino deben ser diferentes.");
-                }
-                $detalle = DetalleRequerimientoMaterial::where('id_detalle', $item['id_detalle'])->lockForUpdate()->firstOrFail();
-                $saldo = $detalle->cantidad_solicitada - $detalle->cantidad_atendida;
-                $cantidad = min($item['cantidad'] ?? 0, $saldo);
+            foreach ($lotesPorDetalle as $idDetalle => $lotes) {
+                $detalle = DetalleRequerimientoMaterial::where('id_detalle', $idDetalle)->lockForUpdate()->firstOrFail();
+                $saldoRestante = $detalle->cantidad_solicitada - $detalle->cantidad_atendida;
+                $totalAcumulado = $detalle->cantidad_atendida;
+                $warehouseUpdated = false;
 
-                if ($cantidad <= 0) {
-                    continue;
-                }
+                foreach ($lotes as $item) {
+                    if ($item['codigo_almacen_origen'] === $item['codigo_almacen_destino']) {
+                        throw new \Exception("El almacén de origen y destino deben ser diferentes.");
+                    }
 
-                $inventarioOrigen = DB::table('inventario')
-                    ->where('codigo_producto', $detalle->codigo_producto)
-                    ->where('codigo_almacen', $item['codigo_almacen_origen'])
-                    ->where('lote', $item['lote'])
-                    ->lockForUpdate()
-                    ->first();
+                    $cantidad = min($item['cantidad'] ?? 0, $saldoRestante);
+                    if ($cantidad <= 0) continue;
 
-                if (!$inventarioOrigen || $inventarioOrigen->stock_actual < $cantidad) {
-                    throw new \Exception("Stock insuficiente del lote {$item['lote']} en el almacén de origen para el producto {$detalle->codigo_producto}.");
-                }
+                    $inventarioOrigen = DB::table('inventario')
+                        ->where('codigo_producto', $detalle->codigo_producto)
+                        ->where('codigo_almacen', $item['codigo_almacen_origen'])
+                        ->where('lote', $item['lote'])
+                        ->lockForUpdate()
+                        ->first();
 
-                $costosSalida = $kardexService->calcularCostos(
-                    $detalle->codigo_producto,
-                    $item['codigo_almacen_origen'],
-                    0, 0, $cantidad,
-                    $inventarioOrigen->stock_actual
-                );
+                    if (!$inventarioOrigen || $inventarioOrigen->stock_actual < $cantidad) {
+                        throw new \Exception("Stock insuficiente del lote {$item['lote']} en el almacén de origen para el producto {$detalle->codigo_producto}.");
+                    }
 
-                DB::table('kardex')->insert([
-                    'codigo_almacen' => $item['codigo_almacen_origen'],
-                    'codigo_producto' => $detalle->codigo_producto,
-                    'fecha_movimiento' => $request->fecha_despacho,
-                    'tipo_movimiento' => 'SALIDA',
-                    'documento' => 'REQUERIMIENTO',
-                    'numero_documento' => $requerimiento->codigo,
-                    'cantidad_entrada' => 0,
-                    'costo_entrada' => 0,
-                    'total_entrada' => 0,
-                    'cantidad_salida' => $cantidad,
-                    'costo_salida' => $costosSalida['costo_salida'],
-                    'total_salida' => $costosSalida['total_salida'],
-                    'cantidad_saldo' => $costosSalida['cantidad_saldo'],
-                    'costo_promedio' => $costosSalida['costo_promedio'],
-                    'total_saldo' => $costosSalida['total_saldo'],
-                    'lote' => $item['lote'],
-                    'usuario_registro' => Auth::id(),
-                ]);
+                    $costosSalida = $kardexService->calcularCostos(
+                        $detalle->codigo_producto, $item['codigo_almacen_origen'],
+                        0, 0, $cantidad, $inventarioOrigen->stock_actual
+                    );
 
-                DB::table('movimientos_inventario')->insert([
-                    'codigo_almacen' => $item['codigo_almacen_origen'],
-                    'codigo_producto' => $detalle->codigo_producto,
-                    'lote' => $item['lote'],
-                    'tipo_movimiento' => 'SALIDA',
-                    'cantidad' => $cantidad,
-                    'costo_unitario' => $costosSalida['costo_salida'],
-                    'total' => $costosSalida['total_salida'],
-                    'documento_referencia' => 'REQUERIMIENTO',
-                    'numero_referencia' => $requerimiento->codigo,
-                    'fecha_movimiento' => $request->fecha_despacho,
-                    'usuario_movimiento' => Auth::id(),
-                    'estado' => 1,
-                ]);
-
-                DB::table('inventario')
-                    ->where('id_inventario', $inventarioOrigen->id_inventario)
-                    ->update([
-                        'stock_actual' => $inventarioOrigen->stock_actual - $cantidad,
-                        'fecha_ultimo_movimiento' => $request->fecha_despacho,
-                        'usuario_ultimo_movimiento' => Auth::id(),
+                    DB::table('kardex')->insert([
+                        'codigo_almacen' => $item['codigo_almacen_origen'],
+                        'codigo_producto' => $detalle->codigo_producto,
+                        'fecha_movimiento' => $request->fecha_despacho,
+                        'tipo_movimiento' => 'SALIDA',
+                        'documento' => 'REQUERIMIENTO',
+                        'numero_documento' => $requerimiento->codigo,
+                        'cantidad_entrada' => 0, 'costo_entrada' => 0, 'total_entrada' => 0,
+                        'cantidad_salida' => $cantidad,
+                        'costo_salida' => $costosSalida['costo_salida'],
+                        'total_salida' => $costosSalida['total_salida'],
+                        'cantidad_saldo' => $costosSalida['cantidad_saldo'],
+                        'costo_promedio' => $costosSalida['costo_promedio'],
+                        'total_saldo' => $costosSalida['total_saldo'],
+                        'lote' => $item['lote'],
+                        'usuario_registro' => Auth::id(),
                     ]);
 
-                $invDestino = DB::table('inventario')
-                    ->where('codigo_producto', $detalle->codigo_producto)
-                    ->where('codigo_almacen', $item['codigo_almacen_destino'])
-                    ->where('lote', $item['lote'])
-                    ->lockForUpdate()
-                    ->first();
+                    DB::table('movimientos_inventario')->insert([
+                        'codigo_almacen' => $item['codigo_almacen_origen'],
+                        'codigo_producto' => $detalle->codigo_producto,
+                        'lote' => $item['lote'],
+                        'tipo_movimiento' => 'SALIDA',
+                        'cantidad' => $cantidad,
+                        'costo_unitario' => $costosSalida['costo_salida'],
+                        'total' => $costosSalida['total_salida'],
+                        'documento_referencia' => 'REQUERIMIENTO',
+                        'numero_referencia' => $requerimiento->codigo,
+                        'fecha_movimiento' => $request->fecha_despacho,
+                        'usuario_movimiento' => Auth::id(),
+                        'estado' => 1,
+                    ]);
 
-                $costosIngreso = $kardexService->calcularCostos(
-                    $detalle->codigo_producto,
-                    $item['codigo_almacen_destino'],
-                    $cantidad,
-                    $costosSalida['costo_salida'],
-                    0,
-                    $invDestino?->stock_actual ?? 0
-                );
-
-                DB::table('kardex')->insert([
-                    'codigo_almacen' => $item['codigo_almacen_destino'],
-                    'codigo_producto' => $detalle->codigo_producto,
-                    'fecha_movimiento' => $request->fecha_despacho,
-                    'tipo_movimiento' => 'INGRESO',
-                    'documento' => 'REQUERIMIENTO',
-                    'numero_documento' => $requerimiento->codigo,
-                    'cantidad_entrada' => $cantidad,
-                    'costo_entrada' => $costosSalida['costo_salida'],
-                    'total_entrada' => $costosIngreso['total_entrada'],
-                    'cantidad_salida' => 0,
-                    'costo_salida' => 0,
-                    'total_salida' => 0,
-                    'cantidad_saldo' => $costosIngreso['cantidad_saldo'],
-                    'costo_promedio' => $costosIngreso['costo_promedio'],
-                    'total_saldo' => $costosIngreso['total_saldo'],
-                    'lote' => $item['lote'],
-                    'usuario_registro' => Auth::id(),
-                ]);
-
-                DB::table('movimientos_inventario')->insert([
-                    'codigo_almacen' => $item['codigo_almacen_destino'],
-                    'codigo_producto' => $detalle->codigo_producto,
-                    'lote' => $item['lote'],
-                    'tipo_movimiento' => 'INGRESO',
-                    'cantidad' => $cantidad,
-                    'costo_unitario' => $costosSalida['costo_salida'],
-                    'total' => $costosIngreso['total_entrada'],
-                    'documento_referencia' => 'REQUERIMIENTO',
-                    'numero_referencia' => $requerimiento->codigo,
-                    'fecha_movimiento' => $request->fecha_despacho,
-                    'usuario_movimiento' => Auth::id(),
-                    'estado' => 1,
-                ]);
-
-                if ($invDestino) {
                     DB::table('inventario')
-                        ->where('id_inventario', $invDestino->id_inventario)
+                        ->where('id_inventario', $inventarioOrigen->id_inventario)
                         ->update([
-                            'stock_actual' => $invDestino->stock_actual + $cantidad,
-                            'estado' => 1,
-                            'costo_promedio' => $costosIngreso['costo_promedio'],
+                            'stock_actual' => $inventarioOrigen->stock_actual - $cantidad,
                             'fecha_ultimo_movimiento' => $request->fecha_despacho,
                             'usuario_ultimo_movimiento' => Auth::id(),
                         ]);
-                } else {
-                    DB::table('inventario')->insert([
+
+                    $invDestino = DB::table('inventario')
+                        ->where('codigo_producto', $detalle->codigo_producto)
+                        ->where('codigo_almacen', $item['codigo_almacen_destino'])
+                        ->where('lote', $item['lote'])
+                        ->lockForUpdate()
+                        ->first();
+
+                    $costosIngreso = $kardexService->calcularCostos(
+                        $detalle->codigo_producto, $item['codigo_almacen_destino'],
+                        $cantidad, $costosSalida['costo_salida'], 0,
+                        $invDestino?->stock_actual ?? 0
+                    );
+
+                    DB::table('kardex')->insert([
+                        'codigo_almacen' => $item['codigo_almacen_destino'],
+                        'codigo_producto' => $detalle->codigo_producto,
+                        'fecha_movimiento' => $request->fecha_despacho,
+                        'tipo_movimiento' => 'INGRESO',
+                        'documento' => 'REQUERIMIENTO',
+                        'numero_documento' => $requerimiento->codigo,
+                        'cantidad_entrada' => $cantidad,
+                        'costo_entrada' => $costosSalida['costo_salida'],
+                        'total_entrada' => $costosIngreso['total_entrada'],
+                        'cantidad_salida' => 0, 'costo_salida' => 0, 'total_salida' => 0,
+                        'cantidad_saldo' => $costosIngreso['cantidad_saldo'],
+                        'costo_promedio' => $costosIngreso['costo_promedio'],
+                        'total_saldo' => $costosIngreso['total_saldo'],
+                        'lote' => $item['lote'],
+                        'usuario_registro' => Auth::id(),
+                    ]);
+
+                    DB::table('movimientos_inventario')->insert([
                         'codigo_almacen' => $item['codigo_almacen_destino'],
                         'codigo_producto' => $detalle->codigo_producto,
                         'lote' => $item['lote'],
-                        'stock_actual' => $cantidad,
-                        'costo_promedio' => $costosIngreso['costo_promedio'],
-                        'ultimo_costo' => $costosSalida['costo_salida'],
-                        'fecha_ultimo_movimiento' => $request->fecha_despacho,
-                        'usuario_ultimo_movimiento' => Auth::id(),
+                        'tipo_movimiento' => 'INGRESO',
+                        'cantidad' => $cantidad,
+                        'costo_unitario' => $costosSalida['costo_salida'],
+                        'total' => $costosIngreso['total_entrada'],
+                        'documento_referencia' => 'REQUERIMIENTO',
+                        'numero_referencia' => $requerimiento->codigo,
+                        'fecha_movimiento' => $request->fecha_despacho,
+                        'usuario_movimiento' => Auth::id(),
+                        'estado' => 1,
                     ]);
+
+                    if ($invDestino) {
+                        DB::table('inventario')
+                            ->where('id_inventario', $invDestino->id_inventario)
+                            ->update([
+                                'stock_actual' => $invDestino->stock_actual + $cantidad,
+                                'estado' => 1,
+                                'costo_promedio' => $costosIngreso['costo_promedio'],
+                                'fecha_ultimo_movimiento' => $request->fecha_despacho,
+                                'usuario_ultimo_movimiento' => Auth::id(),
+                            ]);
+                    } else {
+                        DB::table('inventario')->insert([
+                            'codigo_almacen' => $item['codigo_almacen_destino'],
+                            'codigo_producto' => $detalle->codigo_producto,
+                            'lote' => $item['lote'],
+                            'stock_actual' => $cantidad,
+                            'costo_promedio' => $costosIngreso['costo_promedio'],
+                            'ultimo_costo' => $costosSalida['costo_salida'],
+                            'fecha_ultimo_movimiento' => $request->fecha_despacho,
+                            'usuario_ultimo_movimiento' => Auth::id(),
+                        ]);
+                    }
+
+                    // Update warehouses once per detalle (first lot that has one null)
+                    if (!$warehouseUpdated && (is_null($detalle->codigo_almacen_origen) || is_null($detalle->codigo_almacen_destino))) {
+                        $warehouseUpdated = true;
+                        $detalle->update([
+                            'codigo_almacen_origen' => $item['codigo_almacen_origen'],
+                            'codigo_almacen_destino' => $item['codigo_almacen_destino']
+                        ]);
+                    }
+
+                    DB::table('despacho_requerimiento_lotes')->insert([
+                        'id_detalle' => $detalle->id_detalle,
+                        'id_requerimiento' => $requerimiento->id_requerimiento,
+                        'lote' => $item['lote'],
+                        'cantidad' => $cantidad,
+                        'fecha_despacho' => $request->fecha_despacho,
+                    ]);
+
+                    $saldoRestante -= $cantidad;
+                    $totalAcumulado += $cantidad;
                 }
 
-                // Update the detail line if it still has null warehouses
-                if (is_null($detalle->codigo_almacen_origen) || is_null($detalle->codigo_almacen_destino)) {
-                    $detalle->update([
-                        'codigo_almacen_origen' => $item['codigo_almacen_origen'],
-                        'codigo_almacen_destino' => $item['codigo_almacen_destino']
-                    ]);
+                // Single update per detalle instead of per-lot increment+refresh
+                if ($detalle->cantidad_atendida != $totalAcumulado) {
+                    $detalle->update(['cantidad_atendida' => $totalAcumulado]);
                 }
-
-                DB::table('despacho_requerimiento_lotes')->insert([
-                    'id_detalle' => $detalle->id_detalle,
-                    'id_requerimiento' => $requerimiento->id_requerimiento,
-                    'lote' => $item['lote'],
-                    'cantidad' => $cantidad,
-                    'fecha_despacho' => $request->fecha_despacho,
-                ]);
-
-                $detalle->increment('cantidad_atendida', $cantidad);
-                $detalle->refresh();
-
+                $cantidadAtendidaPorDetalle[$idDetalle] = $totalAcumulado;
+                if ($totalAcumulado < $detalle->cantidad_solicitada) {
+                    $todosCompletos = false;
+                }
             }
 
-            // Verificar si todos los detalles del requerimiento están completos
-            $requerimiento->refresh();
-            $todasCompletas = true;
-            foreach ($requerimiento->detalles as $det) {
-                if ($det->cantidad_atendida < $det->cantidad_solicitada) {
-                    $todasCompletas = false;
-                    break;
-                }
-            }
-
-            $nuevoEstado = $todasCompletas ? 'ATENDIDO_TOTAL' : 'ATENDIDO_PARCIAL';
+            $nuevoEstado = $todosCompletos ? 'ATENDIDO_TOTAL' : 'ATENDIDO_PARCIAL';
             $requerimiento->update(['estado' => $nuevoEstado]);
 
             DB::commit();

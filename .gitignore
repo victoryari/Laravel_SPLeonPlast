@@ -23,5 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 
+/storage/debugbar/
+/config/debugbar.php
 .vercel
 .php-preview-router.php

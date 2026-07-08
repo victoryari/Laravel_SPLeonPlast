@@ -200,6 +200,7 @@
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Cant.</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">U.M.</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Trabajador</th>
+                                <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Fecha</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hora In/Fin (Hombre)</th>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Hora In/Fin (Máquina)</th>
                                 <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Observación</th>
@@ -227,7 +228,7 @@
                                         // Total de KG sumando la cantidad base o nominal, es una aproximacion visual
                                         $totalKG = $grupo->sum('cantidad');
                                     @endphp
-                                    <tr id="row_grupo_{{ $loop->index }}" class="bg-slate-50 border-l-4 border-l-primary">
+                                    <tr id="row_grupo_{{ $loop->index }}" class="bg-slate-50 border-l-4 border-l-primary main-row">
                                         <td class="px-3 py-3 whitespace-nowrap">
                                             <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                                 {{ $esManual ? 'MANUAL' : 'CARGA' }}
@@ -247,6 +248,7 @@
                                         <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{{ number_format($totalKG, 2) }}</td>
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">KG</td>
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_trabajador }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->fecha_inicio ?? $first->fecha ?? 'N/A' }}</td>
                                         <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->hora_inicio }} - {{ $first->hora_fin }}</td>
                                         <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->hora_inicio_maquina }} - {{ $first->hora_fin_maquina }}</td>
                                         @php
@@ -300,7 +302,7 @@
                                 @endforeach
                             @else
                             @foreach($registrados as $r)
-                            <tr id="row_display_{{ $r->id_op_componentes }}" class="bg-slate-50">
+                            <tr id="row_display_{{ $r->id_op_componentes }}" class="bg-slate-50 main-row">
                                 <td class="px-3 py-2 whitespace-nowrap">
                                     <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-slate-200 text-slate-800">
                                         {{ $r->codigo_tipo_producto }}
@@ -315,6 +317,7 @@
                                 <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{{ number_format($r->cantidad, 2) }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_unidad_medida }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_trabajador }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->fecha_inicio ?? 'N/A' }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio }} - {{ $r->hora_fin }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio_maquina }} - {{ $r->hora_fin_maquina }}</td>
                                 @php
@@ -422,6 +425,16 @@
                             @endif
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Pagination Controls -->
+                <div id="pagination_controls" class="flex justify-between items-center mt-4 border-t border-gray-200 pt-4">
+                    <div class="text-sm text-gray-700">
+                        Mostrando <span id="page_start_info" class="font-bold">0</span> a <span id="page_end_info" class="font-bold">0</span> de <span id="page_total_info" class="font-bold">0</span> registros
+                    </div>
+                    <div class="flex space-x-1" id="pagination_buttons">
+                        <!-- Buttons injected via JS -->
+                    </div>
                 </div>
 
                 @if($estado_proceso_actual !== 'COMPLETADO' && !$es_actividad)
@@ -608,6 +621,19 @@
             almacenSelect.addEventListener('change', verificarStock);
         }
         verificarStock();
+        updatePagination();
+
+        // Auto-add suggested resulting product
+        const sugeridoCodigo = @json($producto_sugerido->codigo ?? null);
+        const sugeridoDesc = @json($producto_sugerido->descripcion ?? null);
+        const esCompletado = '{{ $estado_proceso_actual }}' === 'COMPLETADO';
+        
+        if (sugeridoCodigo && !esCompletado && typeof agregarFilaProductoResultante === 'function') {
+            const resultantesTable = document.getElementById('tbody_resultantes');
+            if (resultantesTable) {
+                agregarFilaProductoResultante(sugeridoCodigo, sugeridoDesc);
+            }
+        }
     });
 
     function setupSearchableDropdown(rowId) {
@@ -646,10 +672,9 @@
                 if (esMolido) {
                     tipo = 'REC';
                 } else if (esEnsamblado) {
-                    // Ensamblado podría producir PDT (Producto Terminado) o PEP
-                    tipo = ''; // Vacío para permitir buscar cualquier tipo
+                    tipo = '';
                 } else {
-                    tipo = 'PEP'; // Forzar a PEP en la fila de Productos Resultantes
+                    tipo = 'PEP';
                 }
             }
             
@@ -671,7 +696,7 @@
                         div.className = 'p-2 cursor-pointer border-b border-gray-100 text-xs hover:bg-primary-50 text-gray-700';
                         div.textContent = `${p.id} - ${getProdName(p.text)}`;
                         div.onclick = () => {
-                            searchInput.value = div.textContent;
+                            searchInput.value = getProdName(p.text);
                             hiddenInput.value = p.id;
                             if (tipoSelect && p.codigo_tipo_producto) tipoSelect.value = p.codigo_tipo_producto;
                             optionsContainer.style.display = 'none';
@@ -816,16 +841,19 @@
         }); 
     }
 
-    function agregarFilaProductoResultante() {
+    function agregarFilaProductoResultante(codigo_inicial = '', desc_inicial = '') {
         const tbody = document.getElementById('tbody_resultantes');
+        if(!tbody) return;
         const rowId = 'resultado_' + Date.now() + Math.floor(Math.random()*1000);
         
         let unitsHtml = unidadesData.map(u=>`<option value="${u.codigo}" ${u.codigo=='KG'?'selected':''}>${u.codigo}</option>`).join('');
         
+        const displayVal = desc_inicial ? desc_inicial : (codigo_inicial ? codigo_inicial : '');
+        
         let html = `<tr id="${rowId}" class="nueva-fila-resultado bg-white hover:bg-slate-50 transition-colors">
             <td class="px-2 py-2 align-middle relative">
-                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Producto Resultante...">
-                <input type="hidden" class="c-prod" value="">
+                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Producto Resultante..." value="${displayVal}">
+                <input type="hidden" class="c-prod" value="${codigo_inicial}">
                 <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
             </td>
             
@@ -867,7 +895,7 @@
             </td>
             
             <td class="px-2 py-2 align-middle relative">
-                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Material/Actividad..." value="${item.codigo_producto ? item.codigo_producto + (item.descripcion_producto ? ' - ' + item.descripcion_producto : '') : ''}">
+                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[200px]" placeholder="Buscar Material/Actividad..." value="${item.descripcion_producto ? item.descripcion_producto : (item.codigo_producto ? item.codigo_producto : '')}">
                 <input type="hidden" class="c-prod" value="${item.codigo_producto||''}">
                 <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
             </td>
@@ -880,24 +908,25 @@
             
             <td class="px-2 py-2 align-middle">
                 <input type="number" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-cant w-full min-w-[80px]" value="${item.cantidad||''}" step="0.01" oninput="recalcularFormulaDesdeREC(); verificarStock();">
+                <span class="stock-cell hidden"></span>
             </td>
             
             <td class="px-2 py-2 align-middle">
                 <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[70px] c-um">${unitsHtml}</select>
             </td>
             
-            <td class="px-2 py-2 align-middle text-center">
-                <span class="stock-cell text-xs font-bold whitespace-nowrap">—</span>
-            </td>
-            
             <td class="px-2 py-2 align-middle">
                 <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[160px] c-trab">${trabsHtml}</select>
+            </td>
+
+            <td class="px-2 py-2 align-middle">
+                <input type="date" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-fecha_ini w-[110px]" value="${today}" oninput="syncFechaMaq(this)">
             </td>
             
             <td style="display:none;">
                 <input type="hidden" class="c-formula" value="${item.formula||document.getElementById('formula_selector')?.value||''}">
                 <input type="hidden" class="c-nominal" value="${item.cantidad_nominal||''}">
-                <input type="date" class="c-fecha_ini" value="${today}" oninput="syncFechaMaq(this)"><input type="date" class="c-fecha_fin" value="${today}" oninput="syncFechaMaq(this)">
+                <input type="date" class="c-fecha_fin" value="${today}" oninput="syncFechaMaq(this)">
                 <input type="date" class="c-fecha_ini_maq" value="${today}"><input type="date" class="c-fecha_fin_maq" value="${today}">
             </td>
             
@@ -1167,5 +1196,76 @@
             Swal.fire('Error', 'Ocurrió un error en el servidor.', 'error');
         });
     }
+
+    // --- Pagination Logic ---
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    function updatePagination() {
+        const tbody = document.getElementById('tbody_items');
+        if(!tbody) return;
+        
+        const mainRows = Array.from(tbody.querySelectorAll('.main-row'));
+        const totalItems = mainRows.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIdx = (currentPage - 1) * itemsPerPage;
+        const endIdx = startIdx + itemsPerPage;
+
+        // Hide all rows (including details and edits)
+        Array.from(tbody.children).forEach(row => {
+            if(!row.classList.contains('main-row')) {
+                // If it's a detail or edit row, hide it when page changes
+                if(!row.classList.contains('hidden') && row.id.includes('row_edit')) {
+                    cancelarEdicion(row.id.replace('row_edit_', ''));
+                }
+                row.classList.add('hidden');
+            }
+        });
+
+        mainRows.forEach((row, index) => {
+            if (index >= startIdx && index < endIdx) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+
+        // Update info text
+        document.getElementById('page_total_info').textContent = totalItems;
+        document.getElementById('page_start_info').textContent = totalItems > 0 ? startIdx + 1 : 0;
+        document.getElementById('page_end_info').textContent = Math.min(endIdx, totalItems);
+
+        // Render buttons
+        const paginationContainer = document.getElementById('pagination_buttons');
+        let html = '';
+        
+        html += `<button type="button" onclick="goToPage(${currentPage - 1})" class="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                const isActive = i === currentPage ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
+                html += `<button type="button" onclick="goToPage(${i})" class="px-3 py-1 border rounded-md ${isActive}">${i}</button>`;
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                html += `<span class="px-2 py-1 text-gray-500">...</span>`;
+            }
+        }
+        
+        html += `<button type="button" onclick="goToPage(${currentPage + 1})" class="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
+
+        paginationContainer.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        updatePagination();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updatePagination();
+    });
 </script>
 @endsection

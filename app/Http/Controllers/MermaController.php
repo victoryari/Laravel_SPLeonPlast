@@ -9,6 +9,23 @@ use App\Services\KardexService;
 
 class MermaController extends Controller
 {
+    public static function getNumeroDoc($merma) {
+        $id = str_pad($merma->id_merma ?? $merma->id, 6, '0', STR_PAD_LEFT);
+        $tipo = strtoupper($merma->tipo_merma ?? '');
+        $motivo = strtolower($merma->motivo ?? '');
+
+        if ($tipo === 'MOLIDO') {
+            return 'MOLIDO-' . $id;
+        }
+        if ($tipo === 'LIMPIEZA' || $tipo === 'MIXTO' || strpos($motivo, 'limpieza') !== false) {
+            return 'LIMPIEZA-' . $id;
+        }
+        if ($tipo === 'RECUPERABLE') {
+            return 'RECICLAD-' . $id;
+        }
+        return 'MERMA-' . $id;
+    }
+
     public function index(Request $request)
     {
         $query = Merma::with(['producto', 'almacen', 'usuarioRegistro', 'ordenProduccion']);
@@ -207,6 +224,9 @@ class MermaController extends Controller
                 $totalValorSalidaGlobal = 0;
                 $detallesKardex = [];
 
+                $codigosComponentes = collect($request->componentes)->filter(fn($c) => ((float)($c['pura'] ?? 0) + (float)($c['recuperada'] ?? 0)) > 0)->keys()->toArray();
+                $productosComponentes = Producto::whereIn('codigo', $codigosComponentes)->get()->keyBy('codigo');
+
                 foreach ($request->componentes as $cod => $cant) {
                     $pura = (float)($cant['pura'] ?? 0);
                     $recuperada = (float)($cant['recuperada'] ?? 0);
@@ -214,7 +234,7 @@ class MermaController extends Controller
 
                     if ($cantidadTotal <= 0) continue;
 
-                    $compProducto = Producto::findOrFail($cod);
+                    $compProducto = $productosComponentes[$cod] ?? Producto::findOrFail($cod);
                     $invs = DB::table('inventario')
                         ->where('codigo_producto', $cod)
                         ->where('codigo_almacen', $request->codigo_almacen)
@@ -281,7 +301,7 @@ class MermaController extends Controller
                     'usuario_registro' => Auth::id()
                 ]);
 
-                $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+                $numeroDoc = self::getNumeroDoc($merma);
 
                 foreach ($detallesKardex as $det) {
                     $nuevoStock = $det['inv']->stock_actual - $det['cantidad'];
@@ -448,7 +468,7 @@ class MermaController extends Controller
                 'usuario_registro' => Auth::id()
             ]);
 
-            $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+            $numeroDoc = self::getNumeroDoc($merma);
 
             // 2. Consumir cada componente (Materia Prima)
             foreach ($componentes as $comp) {
@@ -627,7 +647,7 @@ class MermaController extends Controller
                 return back()->with('error', 'La merma ya se encuentra anulada.');
             }
             
-            $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+            $numeroDoc = self::getNumeroDoc($merma);
             
             $movimientos = DB::table('kardex')
                 ->where('numero_documento', $numeroDoc)
@@ -699,7 +719,7 @@ class MermaController extends Controller
     {
         $merma = Merma::with(['ordenProduccion', 'trabajador'])->findOrFail($id);
         
-        $numeroDoc = 'MERMA-' . str_pad($merma->id_merma, 6, '0', STR_PAD_LEFT);
+        $numeroDoc = self::getNumeroDoc($merma);
         
         $movimientos = DB::table('kardex')
             ->where('numero_documento', $numeroDoc)
@@ -721,7 +741,7 @@ class MermaController extends Controller
         $mermas = Merma::with('trabajador')->where('id_orden_produccion', $idop)->get();
 
         $numeroDocs = $mermas->map(function($m) {
-            return 'MERMA-' . str_pad($m->id_merma, 6, '0', STR_PAD_LEFT);
+            return self::getNumeroDoc($m);
         });
 
         $kardexDocs = DB::table('kardex')
@@ -736,22 +756,30 @@ class MermaController extends Controller
         // Para obtener el operario y hora inicio de los ingresos, buscamos en los componentes del proceso
         $componentes = DB::table('componentes_orden_produccion_global')
             ->where('idop', $idop)
-            ->select('id_proceso', 'descripcion_trabajador', 'hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin', 'codigo_formula_produccion', 'lote_produccion_pep', 'descripcion_producto')
+            ->select('id_proceso', 'descripcion_trabajador', 'hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin', 'codigo_formula_produccion', 'lote_produccion_pep', 'descripcion_producto', 'descripcion_centro_trabajo')
             ->get();
+
+        if (empty($op->descripcion_centro_trabajo_produccion)) {
+            $centroComp = $componentes->firstWhere('descripcion_centro_trabajo', '!=', null);
+            if ($centroComp) {
+                $op->descripcion_centro_trabajo_produccion = $centroComp->descripcion_centro_trabajo;
+            }
+        }
 
         $registros = collect();
 
         foreach ($mermas as $m) {
             $color = '-';
-            if (strpos(strtoupper($m->descripcion_producto), 'COLOR ') !== false) {
-                $parts = explode('COLOR ', strtoupper($m->descripcion_producto));
-                $color = trim($parts[1] ?? '-');
+            $prod = DB::table('producto')->where('codigo', $m->codigo_producto)->first();
+            if ($prod && $prod->codigo_color) {
+                $colorDb = DB::table('color')->where('codigo', $prod->codigo_color)->first();
+                $color = $colorDb ? $colorDb->descripcion : $prod->codigo_color;
             }
 
             $prefix = '[MERMA]';
             $motivoText = $m->tipo_merma;
 
-            $numeroDoc = 'MERMA-' . str_pad($m->id_merma, 6, '0', STR_PAD_LEFT);
+            $numeroDoc = self::getNumeroDoc($m);
             $esLimpieza = $kardexDocs->where('numero_documento', $numeroDoc)
                 ->whereIn('documento', ['LIMPIEZA', 'RECICLADO DE LIMPIEZA'])
                 ->isNotEmpty();
@@ -817,9 +845,10 @@ class MermaController extends Controller
             $trabajador = $comp->descripcion_trabajador ?? 'Administrador';
 
             $color = '-';
-            if (strpos(strtoupper($i->descripcion_producto_proceso), 'COLOR ') !== false) {
-                $parts = explode('COLOR ', strtoupper($i->descripcion_producto_proceso));
-                $color = trim($parts[1] ?? '-');
+            $prod = DB::table('producto')->where('codigo', $i->codigo_producto_proceso)->first();
+            if ($prod && $prod->codigo_color) {
+                $colorDb = DB::table('color')->where('codigo', $prod->codigo_color)->first();
+                $color = $colorDb ? $colorDb->descripcion : $prod->codigo_color;
             }
 
             $registros->push((object)[

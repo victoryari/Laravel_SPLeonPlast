@@ -26,6 +26,8 @@
                         if(Auth::user()->rol == 'Administrador') $routeDash = route('admin.dashboard');
                         elseif(Auth::user()->rol == 'Supervisor') $routeDash = route('supervisor.dashboard');
                         elseif(Auth::user()->rol == 'Especialista') $routeDash = route('especialista.dashboard');
+                        elseif(Auth::user()->rol == 'ALMACEN') $routeDash = route('almacen.dashboard');
+                        else $routeDash = route('dashboard');
                     @endphp
                     <a href="{{ $routeDash }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('*.dashboard') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-chart-line w-6"></i>

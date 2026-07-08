@@ -61,7 +61,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @forelse(DB::table('orden_produccion_global')->where('activo', 1)->orderBy('fecha', 'desc')->limit(5)->get() as $orden)
+                        @forelse($ordenesRecientes as $orden)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2 font-medium">{{ $orden->codigo_op }}</td>
                             <td class="px-4 py-2">{{ $orden->descripcion_producto_proceso }}</td>
@@ -93,7 +93,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @forelse(DB::table('produccion_ingresos_proceso')->where('estado', 'PENDIENTE')->orderBy('fecha_ingreso', 'desc')->limit(5)->get() as $ing)
+                        @forelse($recepcionesPendientes as $ing)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-2">{{ $ing->descripcion_producto_proceso }}</td>
                             <td class="px-4 py-2 font-medium">{{ number_format($ing->cantidad, 2) }}</td>

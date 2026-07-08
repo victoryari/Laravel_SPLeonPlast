@@ -186,17 +186,17 @@
                             <div class="flex justify-between text-slate-300 text-sm">
                                 <span>Subtotal:</span>
                                 <input type="hidden" name="total_subtotal" id="h_sub" value="{{ $compra->subtotal }}">
-                                <span id="txt_sub" class="font-medium text-white">S/ {{ number_format($compra->subtotal, 2) }}</span>
+                                <span id="txt_sub" class="font-medium text-white">{{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->subtotal, 2) }}</span>
                             </div>
                             <div class="flex justify-between text-slate-300 text-sm">
                                 <span>IGV (18%):</span>
                                 <input type="hidden" name="total_impuestos" id="h_igv" value="{{ $compra->igv }}">
-                                <span id="txt_igv" class="font-medium text-white">S/ {{ number_format($compra->igv, 2) }}</span>
+                                <span id="txt_igv" class="font-medium text-white">{{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->igv, 2) }}</span>
                             </div>
                             <div class="pt-4 mt-4 border-t border-slate-600 flex justify-between items-center">
                                 <span class="text-slate-200 font-bold text-xl">TOTAL:</span>
                                 <input type="hidden" name="total_general" id="h_total" value="{{ $compra->total }}">
-                                <span id="txt_total" class="text-2xl font-black text-primary">S/ {{ number_format($compra->total, 2) }}</span>
+                                <span id="txt_total" class="text-2xl font-black text-primary">{{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->total, 2) }}</span>
                             </div>
                         </div>
                         <button type="submit" class="w-full mt-8 btn-primary py-3 rounded-xl font-bold text-base flex justify-center gap-2">

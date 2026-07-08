@@ -102,18 +102,20 @@
                         <div class="rounded-lg border border-slate-200 mb-3 overflow-x-auto">
                             <table class="w-full text-left border-collapse table-fixed" id="tablaProductos">
                                 <colgroup>
-                                    <col class="w-[22%]">
+                                    <col class="w-[5%]">
+                                    <col class="w-[20%]">
                                     <col class="w-[11%]">
                                     <col class="w-[8%]">
                                     <col class="w-[8%]">
-                                    <col class="w-[11%]">
                                     <col class="w-[11%]">
                                     <col class="w-[11%]">
                                     <col class="w-[10%]">
-                                    <col class="w-[8%]">
+                                    <col class="w-[10%]">
+                                    <col class="w-[6%]">
                                 </colgroup>
                                 <thead>
                                     <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
+                                        <th class="p-2 font-semibold text-center">#</th>
                                         <th class="p-2 font-semibold">Producto</th>
                                         <th class="p-2 font-semibold">Almacén</th>
                                         <th class="p-2 font-semibold text-center">Cant.</th>
@@ -232,6 +234,9 @@
         let opcionesUM = unidadesData.map(u => `<option value="${u.codigo}" ${u.codigo === um ? 'selected' : ''}>${u.codigo}</option>`).join('');
         return `
         <tr class="fila-producto">
+            <td class="p-1 text-center">
+                <span class="text-xs font-bold text-slate-500 row-item-number">${idx + 1}</span>
+            </td>
             <td class="p-1">
                 <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="${nombre}">${nombre}</span>
                 <input type="hidden" class="input-cod" name="productos[${idx}][codigo]" value="${codigo}">
@@ -459,6 +464,9 @@
                         
                         const html = `
                         <tr class="fila-producto bg-yellow-50/30">
+                            <td class="p-1 text-center">
+                                <span class="text-xs font-bold text-slate-500 row-item-number">${idx + 1}</span>
+                            </td>
                             <td class="p-1">
                                 <span class="texto-prod text-xs font-medium text-slate-800 truncate block" title="${nombre}">${d.codigo_producto} - ${nombre}</span>
                                 <input type="hidden" class="input-cod" name="productos[${idx}][codigo]" value="${d.codigo_producto}">
@@ -527,6 +535,14 @@
                 if (tbody.querySelectorAll('.fila-producto').length > 1) {
                     $(e.target).closest('tr').remove();
                     recalcularTotales();
+                    
+                    // Reenumerar filas
+                    document.querySelectorAll('.fila-producto').forEach((fila, index) => {
+                        const itemNumber = fila.querySelector('.row-item-number');
+                        if (itemNumber) {
+                            itemNumber.textContent = index + 1;
+                        }
+                    });
                 } else {
                     window.toast('Debe haber al menos un producto.', 'warning');
                 }

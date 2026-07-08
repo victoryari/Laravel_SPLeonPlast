@@ -153,8 +153,11 @@ class CompraController extends Controller
 
             $igv_incluido = $request->has('igv_incluido');
 
+            $codigosProductos = collect($request->productos)->pluck('codigo')->unique()->values()->toArray();
+            $productosIndexados = Producto::whereIn('codigo', $codigosProductos)->get()->keyBy('codigo');
+
             foreach ($request->productos as $item) {
-                $prod = Producto::where('codigo', $item['codigo'])->first();
+                $prod = $productosIndexados[$item['codigo']] ?? null;
                 
                 $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
                 $sub = $item['cantidad'] * $precio_unitario;
@@ -179,30 +182,33 @@ class CompraController extends Controller
             if (!empty($request->ids_guias)) {
                 $kardexService = app(\App\Services\KardexService::class);
                 $guiasToUpdate = \App\Models\GuiaRemisionCompra::whereIn('id_guia', $request->ids_guias)->get();
+                $recalcularPendientes = [];
                 foreach ($guiasToUpdate as $guia) {
                     foreach ($request->productos as $item) {
                         $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
                         $tc = $request->moneda === 'USD' ? $request->tipo_cambio : 1.000;
                         $costo_kardex_pen = $precio_unitario * $tc;
-                        
+
                         DB::table('kardex')
                             ->where('numero_documento', $guia->numero_guia)
                             ->where('tipo_movimiento', 'INGRESO')
                             ->where('codigo_producto', $item['codigo'])
-                            ->update([
-                                'costo_entrada' => $costo_kardex_pen
-                            ]);
-                            
+                            ->update(['costo_entrada' => $costo_kardex_pen]);
+
                         $almacenesAfectados = DB::table('kardex')
                             ->where('numero_documento', $guia->numero_guia)
                             ->where('codigo_producto', $item['codigo'])
                             ->pluck('codigo_almacen')
                             ->unique();
-                            
+
                         foreach ($almacenesAfectados as $almacen) {
-                            $kardexService->recalcular($item['codigo'], $almacen);
+                            $key = $item['codigo'] . '|' . $almacen;
+                            $recalcularPendientes[$key] = ['codigo' => $item['codigo'], 'almacen' => $almacen];
                         }
                     }
+                }
+                foreach ($recalcularPendientes as $rp) {
+                    $kardexService->recalcular($rp['codigo'], $rp['almacen']);
                 }
             }
 
@@ -281,8 +287,10 @@ class CompraController extends Controller
 
             DetalleCompra::where('id_compra', $id)->delete();
             $igv_incluido = $request->has('igv_incluido');
+            $codigosProductos = collect($request->productos)->pluck('codigo')->unique()->values()->toArray();
+            $productosIndexados = Producto::whereIn('codigo', $codigosProductos)->get()->keyBy('codigo');
             foreach ($request->productos as $item) {
-                $prod = Producto::where('codigo', $item['codigo'])->first();
+                $prod = $productosIndexados[$item['codigo']] ?? null;
                 $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
                 $sub = $item['cantidad'] * $precio_unitario;
                 $igv_item = $sub * 0.18;
@@ -304,6 +312,7 @@ class CompraController extends Controller
 
             if ($compra->guias && $compra->guias->count() > 0) {
                 $kardexService = app(\App\Services\KardexService::class);
+                $recalcularPendientes = [];
                 foreach ($compra->guias as $guia) {
                     foreach ($request->productos as $item) {
                         $precio_unitario = $igv_incluido ? ($item['precio'] / 1.18) : $item['precio'];
@@ -314,20 +323,22 @@ class CompraController extends Controller
                             ->where('numero_documento', $guia->numero_guia)
                             ->where('tipo_movimiento', 'INGRESO')
                             ->where('codigo_producto', $item['codigo'])
-                            ->update([
-                                'costo_entrada' => $costo_kardex_pen
-                            ]);
-                            
+                            ->update(['costo_entrada' => $costo_kardex_pen]);
+
                         $almacenesAfectados = DB::table('kardex')
                             ->where('numero_documento', $guia->numero_guia)
                             ->where('codigo_producto', $item['codigo'])
                             ->pluck('codigo_almacen')
                             ->unique();
-                            
+
                         foreach ($almacenesAfectados as $almacen) {
-                            $kardexService->recalcular($item['codigo'], $almacen);
+                            $key = $item['codigo'] . '|' . $almacen;
+                            $recalcularPendientes[$key] = ['codigo' => $item['codigo'], 'almacen' => $almacen];
                         }
                     }
+                }
+                foreach ($recalcularPendientes as $rp) {
+                    $kardexService->recalcular($rp['codigo'], $rp['almacen']);
                 }
             }
 
