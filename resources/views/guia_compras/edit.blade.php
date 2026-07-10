@@ -111,7 +111,7 @@
                                     <input type="text" class="w-full border border-slate-200 rounded-md text-xs text-center px-2 py-1 focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Lote..." :name="`productos[${index}][lote]`" x-model="item.lote">
                                 </td>
                                 <td class="p-2">
-                                    <input type="date" class="w-full border border-slate-200 rounded-md text-xs text-center px-1 py-1 focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][fecha_vencimiento]`" x-model="item.vencimiento">
+                                    <input type="date" class="w-full border border-slate-200 rounded-md text-xs text-center px-1 py-1 focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][fecha_vencimiento]`" x-model="item.vencimiento" max="{{ date('Y-m-d') }}">
                                 </td>
                                 <td class="p-2 text-center">
                                     <button type="button" @click="eliminarProducto(index)" class="text-slate-300 hover:text-red-500 transition-colors p-1" title="Eliminar fila">

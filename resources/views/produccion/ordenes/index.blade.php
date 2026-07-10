@@ -22,11 +22,11 @@
             <div class="flex items-center gap-2">
                 <div class="flex flex-col">
                     <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Desde</label>
-                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
                 </div>
                 <div class="flex flex-col">
                     <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Hasta</label>
-                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none">
+                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
                 </div>
             </div>
 
@@ -61,6 +61,7 @@
                         <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold">
                             <th class="p-4 border-r border-slate-700 text-center">OP</th>
                             <th class="p-4 border-r border-slate-700 text-center">Producto</th>
+                            <th class="p-4 border-r border-slate-700 text-center">Descripción</th>
                             <th class="p-4 border-r border-slate-700 text-center">Fecha</th>
                             <th class="p-4 border-r border-slate-700 text-center">Estado</th>
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
@@ -74,6 +75,9 @@
                             </td>
                             <td class="p-4 border-r border-slate-200">
                                 {{ $o->descripcion_producto_proceso ?? 'N/A' }}
+                            </td>
+                            <td class="p-4 border-r border-slate-200 text-sm text-gray-600">
+                                {{ $o->texto_obs ?? '-' }}
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center text-gray-600">
                                 {{ \Carbon\Carbon::parse($o->fecha)->format('d/m/Y') }}
@@ -97,6 +101,15 @@
                                 <a href="{{ route('mermas.reporte_pdf', $o->idop) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 shadow-sm transition-colors" title="Imprimir Hoja de Control de Producción">
                                     <i class="fas fa-file-pdf mr-1"></i> Reporte
                                 </a>
+                                @endif
+                                @if($o->estado == 'PENDIENTE')
+                                <form action="{{ route('produccion.ordenes.destroy', $o->idop) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Está seguro de que desea eliminar/anular esta Orden de Producción?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-gray-600 hover:bg-gray-700 shadow-sm transition-colors" title="Eliminar Orden">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
                                 @endif
                             </td>
                         </tr>

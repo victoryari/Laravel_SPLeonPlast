@@ -39,12 +39,12 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Desde</label>
                         <input type="date" name="fecha_desde" id="inputFechaDesde" value="{{ request('fecha_desde') }}"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" max="{{ date('Y-m-d') }}">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Hasta</label>
                         <input type="date" name="fecha_hasta" id="inputFechaHasta" value="{{ request('fecha_hasta') }}"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                            class="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" max="{{ date('Y-m-d') }}">
                     </div>
                     <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
                         <button type="submit"

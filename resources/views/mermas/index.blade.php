@@ -15,7 +15,7 @@
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
         <form action="{{ route('mermas.index') }}" method="GET" class="flex flex-col md:flex-row gap-3">
             <div class="relative w-full md:w-48">
-                <input type="date" name="fecha" value="{{ request('fecha') }}" class="w-full px-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base outline-none text-gray-600">
+                <input type="date" name="fecha" value="{{ request('fecha') }}" class="w-full px-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base outline-none text-gray-600" max="{{ date('Y-m-d') }}">
             </div>
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

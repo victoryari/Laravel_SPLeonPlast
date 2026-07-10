@@ -44,9 +44,33 @@
                 <table class="w-full text-left border-collapse text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold">
-                            <th class="p-4 border-r border-slate-700 text-center">Código</th>
-                            <th class="p-4 border-r border-slate-700 text-center">Descripción</th>
-                            <th class="p-4 border-r border-slate-700 text-center">Tipo</th>
+                            <th class="p-4 border-r border-slate-700 text-center cursor-pointer hover:bg-slate-700 transition" 
+                                onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => 'codigo', 'order' => request('sort') === 'codigo' && request('order') === 'asc' ? 'desc' : 'asc']) }}'">
+                                Código 
+                                @if(request('sort') === 'codigo')
+                                    <i class="fas fa-sort-{{ request('order') === 'asc' ? 'up' : 'down' }} ml-1"></i>
+                                @else
+                                    <i class="fas fa-sort ml-1 text-slate-500 opacity-50"></i>
+                                @endif
+                            </th>
+                            <th class="p-4 border-r border-slate-700 text-center cursor-pointer hover:bg-slate-700 transition"
+                                onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => 'descripcion', 'order' => request('sort', 'descripcion') === 'descripcion' && request('order', 'asc') === 'asc' ? 'desc' : 'asc']) }}'">
+                                Descripción
+                                @if(request('sort', 'descripcion') === 'descripcion')
+                                    <i class="fas fa-sort-{{ request('order', 'asc') === 'asc' ? 'up' : 'down' }} ml-1"></i>
+                                @else
+                                    <i class="fas fa-sort ml-1 text-slate-500 opacity-50"></i>
+                                @endif
+                            </th>
+                            <th class="p-4 border-r border-slate-700 text-center cursor-pointer hover:bg-slate-700 transition"
+                                onclick="window.location.href='{{ request()->fullUrlWithQuery(['sort' => 'codigo_tipo_producto', 'order' => request('sort') === 'codigo_tipo_producto' && request('order') === 'asc' ? 'desc' : 'asc']) }}'">
+                                Tipo
+                                @if(request('sort') === 'codigo_tipo_producto')
+                                    <i class="fas fa-sort-{{ request('order') === 'asc' ? 'up' : 'down' }} ml-1"></i>
+                                @else
+                                    <i class="fas fa-sort ml-1 text-slate-500 opacity-50"></i>
+                                @endif
+                            </th>
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>

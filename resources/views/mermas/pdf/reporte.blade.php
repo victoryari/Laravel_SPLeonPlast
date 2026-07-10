@@ -95,6 +95,20 @@
             <th>Orden de Producción:</th>
             <td>{{ $op->codigo_op ?? '-' }}</td>
         </tr>
+        @if(isset($op->tara) && $op->tara > 0)
+        <tr>
+            <th>Peso Bruto Inicial:</th>
+            <td>{{ number_format($op->cantidad ?? 0, 2) }} kg</td>
+            <th>Tara / Peso Neto:</th>
+            <td>Tara: {{ number_format($op->tara, 2) }} kg &nbsp;|&nbsp; Neto: {{ number_format(($op->cantidad ?? 0) - $op->tara, 2) }} kg</td>
+        </tr>
+        @endif
+        @if(!empty($op->texto_obs))
+        <tr>
+            <th>Descripción:</th>
+            <td colspan="3">{{ $op->texto_obs }}</td>
+        </tr>
+        @endif
     </table>
 
     <table class="data-table">

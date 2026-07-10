@@ -37,12 +37,12 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Emisión <span class="text-red-500">*</span></label>
-                    <input type="date" name="fecha_emision" value="{{ date('Y-m-d') }}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20" required>
+                    <input type="date" name="fecha_emision" value="{{ date('Y-m-d') }}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20" required max="{{ date('Y-m-d') }}">
                 </div>
                 
                 <div class="sm:col-span-2">
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Almacén Origen <span class="text-red-500">*</span></label>
-                    <select name="codigo_almacen_origen" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20" required>
+                    <select name="codigo_almacen_origen" @change="fetchProductos($event.target.value)" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20" required>
                         <option value="">Seleccione Almacén...</option>
                         @foreach($almacenes as $almacen)
                         <option value="{{ $almacen->codigo_almacen }}">{{ $almacen->codigo_almacen }} - {{ $almacen->descripcion }}</option>
@@ -60,11 +60,9 @@
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Buscar Producto PEP</label>
                     <select id="select-producto" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="">Seleccione un producto...</option>
-                        @foreach($productos as $prod)
-                        <option value="{{ $prod->codigo }}" data-desc="{{ $prod->descripcion }}">
-                            {{ $prod->codigo }} - {{ $prod->descripcion }}
-                        </option>
-                        @endforeach
+                        <template x-for="prod in productosDisponibles" :key="prod.codigo">
+                            <option :value="prod.codigo" :data-desc="prod.descripcion" x-text="prod.codigo + ' - ' + prod.descripcion"></option>
+                        </template>
                     </select>
                 </div>
                 <button type="button" @click="agregarProducto()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-sm font-semibold transition whitespace-nowrap">
@@ -132,7 +130,20 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('guiaSalidaForm', () => ({
             detalles: [],
+            productosDisponibles: [],
             counter: 0,
+
+            fetchProductos(almacen) {
+                if (!almacen) {
+                    this.productosDisponibles = [];
+                    return;
+                }
+                fetch(`{{ route('terceros.salidas.productos_con_stock') }}?almacen=${almacen}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.productosDisponibles = data;
+                    });
+            },
 
             agregarProducto() {
                 const select = document.getElementById('select-producto');

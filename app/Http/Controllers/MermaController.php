@@ -758,6 +758,8 @@ class MermaController extends Controller
             ->where('idop', $idop)
             ->select('id_proceso', 'descripcion_trabajador', 'hora_inicio', 'hora_fin', 'fecha_inicio', 'fecha_fin', 'codigo_formula_produccion', 'lote_produccion_pep', 'descripcion_producto', 'descripcion_centro_trabajo')
             ->get();
+            
+        $procesos = DB::table('orden_proceso')->where('idop', $idop)->get()->keyBy('id');
 
         if (empty($op->descripcion_centro_trabajo_produccion)) {
             $centroComp = $componentes->firstWhere('descripcion_centro_trabajo', '!=', null);
@@ -851,13 +853,25 @@ class MermaController extends Controller
                 $color = $colorDb ? $colorDb->descripcion : $prod->codigo_color;
             }
 
+            $procesoRel = $procesos->get($i->id_proceso);
+            $tipoOp = 'INYECTADA';
+            if ($procesoRel) {
+                switch ($procesoRel->codigo_proceso) {
+                    case '17': $tipoOp = 'TROQUELADA'; break;
+                    case '10': $tipoOp = 'ENSAMBLADA'; break;
+                    case '18': $tipoOp = 'MOLIDA'; break;
+                    case '16': $tipoOp = 'MEZCLADA'; break;
+                    case '15': $tipoOp = 'INYECTADA'; break;
+                }
+            }
+
             $registros->push((object)[
                 'fecha' => $fecha,
                 'hora_inicio' => $hora_ini,
                 'hora_fin' => $hora_fin,
                 'trabajador_nombre' => $trabajador,
                 'cantidad' => $i->cantidad,
-                'motivo' => 'PRODUCCION INYECTADA (' . $i->descripcion_producto_proceso . ')',
+                'motivo' => 'PRODUCCION ' . $tipoOp . ' (' . $i->descripcion_producto_proceso . ')',
                 'tipo' => 'INGRESO',
                 'color' => $color,
                 'timestamp' => $fechaObj->timestamp

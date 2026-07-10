@@ -1,17 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{
-    AuthController, DashboardController, AdminController, UnidadMedidaController,
-    TipoProductoController, ProductoController, ProcesoProduccionController,
-    FormulaController, OperacionProduccionController, CentroTrabajoController,
+    use App\Http\Controllers\{
+        AuthController, DashboardController, AdminController, UnidadMedidaController,
+        TipoProductoController, ProductoController, ProductoProcesoController, ProcesoProduccionController,
+        FormulaController, OperacionProduccionController, CentroTrabajoController,
     TrabajadorController, ProveedorController, ActividadProduccionController,
     MoldeController, ColorController, UsuarioController, CompraController,
     InventarioController, AlmacenController, RolController,
     OrdenProduccionController, OrdenProcesoController, ReporteController,
     ParametroSistemaController, GuiaRemisionCompraController,
     RequerimientoMaterialController, DespachoRequerimientoController,
-    RutasProduccionController, TrazabilidadController
+    RutasProduccionController, TrazabilidadController, MapeoTerceroController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -64,6 +64,9 @@ Route::middleware('auth')->group(function () {
         
         // Productos
         Route::resource('productos', ProductoController::class)->names('productos')->parameters(['productos' => 'codigo']);
+
+        // Productos de Proceso (PEP)
+        Route::resource('productos-proceso', ProductoProcesoController::class)->names('productos_proceso')->parameters(['productos-proceso' => 'codigo']);
         
         // Procesos de Producción
         Route::resource('procesos-produccion', ProcesoProduccionController::class)->names('procesos_produccion')->parameters(['procesos-produccion' => 'codigo']);
@@ -76,6 +79,12 @@ Route::middleware('auth')->group(function () {
         // Otros Maestros
         Route::resource('operaciones-produccion', OperacionProduccionController::class)->names('operaciones_produccion');
         Route::resource('centros-trabajo', CentroTrabajoController::class)->names('centros_trabajo');
+        
+        // Mapeo a Terceros
+        Route::get('mapeo-terceros', [\App\Http\Controllers\MapeoTerceroController::class, 'index'])->name('mapeo-terceros.index');
+        Route::get('mapeo-terceros/create', [\App\Http\Controllers\MapeoTerceroController::class, 'create'])->name('mapeo-terceros.create');
+        Route::post('mapeo-terceros', [\App\Http\Controllers\MapeoTerceroController::class, 'store'])->name('mapeo-terceros.store');
+        Route::delete('mapeo-terceros/{id}', [\App\Http\Controllers\MapeoTerceroController::class, 'destroy'])->name('mapeo-terceros.destroy');
         Route::resource('trabajadores', TrabajadorController::class)->names('trabajadores');
         Route::resource('actividades', ActividadProduccionController::class)->names('actividades');
         Route::resource('moldes', MoldeController::class)->names('moldes');
@@ -337,7 +346,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('terceros')->name('terceros.')->group(function () {
         Route::get('/salidas', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'index'])->name('salidas.index');
         Route::get('/salidas/create', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'create'])->name('salidas.create');
+        Route::get('/salidas/productos-con-stock', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'getProductosConStock'])->name('salidas.productos_con_stock');
         Route::post('/salidas', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'store'])->name('salidas.store');
+        Route::get('/salidas/{id}', [\App\Http\Controllers\GuiaTercerosSalidaController::class, 'show'])->name('salidas.show');
         Route::get('/liquidacion', [\App\Http\Controllers\TercerosLiquidacionController::class, 'index'])->name('liquidacion.index');
         Route::post('/liquidacion/{id}/cerrar', [\App\Http\Controllers\TercerosLiquidacionController::class, 'cerrarConMerma'])->name('liquidacion.cerrar');
     });

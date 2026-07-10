@@ -20,6 +20,8 @@ class OrdenProduccion extends Model
         'fecha',
         'hora_inicio',
         'texto_obs',
+        'cantidad',
+        'tara',
         'estado',
         'activo'
     ];

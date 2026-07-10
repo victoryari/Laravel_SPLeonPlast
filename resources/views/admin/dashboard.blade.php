@@ -38,7 +38,7 @@
         <div class="bg-white rounded-xl shadow-md p-6 border-l-4 border-red-500 hover:shadow-lg transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-gray-500 uppercase">Nivel de Merma Pura</p>
+                    <p class="text-sm font-medium text-gray-500 uppercase">Nivel de Merma</p>
                     <p class="text-2xl font-bold {{ $stats['porcentaje_merma'] > 5 ? 'text-red-600' : 'text-gray-800' }}">
                         {{ $stats['porcentaje_merma'] }}%
                     </p>
@@ -103,7 +103,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <!-- Gráfico Líneas: Tendencia Mermas -->
         <div class="bg-white rounded-xl shadow-md p-6 lg:col-span-2">
-            <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 border-b pb-2">Tendencia de Mermas Pura (Últimos 30 días)</h3>
+            <h3 class="font-bold text-gray-700 uppercase text-sm tracking-wide mb-4 border-b pb-2">Tendencia de Merma (Últimos 30 días)</h3>
             <div class="relative h-64">
                 <canvas id="chartMermas"></canvas>
             </div>

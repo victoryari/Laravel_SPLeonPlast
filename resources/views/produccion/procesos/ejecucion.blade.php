@@ -25,17 +25,22 @@
     </div>
 
     <!-- Cargador de Fórmulas -->
-    @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido) && $estado_proceso_actual !== 'COMPLETADO')
+    @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado) && $estado_proceso_actual !== 'COMPLETADO')
     <div class="bg-white rounded-xl shadow-md border-t-4 border-orange-500 mb-6 overflow-hidden">
         <div class="bg-slate-50 border-b border-gray-200">
-            @if($es_inyectado)
+            @if($es_inyectado || $es_troquelado || $es_horneado)
             <ul class="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200" id="op-tabs">
+                @if($es_inyectado || $es_troquelado || $es_horneado)
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('inyectado')" class="inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-gray-200 rounded-t-lg active" id="tab-inyectado">Producción (Inyectado)</a>
+                    <a href="#" onclick="switchOpTab('inyectado')" class="inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-gray-200 rounded-t-lg active" id="tab-inyectado">
+                        Producción ({{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : 'Inyectado') }})
+                    </a>
                 </li>
+                @endif
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-merma_pura">Merma Pura</a>
+                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50 text-gray-500" id="tab-merma_pura">Merma Pura</a>
                 </li>
+                @if($es_inyectado)
                 <li class="me-2">
                     <a href="#" onclick="switchOpTab('recuperado_molido')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-recuperado_molido">Recuperado para Moler</a>
                 </li>
@@ -45,6 +50,7 @@
                 <li class="me-2">
                     <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-recuperado_maquina">Recup. Máquina</a>
                 </li>
+                @endif
             </ul>
             @else
             <div class="px-6 py-4 flex items-center">
@@ -53,15 +59,45 @@
                 </h2>
             </div>
             @endif
+            @if($es_troquelado)
+            <div class="px-6 py-2 bg-yellow-50 text-yellow-800 font-semibold border-b border-yellow-200 text-sm flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <i class="fas fa-weight mr-1"></i> Peso Bruto:
+                        <span class="bg-white px-2 py-0.5 rounded border border-yellow-200 ml-1">{{ number_format($peso_inicial ?? 0, 2) }}</span>
+                    </div>
+                    <div>
+                        <i class="fas fa-box mr-1"></i> Tara:
+                        <span class="bg-white px-2 py-0.5 rounded border border-yellow-200 ml-1">{{ number_format($tara ?? 0, 2) }}</span>
+                    </div>
+                    <div>
+                        <i class="fas fa-balance-scale mr-1"></i> Peso Neto:
+                        <span class="bg-yellow-200 px-3 py-1 rounded-full text-yellow-900 ml-1 shadow-sm">{{ number_format($peso_neto ?? 0, 2) }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6 text-sm">
+                    <div>
+                        <span class="text-gray-500 font-medium">Consumido:</span>
+                        <span class="font-bold ml-1 text-gray-700">{{ number_format($peso_consumido ?? 0, 2) }} KG</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500 font-medium">Saldo:</span>
+                        <span class="font-bold ml-1 {{ ($peso_neto - $peso_consumido) < 0 ? 'text-red-600' : 'text-emerald-600' }}">
+                            {{ number_format(($peso_neto ?? 0) - ($peso_consumido ?? 0), 2) }} KG
+                        </span>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
         <div class="p-6 bg-white">
-            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado ? 'inyectado' : '' }}">
+            <input type="hidden" id="tipo_operacion" value="inyectado">
             
             <div class="flex flex-wrap items-end gap-4">
                 
-                @if($es_inyectado || $es_ensamblado || $es_molido)
+                @if($es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado)
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_centro">{{ $es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)') }}</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)'))) }}</label>
                     <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
@@ -114,7 +150,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha</label>
-                    <input type="date" id="fecha_global" value="{{ $orden->fecha ?? date('Y-m-d') }}"
+                    <input type="date" id="fecha_global" value="{{ $orden->fecha ?? date('Y-m-d') }}" max="{{ date('Y-m-d') }}"
                         class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                 </div>
 
@@ -132,8 +168,8 @@
 
                 <div class="flex-1"></div>
 
-                <button type="button" onclick="cargarEjecucionAgrupada()" class="px-5 py-2 {{ $es_inyectado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition" id="btn_cargar">
-                    <i class="fas fa-box-open mr-2"></i>Cargar Inyectado
+                <button type="button" onclick="cargarEjecucionAgrupada()" class="px-5 py-2 {{ $es_inyectado || $es_troquelado || $es_horneado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition" id="btn_cargar">
+                    <i class="fas fa-box-open mr-2"></i>Cargar {{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : 'Inyectado') }}
                 </button>
             </div>
 
@@ -542,8 +578,11 @@
     const moldesData = @json($moldes);
     const formulasData = @json($formulas_disponibles);
     const esInyectado = {{ $es_inyectado ? 'true' : 'false' }};
+    const esTroquelado = {{ $es_troquelado ? 'true' : 'false' }};
+    const esHorneado = {{ $es_horneado ? 'true' : 'false' }};
     const esEnsamblado = {{ $es_ensamblado ? 'true' : 'false' }};
     const esMolido = {{ (isset($es_molido) && $es_molido) ? 'true' : 'false' }};
+    const pesoNeto = {{ $peso_neto ?? 0 }};
 
     function vincularFormula() {
         const sm = document.getElementById('molde_global');
@@ -920,14 +959,14 @@
             </td>
 
             <td class="px-2 py-2 align-middle">
-                <input type="date" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-fecha_ini w-[110px]" value="${today}" oninput="syncFechaMaq(this)">
+                <input type="date" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-fecha_ini w-[110px]" value="${today}" max="${today}" oninput="syncFechaMaq(this)">
             </td>
             
             <td style="display:none;">
                 <input type="hidden" class="c-formula" value="${item.formula||document.getElementById('formula_selector')?.value||''}">
                 <input type="hidden" class="c-nominal" value="${item.cantidad_nominal||''}">
-                <input type="date" class="c-fecha_fin" value="${today}" oninput="syncFechaMaq(this)">
-                <input type="date" class="c-fecha_ini_maq" value="${today}"><input type="date" class="c-fecha_fin_maq" value="${today}">
+                <input type="date" class="c-fecha_fin" value="${today}" max="${today}" oninput="syncFechaMaq(this)">
+                <input type="date" class="c-fecha_ini_maq" value="${today}" max="${today}"><input type="date" class="c-fecha_fin_maq" value="${today}" max="${today}">
             </td>
             
             <td class="px-2 py-2 align-middle">
@@ -945,6 +984,8 @@
                     <input type="time" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-hora_fin_maq w-[90px]" value="${item.hora_fin||'17:00'}">
                 </div>
             </td>
+            
+            <td class="px-2 py-2 align-middle"></td>
             
             <td class="px-2 py-2 align-middle text-center">
                 <button type="button" onclick="const r = document.getElementById('${rowId}'); r.remove(); recalcularFormulaDesdeREC(); verificarStock();" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" title="Eliminar fila">
@@ -981,14 +1022,18 @@
         
         let data = [];
         let error = false;
+        let sumCantidad = 0;
         
         filas.forEach(r => {
+            const tipo = r.querySelector('.c-tipo').value;
             const prod = r.querySelector('.c-prod').value;
-            const cant = r.querySelector('.c-cant').value;
-            if (!prod || !cant) error = true;
+            const cant = parseFloat(r.querySelector('.c-cant').value) || 0;
+            if (!prod) error = true;
+            if (tipo !== 'ACT' && cant <= 0) error = true;
+            sumCantidad += cant;
             
             data.push({
-                codigo_tipo_producto: r.querySelector('.c-tipo').value,
+                codigo_tipo_producto: tipo,
                 codigo_producto: prod,
                 codigo_centro_trabajo: r.querySelector('.c-centro').value,
                 codigo_molde: r.querySelector('.c-molde')?.value || null,
@@ -1008,7 +1053,11 @@
             });
         });
         
-        if (error) return window.toast("Por favor seleccione un producto y especifique una cantidad en todas las filas.", 'warning');
+        if (error) return window.toast("Por favor complete los campos requeridos en todas las filas (cantidad es obligatoria excepto para Actividades).", 'warning');
+
+        if (esTroquelado && pesoNeto > 0 && sumCantidad > pesoNeto) {
+            return window.toast(`El consumo total (${sumCantidad} KG) no puede exceder el Peso Neto del Rollo (${pesoNeto} KG).`, 'error');
+        }
         
         // Serializar productos resultantes
         const resultados = document.querySelectorAll('.nueva-fila-resultado');
@@ -1101,7 +1150,7 @@
         const lblFormula = document.getElementById('lbl_formula');
         
         if (tabName === 'inyectado') {
-            btn.innerHTML = '<i class="fas fa-box-open mr-2"></i>Cargar Inyectado';
+            btn.innerHTML = `<i class="fas fa-box-open mr-2"></i>Cargar ${esTroquelado ? 'Troquelado' : 'Inyectado'}`;
             btn.className = 'px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-md shadow-sm transition';
             lblFormula.innerText = 'Fórmula/Color';
         } else if (tabName === 'merma_pura') {

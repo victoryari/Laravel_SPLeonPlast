@@ -9,6 +9,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @stack('styles')
 </head>
 <body class="font-sans leading-normal tracking-normal text-slate-800">
 
@@ -35,7 +36,7 @@
                     </a>
 
 
-                    @if(Auth::user()->hasAnyAccess(['procesos_produccion.index', 'formulas.index', 'productos.index', 'tipos_producto.index', 'unidades_medida.index', 'operaciones_produccion.index', 'centros_trabajo.index', 'trabajadores.index', 'proveedores.index', 'actividades.index', 'moldes.index', 'colores.index']))
+                    @if(Auth::user()->hasAnyAccess(['procesos_produccion.index', 'formulas.index', 'productos.index', 'productos_proceso.index', 'tipos_producto.index', 'unidades_medida.index', 'operaciones_produccion.index', 'centros_trabajo.index', 'trabajadores.index', 'proveedores.index', 'actividades.index', 'moldes.index', 'colores.index']))
                     <div>
                         <button type="button" id="btnTablasMaestras" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
@@ -49,10 +50,12 @@
                             @if(Auth::user()->hasAccess('procesos_produccion.index'))<a href="{{ route('procesos_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('procesos_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Procesos de producción</a>@endif
                             @if(Auth::user()->hasAccess('formulas.index'))<a href="{{ route('formulas.index') }}" class="block p-2 text-sm {{ request()->routeIs('formulas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Fórmulas</a>@endif
                             @if(Auth::user()->hasAccess('productos.index'))<a href="{{ route('productos.index') }}" class="block p-2 text-sm {{ request()->routeIs('productos.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Productos</a>@endif
+                            @if(Auth::user()->hasAccess('productos_proceso.index'))<a href="{{ route('productos_proceso.index') }}" class="block p-2 text-sm {{ request()->routeIs('productos_proceso.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Productos de proceso</a>@endif
                             @if(Auth::user()->hasAccess('tipos_producto.index'))<a href="{{ route('tipos_producto.index') }}" class="block p-2 text-sm {{ request()->routeIs('tipos_producto.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Tipo de productos</a>@endif
                             @if(Auth::user()->hasAccess('unidades_medida.index'))<a href="{{ route('unidades_medida.index') }}" class="block p-2 text-sm {{ request()->routeIs('unidades_medida.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Unidad de medida</a>@endif
                             @if(Auth::user()->hasAccess('operaciones_produccion.index'))<a href="{{ route('operaciones_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('operaciones_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Operaciones</a>@endif
                             @if(Auth::user()->hasAccess('centros_trabajo.index'))<a href="{{ route('centros_trabajo.index') }}" class="block p-2 text-sm {{ request()->routeIs('centros_trabajo.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Centros de trabajo</a>@endif
+                            @if(Auth::user()->rol == 'Administrador')<a href="{{ route('mapeo-terceros.index') }}" class="block p-2 text-sm {{ request()->routeIs('mapeo-terceros.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Mapeo a Terceros</a>@endif
                             @if(Auth::user()->hasAccess('trabajadores.index'))<a href="{{ route('trabajadores.index') }}" class="block p-2 text-sm {{ request()->routeIs('trabajadores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Trabajadores</a>@endif
                             @if(Auth::user()->hasAccess('actividades.index'))<a href="{{ route('actividades.index') }}" class="block p-2 text-sm {{ request()->routeIs('actividades.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Actividades</a>@endif
                             @if(Auth::user()->hasAccess('moldes.index'))<a href="{{ route('moldes.index') }}" class="block p-2 text-sm {{ request()->routeIs('moldes.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Moldes</a>@endif
@@ -353,10 +356,10 @@
         const currentUrl = window.location.href;
 
         const maestrasSlugs = [
-            'unidades-medida', 'tipos-producto', 'productos',
+            'unidades-medida', 'tipos-producto', 'productos', 'productos-proceso',
             'procesos-produccion', 'formulas', 'operaciones-produccion',
             'centros-trabajo', 'trabajadores',
-            'actividades', 'moldes', 'colores', 'parametros'
+            'actividades', 'moldes', 'colores', 'parametros', 'mapeo-terceros'
         ];
 
         if (maestrasSlugs.some(slug => currentUrl.includes(slug))) {

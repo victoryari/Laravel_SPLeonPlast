@@ -27,8 +27,8 @@ class OrdenProduccionController extends Controller
             });
         }
 
-        $ordenes = $query->orderBy('fecha', 'desc')
-            ->orderBy('idop', 'desc')
+        $ordenes = $query->orderBy('fecha', 'asc')
+            ->orderBy('idop', 'asc')
             ->paginate(15)
             ->appends($request->all());
 
@@ -68,7 +68,9 @@ class OrdenProduccionController extends Controller
             'codigo_producto_proceso' => 'required|string',
             'fecha' => 'required|date',
             'hora_inicio' => 'nullable|date_format:H:i',
-            'texto_obs' => 'nullable|string'
+            'texto_obs' => 'nullable|string',
+            'cantidad' => 'nullable|numeric|min:0',
+            'tara' => 'nullable|numeric|min:0'
         ]);
 
         try {
@@ -84,6 +86,8 @@ class OrdenProduccionController extends Controller
                 'fecha' => $request->fecha,
                 'hora_inicio' => $request->hora_inicio,
                 'texto_obs' => $request->texto_obs,
+                'cantidad' => $request->cantidad,
+                'tara' => $request->tara,
                 'estado' => 'PENDIENTE',
                 'activo' => 1
             ]);

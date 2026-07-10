@@ -1,3 +1,6 @@
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
+@endpush
 @extends('layouts.app')
 @section('title', 'Nueva Guía de Remisión')
 
@@ -49,7 +52,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Emisión <span class="text-red-500">*</span></label>
-                    <input type="date" name="fecha_emision" value="{{ old('fecha_emision', date('Y-m-d')) }}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20" required>
+                    <input type="date" name="fecha_emision" value="{{ old('fecha_emision', date('Y-m-d')) }}" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20" required max="{{ date('Y-m-d') }}">
                 </div>
             </div>
         </div>
@@ -63,7 +66,7 @@
                     <select id="select-producto" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20">
                         <option value="">Seleccione un producto...</option>
                         @foreach($productos as $prod)
-                            <option value="{{ $prod->codigo }}" data-desc="{{ $prod->descripcion }}" data-um="{{ $prod->unidad_medida_codigo ?? 'NIU' }}">
+                            <option value="{{ $prod->codigo }}" data-desc="{{ $prod->descripcion }}" data-um="{{ $prod->codigo_unidad_medida ?? 'NIU' }}">
                                 {{ $prod->codigo }} - {{ $prod->descripcion }}
                             </option>
                         @endforeach
@@ -110,7 +113,7 @@
                                     <input type="text" class="w-full border border-slate-200 rounded-md text-xs text-center px-2 py-1 focus:border-primary focus:ring-1 focus:ring-primary" placeholder="Lote..." :name="`productos[${index}][lote]`" x-model="item.lote">
                                 </td>
                                 <td class="p-2">
-                                    <input type="date" class="w-full border border-slate-200 rounded-md text-xs text-center px-1 py-1 focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][fecha_vencimiento]`" x-model="item.vencimiento">
+                                    <input type="date" class="w-full border border-slate-200 rounded-md text-xs text-center px-1 py-1 focus:border-primary focus:ring-1 focus:ring-primary" :name="`productos[${index}][fecha_vencimiento]`" x-model="item.vencimiento" max="{{ date('Y-m-d') }}">
                                 </td>
                                 <td class="p-2 text-center">
                                     <button type="button" @click="eliminarProducto(index)" class="text-slate-300 hover:text-red-500 transition-colors p-1" title="Eliminar fila">
@@ -146,7 +149,18 @@
 
 @push('scripts')
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        window.tsInstance = new TomSelect("#select-producto",{
+            create: false,
+            sortField: {
+                field: "text",
+                direction: "asc"
+            }
+        });
+    });
+
     document.addEventListener('alpine:init', () => {
         Alpine.data('guiaForm', () => ({
             ruc_proveedor: '{{ old('ruc_proveedor') }}',
@@ -187,7 +201,11 @@
                     vencimiento: '',
                     cantidad: 1
                 });
-                select.value = '';
+                if (window.tsInstance) {
+                    window.tsInstance.clear();
+                } else {
+                    select.value = '';
+                }
             },
 
             eliminarProducto(index) {

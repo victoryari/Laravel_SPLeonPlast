@@ -45,11 +45,26 @@ class ProductoController extends Controller
             $query->where('codigo_tipo_producto', $tipoFiltro);
         }
 
+        // Ordenamiento dinámico
+        $sort = $request->input('sort', 'descripcion'); // Por defecto ordena por descripción
+        $order = $request->input('order', 'asc');
+        
+        $validSortColumns = ['codigo', 'descripcion', 'codigo_tipo_producto'];
+        if (!in_array($sort, $validSortColumns)) {
+            $sort = 'descripcion';
+        }
+        $order = strtolower($order) === 'desc' ? 'desc' : 'asc';
+
         // Ejecutamos la paginación
-        $productos = $query->orderBy('descripcion', 'asc')->paginate(10);
+        $productos = $query->orderBy($sort, $order)->paginate(10);
         
         // Aseguramos que los enlaces de paginación conserven los filtros actuales
-        $productos->appends(['search' => $search, 'codigo_tipo_producto' => $tipoFiltro]);
+        $productos->appends([
+            'search' => $search, 
+            'codigo_tipo_producto' => $tipoFiltro,
+            'sort' => $sort,
+            'order' => $order
+        ]);
 
         // Cargamos los tipos para el select del filtro
         $tipos = TipoProducto::where('estado', 1)->orderBy('descripcion', 'asc')->get();

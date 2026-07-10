@@ -53,7 +53,7 @@
                             </x-form-group>
 
                             <x-form-group class="md:col-span-2" label="Fecha de Emisión" required>
-                                <input type="date" name="fecha_compra" value="{{ date('Y-m-d') }}" class="input-field" required>
+                                <input type="date" name="fecha_compra" value="{{ date('Y-m-d') }}" class="input-field" required max="{{ date('Y-m-d') }}">
                             </x-form-group>
 
                             <x-form-group class="md:col-span-2" label="Moneda" required>
@@ -258,7 +258,7 @@
                 <input type="text" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px" placeholder="Lote" name="productos[${idx}][lote]">
             </td>
             <td class="p-1">
-                <input type="date" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]">
+                <input type="date" class="w-full border border-slate-200 bg-slate-50 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]" max="{{ date('Y-m-d') }}">
             </td>
             <td class="p-1">
                 <input type="number" step="any" min="0" class="w-full border border-slate-200 bg-slate-50 text-right rounded-md text-xs text-primary font-semibold input-prec" style="height:28px" name="productos[${idx}][precio]">
@@ -488,7 +488,7 @@
                                 <input type="text" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][lote]" value="${d.lote || ''}" readonly tabindex="-1">
                             </td>
                             <td class="p-1">
-                                <input type="date" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]" value="${d.fecha_vencimiento ? d.fecha_vencimiento.split('T')[0] : ''}" readonly tabindex="-1">
+                                <input type="date" class="w-full border border-slate-200 bg-slate-100 rounded-md text-xs text-center" style="height:28px" name="productos[${idx}][fecha_vencimiento]" value="${d.fecha_vencimiento ? d.fecha_vencimiento.split('T')[0] : ''}" readonly tabindex="-1" max="{{ date('Y-m-d') }}">
                             </td>
                         <td class="p-1">
                             <input type="number" step="any" min="0" class="w-full border border-primary bg-white text-right rounded-md text-xs text-primary font-bold input-prec focus:ring-primary shadow-inner" style="height:28px" name="productos[${idx}][precio]" placeholder="0.00" required autofocus>

@@ -35,7 +35,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Fecha Transferencia</label>
-                    <input type="date" name="fecha_transferencia" value="{{ date('Y-m-d') }}" class="w-full border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50" required>
+                    <input type="date" name="fecha_transferencia" value="{{ date('Y-m-d') }}" class="w-full border-gray-300 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 bg-gray-50" required max="{{ date('Y-m-d') }}">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Almacén de Origen</label>

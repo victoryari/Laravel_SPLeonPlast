@@ -30,7 +30,7 @@
                                 <x-form-group label="Fecha de Requerimiento" required>
                                     <input type="date" name="fecha_requerimiento" 
                                            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none" 
-                                           value="{{ date('Y-m-d') }}" required>
+                                           value="{{ date('Y-m-d') }}" required max="{{ date('Y-m-d') }}">
                                 </x-form-group>
                             </div>
                             <div>

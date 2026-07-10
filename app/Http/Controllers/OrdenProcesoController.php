@@ -323,6 +323,11 @@ class OrdenProcesoController extends Controller
         $es_inyectado = ($proceso->codigo_proceso == '15');
         $es_ensamblado = ($proceso->codigo_proceso == '10');
         $es_molido = ($proceso->codigo_proceso == '18');
+        $es_troquelado = ($proceso->codigo_proceso == '17');
+        $es_horneado = ($proceso->codigo_proceso == '13');
+        $peso_inicial = $orden->cantidad;
+        $tara = $orden->tara;
+        $peso_neto = max(0, floatval($peso_inicial) - floatval($tara));
 
         $proceso_nombre = strtoupper(trim($proceso->proceso_desc));
         $formulas_disponibles = DB::table('formula_produccion')
@@ -353,6 +358,11 @@ class OrdenProcesoController extends Controller
 
         $registrados = ComponenteOrdenProduccion::where('id_proceso', $id)->where('estado', 1)->orderBy('fecha_inicio', 'asc')->orderBy('hora_inicio', 'asc')->get();
         $tiene_componentes = ($registrados->count() > 0);
+
+        $peso_consumido = 0;
+        if ($es_troquelado || $es_horneado) {
+            $peso_consumido = $registrados->where('codigo_tipo_producto', '!=', 'ACT')->sum('cantidad');
+        }
 
         // Agrupar por fórmula y fecha de creación (Cargas)
         $cargas_agrupadas = collect();
@@ -427,32 +437,12 @@ class OrdenProcesoController extends Controller
         $almacenes = DB::table('almacen')->where('activo', 1)->get();
         $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
 
-        // Intentar deducir el producto resultante basado en el proceso actual
-        $descOrden = $orden->descripcion_producto_proceso;
-        $descProcesoActual = $proceso->proceso_desc ?? $proceso->descripcion_proceso;
-        
-        $words = explode(' ', $descOrden);
-        if (count($words) > 1) {
-            array_pop($words); // Quitar la última palabra (ej. TROQUELADO)
-            $baseName = implode(' ', $words);
-        } else {
-            $baseName = $descOrden;
-        }
-        
-        $descSugerida = trim($baseName . ' ' . $descProcesoActual);
-
-        $producto_sugerido = DB::table('producto')
-            ->where('es_producto_proceso', 1)
-            ->where(function($q) use ($descOrden, $descSugerida) {
-                $q->where('descripcion', $descSugerida)
-                  ->orWhere('descripcion', $descOrden);
-            })
-            // Priorizar el que coincida exactamente con la descripcion sugerida del proceso
-            ->orderByRaw("CASE WHEN descripcion = ? THEN 1 ELSE 2 END", [$descSugerida])
-            ->first();
+        // Ya no se deduce el producto resultante automáticamente para Troquelado/Horneado
+        // dado que ahora trabajan con fórmulas directamente.
+        $producto_sugerido = null;
 
         return view('produccion.procesos.ejecucion', compact(
-            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_molido',
+            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_molido', 'es_troquelado', 'es_horneado', 'peso_inicial', 'tara', 'peso_neto', 'peso_consumido',
             'formulas_disponibles', 'registrados', 'cargas_agrupadas', 'tiene_componentes', 'tipos_producto',
             'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen', 'producto_sugerido'
         ));
@@ -584,6 +574,31 @@ class OrdenProcesoController extends Controller
         try {
             DB::beginTransaction();
 
+            $proceso = DB::table('orden_proceso')->where('id', $id)->first();
+            if ($proceso && $proceso->codigo_proceso == '17') {
+                $orden = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+                $peso_neto = max(0, floatval($orden->cantidad) - floatval($orden->tara));
+                
+                $cantidad_existente = DB::table('componentes_orden_produccion_global')
+                    ->where('idop', $idop)
+                    ->where('id_proceso', $id)
+                    ->where('estado', 1)
+                    ->where('codigo_tipo_producto', '!=', 'ACT')
+                    ->sum('cantidad') ?? 0;
+                
+                $cantidad_nueva = 0;
+                foreach ($componentes as $c) {
+                    $tipo = $c['codigo_tipo_producto'] ?? 'MTP';
+                    if ($tipo !== 'ACT' && !str_contains(strtolower($c['descripcion'] ?? ''), 'parada') && !str_contains(strtolower($c['descripcion'] ?? ''), 'cambio')) {
+                        $cantidad_nueva += floatval($c['cantidad'] ?? 0);
+                    }
+                }
+                
+                if (round($cantidad_existente + $cantidad_nueva, 2) > round($peso_neto, 2)) {
+                    throw new \Exception("La suma de las cantidades (" . number_format($cantidad_existente + $cantidad_nueva, 2) . " KG) supera el Peso Neto (" . number_format($peso_neto, 2) . " KG). Actualice la cantidad a registrar.");
+                }
+            }
+
             $usuario_id = Auth::user()->id_usuario ?? 5;
             $batch_id = mt_rand(1000, 9999);
             $numero_referencia = "OP-{$idop}-PROC-{$id}-" . $batch_id;
@@ -609,6 +624,22 @@ class OrdenProcesoController extends Controller
             if ($proceso->estado_avance === 'COMPLETADO') {
                 throw new \Exception("No se pueden registrar componentes en un proceso COMPLETADO.");
             }
+
+            // Validar peso neto si es Troquelado
+            if ($proceso->codigo_proceso == '17') {
+                $orden = OrdenProduccion::findOrFail($idop);
+                $peso_neto = max(0, floatval($orden->cantidad) - floatval($orden->tara));
+                if ($peso_neto > 0) {
+                    $consumo_total = 0;
+                    foreach ($componentes as $comp) {
+                        $consumo_total += floatval($comp['cantidad'] ?? 0);
+                    }
+                    if ($consumo_total > $peso_neto) {
+                        throw new \Exception("El consumo total ({$consumo_total} KG) excede el Peso Neto del Rollo ({$peso_neto} KG).");
+                    }
+                }
+            }
+
             $es_actividad = ($proceso->codigo_proceso == '1');
 
             if ($es_actividad) {
@@ -988,11 +1019,18 @@ class OrdenProcesoController extends Controller
 
                     if ($es_merma) {
                         $tipoMerma = 'RECUPERABLE';
-                        if ($tipo_op_origen === 'limpieza') $tipoMerma = 'MIXTO';
-                        if (str_contains($tipo_op_origen, 'molido')) $tipoMerma = 'MOLIDO';
-
                         $motivoM = 'RECICLADO INYECCION';
-                        if ($tipo_op_origen === 'limpieza') $motivoM = 'RECICLADO DE LIMPIEZA';
+
+                        if ($tipo_op_origen === 'limpieza') {
+                            $tipoMerma = 'MIXTO';
+                            $motivoM = 'RECICLADO DE LIMPIEZA';
+                        } elseif (str_contains($tipo_op_origen, 'molido')) {
+                            $tipoMerma = 'MOLIDO';
+                            $motivoM = 'RECUPERADO MOLIDO';
+                        } elseif ($tipo_op_origen === 'merma_pura') {
+                            $tipoMerma = 'PURA';
+                            $motivoM = 'MERMA PURA';
+                        }
 
                         $costo_unitario_merma = round($costo_total_consumos / $g['cant'], 6);
 
@@ -1016,74 +1054,75 @@ class OrdenProcesoController extends Controller
                             'updated_at' => now()
                         ]);
 
-                        // Generar el ingreso a Kardex de la Merma (REC-)
-                        $param = DB::table('parametros_sistema')->where('codigo_parametro', 'PORCENTAJE_COSTO_RECICLADO')->first();
-                        $porcentaje = $param ? (float) $param->valor : 0.8;
-                        
-                        $costoReciclado = $costo_unitario_merma * $porcentaje;
-                        $totalEntradaRec = round($g['cant'] * $costoReciclado, 2);
+                        if ($tipo_op_origen !== 'merma_pura') {
+                            // Generar el ingreso a Kardex de la Merma (REC-)
+                            $param = DB::table('parametros_sistema')->where('codigo_parametro', 'PORCENTAJE_COSTO_RECICLADO')->first();
+                            $porcentaje = $param ? (float) $param->valor : 0.8;
+                            
+                            $costoReciclado = $costo_unitario_merma * $porcentaje;
+                            $totalEntradaRec = round($g['cant'] * $costoReciclado, 2);
 
-                        $codRecuperado = 'REC-' . $g['codigo_pep'];
-                        $prodPrincipal = DB::table('producto')->where('codigo', $g['codigo_pep'])->first();
+                            $codRecuperado = 'REC-' . $g['codigo_pep'];
+                            $prodPrincipal = DB::table('producto')->where('codigo', $g['codigo_pep'])->first();
 
-                        DB::table('producto')->updateOrInsert(
-                            ['codigo' => $codRecuperado],
-                            [
-                                'descripcion' => 'RECUPERADO - ' . $g['descripcion_pep'],
-                                'codigo_tipo_producto' => $prodPrincipal->codigo_tipo_producto ?? 'PEP',
-                                'codigo_unidad_medida' => $prodPrincipal->codigo_unidad_medida ?? 'KG',
-                                'estado' => 1
-                            ]
-                        );
+                            DB::table('producto')->updateOrInsert(
+                                ['codigo' => $codRecuperado],
+                                [
+                                    'descripcion' => 'RECUPERADO - ' . $g['descripcion_pep'],
+                                    'codigo_tipo_producto' => $prodPrincipal->codigo_tipo_producto ?? 'PEP',
+                                    'codigo_unidad_medida' => $prodPrincipal->codigo_unidad_medida ?? 'KG',
+                                    'estado' => 1
+                                ]
+                            );
 
-                        DB::table('inventario')->updateOrInsert(
-                            ['codigo_producto' => $codRecuperado, 'codigo_almacen' => $almacen_origen],
-                            ['stock_minimo' => 0, 'stock_maximo' => 0]
-                        );
+                            DB::table('inventario')->updateOrInsert(
+                                ['codigo_producto' => $codRecuperado, 'codigo_almacen' => $almacen_origen],
+                                ['stock_minimo' => 0, 'stock_maximo' => 0]
+                            );
 
-                        $invRec = DB::table('inventario')
-                            ->where('codigo_producto', $codRecuperado)
-                            ->where('codigo_almacen', $almacen_origen)
-                            ->first();
+                            $invRec = DB::table('inventario')
+                                ->where('codigo_producto', $codRecuperado)
+                                ->where('codigo_almacen', $almacen_origen)
+                                ->first();
 
-                        $saldoAnteriorRec = $invRec->stock_actual ?? 0;
-                        $costoPromAnteriorRec = $invRec->costo_promedio ?? 0;
-                        $nuevoSaldoRec = $saldoAnteriorRec + $g['cant'];
-                        $nuevoTotalSaldoRec = ($saldoAnteriorRec * $costoPromAnteriorRec) + $totalEntradaRec;
-                        $nuevoCostoPromRec = $nuevoSaldoRec > 0 ? round($nuevoTotalSaldoRec / $nuevoSaldoRec, 6) : 0;
+                            $saldoAnteriorRec = $invRec->stock_actual ?? 0;
+                            $costoPromAnteriorRec = $invRec->costo_promedio ?? 0;
+                            $nuevoSaldoRec = $saldoAnteriorRec + $g['cant'];
+                            $nuevoTotalSaldoRec = ($saldoAnteriorRec * $costoPromAnteriorRec) + $totalEntradaRec;
+                            $nuevoCostoPromRec = $nuevoSaldoRec > 0 ? round($nuevoTotalSaldoRec / $nuevoSaldoRec, 6) : 0;
 
-                        DB::table('inventario')
-                            ->where('codigo_producto', $codRecuperado)
-                            ->where('codigo_almacen', $almacen_origen)
-                            ->update([
-                                'stock_actual' => $nuevoSaldoRec,
+                            DB::table('inventario')
+                                ->where('codigo_producto', $codRecuperado)
+                                ->where('codigo_almacen', $almacen_origen)
+                                ->update([
+                                    'stock_actual' => $nuevoSaldoRec,
+                                    'costo_promedio' => $nuevoCostoPromRec,
+                                    'fecha_ultimo_movimiento' => now(),
+                                    'usuario_ultimo_movimiento' => $usuario_id
+                                ]);
+
+                            $numeroDocMerma = 'MERMA-' . str_pad($id_merma, 6, '0', STR_PAD_LEFT);
+
+                            DB::table('kardex')->insert([
+                                'codigo_producto' => $codRecuperado,
+                                'codigo_almacen' => $almacen_origen,
+                                'fecha_movimiento' => $fecha_movimiento_general,
+                                'tipo_movimiento' => 'INGRESO',
+                                'documento' => $motivoM,
+                                'numero_documento' => $numeroDocMerma,
+                                'cantidad_entrada' => $g['cant'],
+                                'costo_entrada' => $costoReciclado,
+                                'total_entrada' => $totalEntradaRec,
+                                'cantidad_salida' => 0,
+                                'costo_salida' => 0,
+                                'total_salida' => 0,
+                                'cantidad_saldo' => $nuevoSaldoRec,
                                 'costo_promedio' => $nuevoCostoPromRec,
-                                'fecha_ultimo_movimiento' => now(),
-                                'usuario_ultimo_movimiento' => $usuario_id
+                                'total_saldo' => round($nuevoSaldoRec * $nuevoCostoPromRec, 6),
+                                'observaciones' => "INGRESO DE MATERIAL RECUPERADO DE MERMA OP-{$idop}",
+                                'usuario_registro' => $usuario_id
                             ]);
-
-                        $numeroDocMerma = 'MERMA-' . str_pad($id_merma, 6, '0', STR_PAD_LEFT);
-
-                        DB::table('kardex')->insert([
-                            'codigo_producto' => $codRecuperado,
-                            'codigo_almacen' => $almacen_origen,
-                            'fecha_movimiento' => $fecha_movimiento_general,
-                            'tipo_movimiento' => 'INGRESO',
-                            'documento' => $motivoM,
-                            'numero_documento' => $numeroDocMerma,
-                            'cantidad_entrada' => $g['cant'],
-                            'costo_entrada' => $costoReciclado,
-                            'total_entrada' => $totalEntradaRec,
-                            'cantidad_salida' => 0,
-                            'costo_salida' => 0,
-                            'total_salida' => 0,
-                            'cantidad_saldo' => $nuevoSaldoRec,
-                            'costo_promedio' => $nuevoCostoPromRec,
-                            'total_saldo' => round($nuevoSaldoRec * $nuevoCostoPromRec, 6),
-                            'observaciones' => "INGRESO DE MATERIAL RECUPERADO DE MERMA OP-{$idop}",
-                            'usuario_registro' => $usuario_id
-                        ]);
-
+                        }
                     } else {
                         DB::table('produccion_ingresos_proceso')->insert([
                             'idop' => $idop,
@@ -1137,6 +1176,8 @@ class OrdenProcesoController extends Controller
                 $q->where('estado_avance', 'PENDIENTE')->orWhereNull('estado_avance');
             })->update(['estado_avance' => 'EN_PROCESO']);
 
+            DB::table('orden_produccion_global')->where('idop', $idop)->where('estado', 'PENDIENTE')->update(['estado' => 'EN_PROCESO']);
+
             DB::commit();
             if ($request->ajax()) {
                 return response()->json(['success' => true, 'message' => "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados."]);
@@ -1188,14 +1229,14 @@ class OrdenProcesoController extends Controller
                     'descripcion_trabajador' => $request->codigo_trabajador
                         ? DB::table('trabajador')->where('codigo', $request->codigo_trabajador)->value('nombre')
                         : $componente->descripcion_trabajador,
-                    'fecha_inicio' => $request->fecha_inicio ?? $componente->fecha_inicio,
-                    'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
-                    'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
-                    'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
-                    'fecha_inicio_maquina' => $request->fecha_inicio_maquina ?? $componente->fecha_inicio_maquina,
-                    'fecha_fin_maquina'    => $request->fecha_fin_maquina ?? $componente->fecha_fin_maquina,
-                    'hora_inicio_maquina'  => $request->hora_inicio_maquina ?? $componente->hora_inicio_maquina,
-                    'hora_fin_maquina'     => $request->hora_fin_maquina ?? $componente->hora_fin_maquina,
+                    'fecha_inicio' => $request->has('fecha_inicio') ? $request->input('fecha_inicio') : $componente->fecha_inicio,
+                    'fecha_fin'    => $request->has('fecha_fin') ? $request->input('fecha_fin') : $componente->fecha_fin,
+                    'hora_inicio'  => $request->has('hora_inicio') ? $request->input('hora_inicio') : $componente->hora_inicio,
+                    'hora_fin'     => $request->has('hora_fin') ? $request->input('hora_fin') : $componente->hora_fin,
+                    'fecha_inicio_maquina' => $request->has('fecha_inicio_maquina') ? $request->input('fecha_inicio_maquina') : $componente->fecha_inicio_maquina,
+                    'fecha_fin_maquina'    => $request->has('fecha_fin_maquina') ? $request->input('fecha_fin_maquina') : $componente->fecha_fin_maquina,
+                    'hora_inicio_maquina'  => $request->has('hora_inicio_maquina') ? $request->input('hora_inicio_maquina') : $componente->hora_inicio_maquina,
+                    'hora_fin_maquina'     => $request->has('hora_fin_maquina') ? $request->input('hora_fin_maquina') : $componente->hora_fin_maquina,
                 ]);
                 DB::commit();
                 return back()->with('success', 'Actividad actualizada correctamente.');
@@ -1204,6 +1245,22 @@ class OrdenProcesoController extends Controller
             $nuevaCantidad = floatval($request->cantidad);
             $originalCantidad = floatval($componente->cantidad);
             $diferencia = $nuevaCantidad - $originalCantidad;
+
+            $proceso = DB::table('orden_proceso')->where('id', $id)->first();
+            if ($proceso && $proceso->codigo_proceso == '17' && $componente->codigo_tipo_producto !== 'ACT') {
+                $orden = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+                $peso_neto = max(0, floatval($orden->cantidad) - floatval($orden->tara));
+                $cantidad_existente = DB::table('componentes_orden_produccion_global')
+                    ->where('idop', $idop)
+                    ->where('id_proceso', $id)
+                    ->where('estado', 1)
+                    ->where('codigo_tipo_producto', '!=', 'ACT')
+                    ->sum('cantidad') ?? 0;
+                
+                if (round($cantidad_existente + $diferencia, 2) > round($peso_neto, 2)) {
+                    throw new \Exception("La suma de las cantidades (" . number_format($cantidad_existente + $diferencia, 2) . " KG) supera el Peso Neto (" . number_format($peso_neto, 2) . " KG). Actualice la cantidad a registrar.");
+                }
+            }
 
             $movimientosOrigen = DB::table('movimientos_inventario')
                 ->where('componente_origen_id', $id_componente)
@@ -1218,14 +1275,14 @@ class OrdenProcesoController extends Controller
                     'descripcion_trabajador' => $request->codigo_trabajador
                         ? DB::table('trabajador')->where('codigo', $request->codigo_trabajador)->value('nombre')
                         : $componente->descripcion_trabajador,
-                    'fecha_inicio' => $request->fecha_inicio ?? $componente->fecha_inicio,
-                    'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
-                    'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
-                    'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
-                    'fecha_inicio_maquina' => $request->fecha_inicio_maquina ?? $componente->fecha_inicio_maquina,
-                    'fecha_fin_maquina'    => $request->fecha_fin_maquina ?? $componente->fecha_fin_maquina,
-                    'hora_inicio_maquina'  => $request->hora_inicio_maquina ?? $componente->hora_inicio_maquina,
-                    'hora_fin_maquina'     => $request->hora_fin_maquina ?? $componente->hora_fin_maquina,
+                    'fecha_inicio' => $request->has('fecha_inicio') ? $request->input('fecha_inicio') : $componente->fecha_inicio,
+                    'fecha_fin'    => $request->has('fecha_fin') ? $request->input('fecha_fin') : $componente->fecha_fin,
+                    'hora_inicio'  => $request->has('hora_inicio') ? $request->input('hora_inicio') : $componente->hora_inicio,
+                    'hora_fin'     => $request->has('hora_fin') ? $request->input('hora_fin') : $componente->hora_fin,
+                    'fecha_inicio_maquina' => $request->has('fecha_inicio_maquina') ? $request->input('fecha_inicio_maquina') : $componente->fecha_inicio_maquina,
+                    'fecha_fin_maquina'    => $request->has('fecha_fin_maquina') ? $request->input('fecha_fin_maquina') : $componente->fecha_fin_maquina,
+                    'hora_inicio_maquina'  => $request->has('hora_inicio_maquina') ? $request->input('hora_inicio_maquina') : $componente->hora_inicio_maquina,
+                    'hora_fin_maquina'     => $request->has('hora_fin_maquina') ? $request->input('hora_fin_maquina') : $componente->hora_fin_maquina,
                     'cantidad'     => $nuevaCantidad,
                 ]);
                 DB::commit();
@@ -1475,14 +1532,14 @@ class OrdenProcesoController extends Controller
                 'descripcion_trabajador' => $request->codigo_trabajador
                     ? DB::table('trabajador')->where('codigo', $request->codigo_trabajador)->value('nombre')
                     : $componente->descripcion_trabajador,
-                'fecha_inicio' => $request->fecha_inicio ?? $componente->fecha_inicio,
-                'fecha_fin'    => $request->fecha_fin ?? $componente->fecha_fin,
-                'hora_inicio'  => $request->hora_inicio ?? $componente->hora_inicio,
-                'hora_fin'     => $request->hora_fin ?? $componente->hora_fin,
-                'fecha_inicio_maquina' => $request->fecha_inicio_maquina ?? $componente->fecha_inicio_maquina,
-                'fecha_fin_maquina'    => $request->fecha_fin_maquina ?? $componente->fecha_fin_maquina,
-                'hora_inicio_maquina'  => $request->hora_inicio_maquina ?? $componente->hora_inicio_maquina,
-                'hora_fin_maquina'     => $request->hora_fin_maquina ?? $componente->hora_fin_maquina,
+                'fecha_inicio' => $request->has('fecha_inicio') ? $request->input('fecha_inicio') : $componente->fecha_inicio,
+                'fecha_fin'    => $request->has('fecha_fin') ? $request->input('fecha_fin') : $componente->fecha_fin,
+                'hora_inicio'  => $request->has('hora_inicio') ? $request->input('hora_inicio') : $componente->hora_inicio,
+                'hora_fin'     => $request->has('hora_fin') ? $request->input('hora_fin') : $componente->hora_fin,
+                'fecha_inicio_maquina' => $request->has('fecha_inicio_maquina') ? $request->input('fecha_inicio_maquina') : $componente->fecha_inicio_maquina,
+                'fecha_fin_maquina'    => $request->has('fecha_fin_maquina') ? $request->input('fecha_fin_maquina') : $componente->fecha_fin_maquina,
+                'hora_inicio_maquina'  => $request->has('hora_inicio_maquina') ? $request->input('hora_inicio_maquina') : $componente->hora_inicio_maquina,
+                'hora_fin_maquina'     => $request->has('hora_fin_maquina') ? $request->input('hora_fin_maquina') : $componente->hora_fin_maquina,
                 'cantidad'     => $nuevaCantidad,
             ]);
 
@@ -1912,6 +1969,21 @@ class OrdenProcesoController extends Controller
             $proceso = OrdenProceso::findOrFail($id);
             if ($proceso->estado_avance === 'COMPLETADO') {
                 throw new \Exception("No se pueden registrar componentes en un proceso COMPLETADO.");
+            }
+
+            if ($proceso->codigo_proceso == '17') {
+                $orden = DB::table('orden_produccion_global')->where('idop', $idop)->first();
+                $peso_neto = max(0, floatval($orden->cantidad) - floatval($orden->tara));
+                $cantidad_existente = DB::table('componentes_orden_produccion_global')
+                    ->where('idop', $idop)
+                    ->where('id_proceso', $id)
+                    ->where('estado', 1)
+                    ->where('codigo_tipo_producto', '!=', 'ACT')
+                    ->sum('cantidad') ?? 0;
+                
+                if (round($cantidad_existente + $cantidad_total, 2) > round($peso_neto, 2)) {
+                    throw new \Exception("La suma de las cantidades (" . number_format($cantidad_existente + $cantidad_total, 2) . " KG) supera el Peso Neto (" . number_format($peso_neto, 2) . " KG). Actualice la cantidad a registrar.");
+                }
             }
 
             // 1. Obtener los componentes de la fórmula

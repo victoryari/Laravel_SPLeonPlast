@@ -52,12 +52,12 @@
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Desde</label>
                 <input type="date" name="fecha_desde" id="inputFechaDesde" value="{{ request('fecha_desde') }}"
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" max="{{ date('Y-m-d') }}">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-slate-500 mb-1">Fecha Hasta</label>
                 <input type="date" name="fecha_hasta" id="inputFechaHasta" value="{{ request('fecha_hasta') }}"
-                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition">
+                    class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition" max="{{ date('Y-m-d') }}">
             </div>
             <div class="flex items-end gap-2">
                 <button type="submit"
@@ -129,7 +129,7 @@
                     @forelse($movimientos as $mov)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="p-3 border-r border-slate-100 text-slate-500 whitespace-nowrap text-[11px] text-center">
-                            {{ \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/Y H:i') }}
+                            {{ \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/Y') }}
                         </td>
                         <td class="p-3 border-r border-slate-100 font-semibold text-slate-800">
                             <span class="text-xs text-indigo-600 block mb-0.5">{{ $mov->codigo_producto }}</span>

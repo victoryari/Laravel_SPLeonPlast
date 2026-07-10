@@ -46,7 +46,7 @@
                             📅 Fecha <span class="text-red-500">*</span>
                         </label>
                         <input type="date" name="fecha" id="fecha" required value="{{ old('fecha', date('Y-m-d')) }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary" max="{{ date('Y-m-d') }}">
                     </div>
 
                     {{-- Hora Inicio --}}
@@ -60,7 +60,7 @@
                     </div>
 
                     {{-- Producto --}}
-                    <div class="col-span-1 md:col-span-2">
+                    <div>
                         <label for="codigo_producto_proceso" class="block text-sm font-medium text-gray-700 mb-1">
                             🏭 Producto <span class="text-red-500">*</span>
                         </label>
@@ -72,6 +72,26 @@
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+
+                    {{-- Cantidad / Peso Inicial --}}
+                    <div id="container_cantidad" style="display: none;">
+                        <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="fas fa-weight"></i> Peso Bruto del Rollo (KG)
+                        </label>
+                        <input type="number" step="0.01" name="cantidad" id="cantidad" value="{{ old('cantidad') }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        <p class="mt-1 text-xs text-gray-500">Opcional. Peso total del rollo.</p>
+                    </div>
+
+                    {{-- Tara / Peso Empaque --}}
+                    <div id="container_tara" style="display: none;">
+                        <label for="tara" class="block text-sm font-medium text-gray-700 mb-1">
+                            <i class="fas fa-box"></i> Tara / Peso Empaque (KG)
+                        </label>
+                        <input type="number" step="0.01" name="tara" id="tara" value="{{ old('tara') }}"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        <p class="mt-1 text-xs text-gray-500">Opcional. Se descontará del Peso Bruto.</p>
                     </div>
 
                     {{-- Observaciones --}}
@@ -95,4 +115,32 @@
             </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectProducto = document.getElementById('codigo_producto_proceso');
+        const containerCantidad = document.getElementById('container_cantidad');
+        const containerTara = document.getElementById('container_tara');
+        
+        function toggleCantidad() {
+            const selectedOption = selectProducto.options[selectProducto.selectedIndex];
+            if (!selectedOption) return;
+            
+            const texto = selectedOption.text.toUpperCase();
+            // Mostrar si es Troquelado (incluye grande o chico troquelado)
+            if (texto.includes('TROQUELADO')) {
+                containerCantidad.style.display = 'block';
+                containerTara.style.display = 'block';
+            } else {
+                containerCantidad.style.display = 'none';
+                containerTara.style.display = 'none';
+                document.getElementById('cantidad').value = '';
+                document.getElementById('tara').value = '';
+            }
+        }
+        
+        selectProducto.addEventListener('change', toggleCantidad);
+        toggleCantidad(); // Ejecutar al inicio por si ya hay un valor seleccionado
+    });
+</script>
 @endsection

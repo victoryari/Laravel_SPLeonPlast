@@ -23,6 +23,7 @@
                         <th class="p-4 border-b border-slate-200">Proveedor</th>
                         <th class="p-4 border-b border-slate-200">Almacén Origen</th>
                         <th class="p-4 border-b border-slate-200 text-center">Estado</th>
+                        <th class="p-4 border-b border-slate-200 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -48,6 +49,11 @@
                                 ][$guia->estado_guia] ?? 'slate';
                             @endphp
                             <x-badge color="{{ $badgeColor }}">{{ $guia->estado_guia }}</x-badge>
+                        </td>
+                        <td class="p-4 text-center">
+                            <a href="{{ route('terceros.salidas.show', $guia->id_guia_salida) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-primary hover:text-white transition" title="Ver Detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </td>
                     </tr>
                     @empty

@@ -18,11 +18,11 @@
         <div class="flex flex-wrap items-end gap-4">
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Inicio</label>
-                <input type="date" name="fecha_inicio" value="{{ $fechaInicio }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <input type="date" name="fecha_inicio" value="{{ $fechaInicio }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" max="{{ date('Y-m-d') }}">
             </div>
             <div>
                 <label class="block text-xs font-semibold text-gray-600 mb-1">Fecha Fin</label>
-                <input type="date" name="fecha_fin" value="{{ $fechaFin }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                <input type="date" name="fecha_fin" value="{{ $fechaFin }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm" max="{{ date('Y-m-d') }}">
             </div>
             <button type="submit" class="bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-4 rounded-lg shadow transition text-sm">
                 <i class="fas fa-search mr-1"></i> Filtrar

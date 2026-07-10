@@ -60,7 +60,7 @@
         <tbody>
             @foreach($movimientos as $mov)
             <tr>
-                <td>{{ \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/y H:i') }}</td>
+                <td>{{ \Carbon\Carbon::parse($mov->fecha_movimiento)->format('d/m/Y') }}</td>
                 <td class="text-left">{{ Str::limit($mov->producto, 20) }}</td>
                 <td>{{ $mov->numero_documento }}</td>
                 <td>{{ $mov->tipo_movimiento }}</td>
