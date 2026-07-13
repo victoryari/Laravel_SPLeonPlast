@@ -6,18 +6,18 @@
 <div class="container mx-auto max-w-3xl pb-8 md:pb-10">
     <!-- Breadcrumbs / Header -->
     <div class="mb-6">
-        <nav class="flex text-sm text-gray-500 mb-2">
+        <nav class="flex text-sm text-slate-500 mb-2">
             <a href="{{ route('produccion.ordenes.index') }}" class="hover:text-primary transition-colors">Órdenes</a>
             <span class="mx-2">›</span>
             <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="hover:text-primary transition-colors">Orden #{{ $orden->codigo_op }}</a>
             <span class="mx-2">›</span>
-            <span class="text-gray-700">Agregar Proceso</span>
+            <span class="text-slate-700">Agregar Proceso</span>
         </nav>
-        <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center">
             <i class="fas fa-plus-circle mr-3 text-primary"></i> Agregar Nuevo Proceso
         </h1>
-        <p class="text-sm text-gray-600 mt-1">
-            Orden de Producción: <span class="font-semibold text-gray-800">{{ $orden->codigo_op }}</span>
+        <p class="text-sm text-slate-600 mt-1">
+            Orden de Producción: <span class="font-semibold text-slate-800">{{ $orden->codigo_op }}</span>
         </p>
     </div>
 
@@ -39,10 +39,10 @@
             
             <div class="space-y-6">
                 <div>
-                    <label for="codigo_proceso" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="codigo_proceso" class="block text-sm font-medium text-slate-700 mb-2">
                         Seleccionar Tipo de Proceso <span class="text-red-500">*</span>
                     </label>
-                    <select name="codigo_proceso" id="codigo_proceso" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
+                    <select name="codigo_proceso" id="codigo_proceso" required class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all">
                         <option value="">-- Seleccione un proceso --</option>
                         @foreach($cat_procesos as $c)
                             <option value="{{ $c->codigo }}" {{ old('codigo_proceso') == $c->codigo ? 'selected' : '' }}>
@@ -50,17 +50,17 @@
                             </option>
                         @endforeach
                     </select>
-                    <p class="mt-2 text-xs text-gray-500">
+                    <p class="mt-2 text-xs text-slate-500">
                         Los procesos se agregarán secuencialmente (10, 20, 30...) para facilitar el orden de ejecución.
                     </p>
                 </div>
 
                 <div>
-                    <label for="observaciones" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="observaciones" class="block text-sm font-medium text-slate-700 mb-2">
                         Observaciones / Detalle Adicional (Opcional)
                     </label>
-                    <textarea name="observaciones" id="observaciones" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Ej. Cáscara color azul ultra mar...">{{ old('observaciones') }}</textarea>
-                    <p class="mt-2 text-xs text-gray-500">
+                    <textarea name="observaciones" id="observaciones" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="Ej. Cáscara color azul ultra mar...">{{ old('observaciones') }}</textarea>
+                    <p class="mt-2 text-xs text-slate-500">
                         Útil para diferenciar procesos similares (ej. inyectado de diferentes colores/partes para el mismo ensamble).
                     </p>
                 </div>
@@ -78,8 +78,8 @@
             </div>
 
             <!-- Botones de Acción -->
-            <div class="mt-8 pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-end gap-3">
-                <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="flex items-center justify-center px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium">
+            <div class="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row justify-end gap-3">
+                <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="flex items-center justify-center px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition font-medium">
                     Cancelar
                 </a>
                 <button type="submit" class="flex items-center justify-center px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark shadow-md transition font-bold">

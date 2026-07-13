@@ -15,9 +15,9 @@
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+                <i class="fas fa-search text-slate-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base" placeholder="Buscar por código, nombre o empresa...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base" placeholder="Buscar por código, nombre o empresa...">
         </div>
     </div>
 
@@ -34,13 +34,13 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-xs md:text-sm">
+                    <tbody class="divide-y divide-slate-100 text-xs md:text-sm">
                         @forelse ($trabajadores as $trabajador)
                             <tr class="hover:bg-slate-50/50 transition">
-                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $trabajador->codigo }}</td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $trabajador->nombre }}</td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">{{ $trabajador->empresa ?? '-' }}</td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700 text-right font-medium">
+                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">{{ $trabajador->codigo }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">{{ $trabajador->nombre }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-600">{{ $trabajador->empresa ?? '-' }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700 text-right font-medium">
                                     {{ $trabajador->sueldo ? 'S/ ' . number_format($trabajador->sueldo, 2) : 'No asignado' }}
                                 </td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
@@ -68,7 +68,7 @@
                 </table>
             </div>
             @if ($trabajadores->hasPages())
-                <div class="px-4 md:px-6 py-3 border-t bg-gray-50/50">
+                <div class="px-4 md:px-6 py-3 border-t bg-slate-50/50">
                     {{ $trabajadores->links() }}
                 </div>
             @endif

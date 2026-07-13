@@ -30,9 +30,9 @@
 <div class="container mx-auto">
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
-        <h1 class="text-xl md:text-2xl font-bold text-gray-800">Diseño de Fórmula</h1>
+        <h1 class="text-xl md:text-2xl font-bold text-slate-800">Diseño de Fórmula</h1>
         </div>
-        <a href="{{ route('formulas.index') }}" class="text-sm md:text-base text-gray-600 hover:text-purple-600 transition font-medium flex items-center w-fit">
+        <a href="{{ route('formulas.index') }}" class="text-sm md:text-base text-slate-600 hover:text-purple-600 transition font-medium flex items-center w-fit">
             <i class="fas fa-arrow-left mr-2"></i> Volver al Maestro
         </a>
         
@@ -52,7 +52,7 @@
                 <div class="bg-slate-900/50 p-3 md:p-4 rounded-xl border border-slate-600 w-full lg:w-auto">
                     <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-2">Asignación Global de Molde</label>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                        <div class="w-full sm:w-72 text-gray-800">
+                        <div class="w-full sm:w-72 text-slate-800">
                             <select id="moldeGlobal" class="w-full select-dark">
                                 <option value="">Seleccione molde...</option>
                                 @foreach($moldes as $molde)
@@ -74,11 +74,11 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 mb-4 md:mb-6 w-full">
+        <div class="bg-white rounded-xl shadow-lg border border-slate-100 mb-4 md:mb-6 w-full">
             <div class="overflow-x-auto pb-2">
                 <table class="w-full text-left whitespace-nowrap min-w-[800px]">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-600 border-b border-gray-200 text-[11px] md:text-xs">
+                        <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-[11px] md:text-xs">
                             <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider">Producto (Materia Prima)</th>
                             <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider">Tipo</th>
                             <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider text-center">C. Nominal</th>
@@ -88,7 +88,7 @@
                             <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-xs md:text-sm" id="tbComposicion">
+                    <tbody class="divide-y divide-slate-100 text-xs md:text-sm" id="tbComposicion">
                         @foreach($composiciones as $idx => $comp)
                             <tr class="hover:bg-slate-50 transition duration-150" data-id="row-{{ $idx }}">
                                 <td class="px-3 md:px-6 py-2 md:py-4 text-producto">{{ $comp->producto ? $comp->producto->descripcion : $comp->codigo_producto }}</td>
@@ -125,15 +125,15 @@
                 </div>
                 <p class="text-slate-500 text-sm md:text-base">No hay componentes en esta fórmula.</p>
             </div>
-            <div class="flex justify-between items-center bg-white p-3 border-t border-gray-100" id="paginationWrapper" style="display: none;">
-                <div class="text-xs md:text-sm text-gray-500" id="paginationInfo">
+            <div class="flex justify-between items-center bg-white p-3 border-t border-slate-100" id="paginationWrapper" style="display: none;">
+                <div class="text-xs md:text-sm text-slate-500" id="paginationInfo">
                     Mostrando <span id="pageStart"></span> a <span id="pageEnd"></span> de <span id="pageTotal"></span> registros
                 </div>
                 <div class="flex gap-1 flex-wrap" id="paginationButtons"></div>
             </div>
         </div>
         
-        <div class="bg-white p-3 md:p-4 rounded-xl shadow-lg border border-gray-200 flex justify-end">
+        <div class="bg-white p-3 md:p-4 rounded-xl shadow-lg border border-slate-200 flex justify-end">
             <button type="submit" class="w-fit bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 md:py-3 px-6 md:px-10 rounded-lg shadow-md transition transform hover:-translate-y-0.5 text-sm md:text-base">
                 <i class="fas fa-save mr-2"></i> Finalizar Composición
             </button>
@@ -144,31 +144,31 @@
 <div id="modalComponente" class="fixed inset-0 bg-slate-900 bg-opacity-60 hidden z-50 flex items-center justify-center backdrop-blur-sm px-2 py-4">
     <div class="bg-white rounded-xl md:rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
         
-        <div class="bg-slate-50 px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 flex justify-between items-center flex-shrink-0">
-            <h3 class="text-lg md:text-xl font-bold text-gray-800" id="modalTitle">Nuevo Componente</h3>
-            <button type="button" onclick="cerrarModal()" class="text-gray-400 hover:text-red-500 transition p-2"><i class="fas fa-times text-lg md:text-xl"></i></button>
+        <div class="bg-slate-50 px-4 md:px-6 py-3 md:py-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+            <h3 class="text-lg md:text-xl font-bold text-slate-800" id="modalTitle">Nuevo Componente</h3>
+            <button type="button" onclick="cerrarModal()" class="text-slate-400 hover:text-red-500 transition p-2"><i class="fas fa-times text-lg md:text-xl"></i></button>
         </div>
         
         <form id="formModal" class="p-4 md:p-6 overflow-y-auto flex-1">
             <input type="hidden" id="modalRowId">
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
-                <div class="col-span-1 sm:col-span-2 text-gray-800">
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Materia Prima / Producto <span class="text-red-500">*</span></label>
+                <div class="col-span-1 sm:col-span-2 text-slate-800">
+                    <label class="block text-xs md:text-sm font-medium text-slate-700 mb-1">Materia Prima / Producto <span class="text-red-500">*</span></label>
                     <select id="modalProducto" class="w-full" required>
                         <option value="">Seleccione producto...</option>
                     </select>
                 </div>
 
-                <div class="text-gray-800">
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Tipo de Componente</label>
-                    <input type="text" id="modalTipoDesc" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base bg-gray-100 cursor-not-allowed outline-none" readonly placeholder="Automático...">
+                <div class="text-slate-800">
+                    <label class="block text-xs md:text-sm font-medium text-slate-700 mb-1">Tipo de Componente</label>
+                    <input type="text" id="modalTipoDesc" class="w-full border border-slate-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base bg-slate-100 cursor-not-allowed outline-none" readonly placeholder="Automático...">
                     <input type="hidden" id="modalTipo">
                 </div>
 
-                <div class="text-gray-800">
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Unidad de Medida</label>
-                    <select id="modalUnidad" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base">
+                <div class="text-slate-800">
+                    <label class="block text-xs md:text-sm font-medium text-slate-700 mb-1">Unidad de Medida</label>
+                    <select id="modalUnidad" class="w-full border border-slate-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base">
                         @foreach($unidades as $um)
                             <option value="{{ $um->codigo }}">{{ $um->descripcion }} ({{ $um->codigo }})</option>
                         @endforeach
@@ -176,18 +176,18 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">C. Nominal</label>
-                    <input type="number" step="0.0001" id="modalNominal" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base outline-none focus:ring-2 focus:ring-purple-500" placeholder="0.0000">
+                    <label class="block text-xs md:text-sm font-medium text-slate-700 mb-1">C. Nominal</label>
+                    <input type="number" step="0.0001" id="modalNominal" class="w-full border border-slate-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base outline-none focus:ring-2 focus:ring-purple-500" placeholder="0.0000">
                 </div>
 
                 <div>
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">C. Real <span class="text-red-500">*</span></label>
+                    <label class="block text-xs md:text-sm font-medium text-slate-700 mb-1">C. Real <span class="text-red-500">*</span></label>
                     <input type="number" step="0.0001" id="modalReal" class="w-full border-2 border-purple-200 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base font-bold outline-none focus:ring-2 focus:ring-purple-500" placeholder="0.0000" required>
                 </div>
 
-                <div class="col-span-1 sm:col-span-2 text-gray-800">
-                    <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">Molde Individual <span class="text-[10px] md:text-xs text-gray-400">(Opcional)</span></label>
-                    <select id="modalMolde" class="w-full border border-gray-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base">
+                <div class="col-span-1 sm:col-span-2 text-slate-800">
+                    <label class="block text-xs md:text-sm font-medium text-slate-700 mb-1">Molde Individual <span class="text-[10px] md:text-xs text-slate-400">(Opcional)</span></label>
+                    <select id="modalMolde" class="w-full border border-slate-300 rounded-lg px-3 py-2 h-[42px] text-sm md:text-base">
                         <option value="">Ninguno</option>
                         @foreach($moldes as $molde)
                             <option value="{{ $molde->codigo }}">{{ $molde->descripcion }}</option>
@@ -196,8 +196,8 @@
                 </div>
             </div>
 
-            <div class="mt-6 pt-4 md:pt-5 border-t border-gray-100 flex justify-end gap-3">
-                <button type="button" onclick="cerrarModal()" class="w-fit bg-gray-100 text-gray-700 font-semibold py-2 px-6 rounded-lg transition text-sm md:text-base">Cancelar</button>
+            <div class="mt-6 pt-4 md:pt-5 border-t border-slate-100 flex justify-end gap-3">
+                <button type="button" onclick="cerrarModal()" class="w-fit bg-slate-100 text-slate-700 font-semibold py-2 px-6 rounded-lg transition text-sm md:text-base">Cancelar</button>
                 <button type="submit" class="w-fit bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow transition text-sm md:text-base">Confirmar ítem</button>
             </div>
         </form>
@@ -205,7 +205,7 @@
 </div>
 
 <template id="rowTemplate">
-    <tr class="hover:bg-slate-50 transition border-b border-gray-50">
+    <tr class="hover:bg-slate-50 transition border-b border-slate-50">
         <td class="px-3 md:px-6 py-2 md:py-4 text-producto"></td>
         <td class="px-3 md:px-6 py-2 md:py-4 text-tipo-desc"></td>
         <td class="px-3 md:px-6 py-2 md:py-4 text-center text-nominal"></td>
@@ -290,19 +290,19 @@
             document.getElementById('pageTotal').innerText = totalRows;
 
             let buttonsHtml = '';
-            buttonsHtml += `<button type="button" onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded border ${currentPage === 1 ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
+            buttonsHtml += `<button type="button" onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded border ${currentPage === 1 ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-100'}" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
             
             for (let i = 1; i <= totalPages; i++) {
                 if (i === currentPage) {
                     buttonsHtml += `<button type="button" class="px-3 py-1 rounded bg-purple-600 text-white font-bold">${i}</button>`;
                 } else if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                    buttonsHtml += `<button type="button" onclick="changePage(${i})" class="px-3 py-1 rounded border text-gray-700 hover:bg-gray-100">${i}</button>`;
+                    buttonsHtml += `<button type="button" onclick="changePage(${i})" class="px-3 py-1 rounded border text-slate-700 hover:bg-slate-100">${i}</button>`;
                 } else if (i === currentPage - 2 || i === currentPage + 2) {
                     buttonsHtml += `<span class="px-2 py-1">...</span>`;
                 }
             }
 
-            buttonsHtml += `<button type="button" onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded border ${currentPage === totalPages ? 'text-gray-400 bg-gray-50 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
+            buttonsHtml += `<button type="button" onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded border ${currentPage === totalPages ? 'text-slate-400 bg-slate-50 cursor-not-allowed' : 'text-slate-700 hover:bg-slate-100'}" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
             
             document.getElementById('paginationButtons').innerHTML = buttonsHtml;
         } else {

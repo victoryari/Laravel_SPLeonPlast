@@ -15,9 +15,9 @@
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6">
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+                <i class="fas fa-search text-slate-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base" placeholder="Buscar por código o descripción...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base" placeholder="Buscar por código o descripción...">
         </div>
     </div>
 
@@ -32,11 +32,11 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-xs md:text-sm">
+                    <tbody class="divide-y divide-slate-100 text-xs md:text-sm">
                         @forelse ($centros as $ct)
                             <tr class="hover:bg-slate-50/50 transition">
-                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $ct->codigo }}</td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $ct->descripcion }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">{{ $ct->codigo }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">{{ $ct->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <div class="flex items-center justify-center gap-2 md:gap-3">
                                         <a href="{{ route('centros_trabajo.edit', $ct->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition" title="Editar">
@@ -62,7 +62,7 @@
                 </table>
             </div>
             @if ($centros->hasPages())
-                <div class="px-4 md:px-6 py-3 border-t bg-gray-50/50">
+                <div class="px-4 md:px-6 py-3 border-t bg-slate-50/50">
                     {{ $centros->links() }}
                 </div>
             @endif

@@ -75,7 +75,7 @@
                                         @foreach($modulos as $modulo)
                                             <label class="flex items-center p-2 rounded hover:bg-slate-100 cursor-pointer transition">
                                                 <input type="checkbox" name="modulos[]" value="{{ $modulo->id }}" 
-                                                    class="form-checkbox h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                                                    class="form-checkbox h-4 w-4 text-primary border-slate-300 rounded focus:ring-primary"
                                                     {{ (is_array(old('modulos')) && in_array($modulo->id, old('modulos'))) || (empty(old('modulos')) && in_array($modulo->id, $rolModulos)) ? 'checked' : '' }}>
                                                 <span class="ml-3 text-sm text-slate-700 flex items-center gap-2">
                                                     @if($modulo->icono) <i class="{{ $modulo->icono }} text-slate-400 w-4 text-center"></i> @endif

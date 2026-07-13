@@ -37,7 +37,7 @@
                     <x-form-group label="Sueldo Base">
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <span class="text-gray-500 font-medium">S/</span>
+                                <span class="text-slate-500 font-medium">S/</span>
                             </div>
                             <input type="number" step="0.01" min="0" name="sueldo" id="sueldo" value="{{ old('sueldo') }}" class="input-field pl-10" placeholder="0.00">
                         </div>

@@ -14,9 +14,9 @@
     <div class="bg-white p-4 rounded-xl shadow-md mb-6">
         <form action="{{ route('proveedores.index') }}" method="GET" class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+                <i class="fas fa-search text-slate-400"></i>
             </div>
-            <input type="text" name="search" id="searchInput" value="{{ $search }}" class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Buscar por RUC, Razón Social o Contacto...">
+            <input type="text" name="search" id="searchInput" value="{{ $search }}" class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none" placeholder="Buscar por RUC, Razón Social o Contacto...">
         </form>
     </div>
 
@@ -32,14 +32,14 @@
                         <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-sm">
+                <tbody class="divide-y divide-slate-100 text-sm">
                     @forelse ($proveedores as $prov)
                         <tr class="hover:bg-slate-50 transition">
-                            <td class="px-6 py-4 font-medium text-gray-600">{{ $prov->ruc }}</td>
-                            <td class="px-6 py-4 text-gray-500">{{ $prov->razon_social }}</td>
-                            {{-- <td class="px-6 py-4 text-gray-600">{{ $prov->contacto ?? '-' }}</td> --}}
+                            <td class="px-6 py-4 font-medium text-slate-600">{{ $prov->ruc }}</td>
+                            <td class="px-6 py-4 text-slate-500">{{ $prov->razon_social }}</td>
+                            {{-- <td class="px-6 py-4 text-slate-600">{{ $prov->contacto ?? '-' }}</td> --}}
                             <td class="px-6 py-4">
-                                <div class="text-xs text-gray-500"><i class="fas fa-phone mr-1"></i> {{ $prov->telefono ?? 'S/T' }}</div>
+                                <div class="text-xs text-slate-500"><i class="fas fa-phone mr-1"></i> {{ $prov->telefono ?? 'S/T' }}</div>
                                 <div class="text-xs text-primary"><i class="fas fa-envelope mr-1"></i> {{ $prov->email ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4 text-center space-x-2">
@@ -65,7 +65,7 @@
             </table>
         </div>
         @if ($proveedores->hasPages())
-            <div class="px-6 py-4 border-t bg-gray-50">
+            <div class="px-6 py-4 border-t bg-slate-50">
                 {{ $proveedores->links() }}
             </div>
         @endif

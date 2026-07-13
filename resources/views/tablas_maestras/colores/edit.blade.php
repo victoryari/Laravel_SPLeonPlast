@@ -12,7 +12,7 @@
             
             <x-form-group label="Código del Color">
                 <input type="text" value="{{ $color->codigo }}" class="input-field bg-slate-50 text-slate-400 font-mono cursor-not-allowed" readonly>
-                <p class="text-[10px] text-gray-400 mt-2 italic">El código no es editable.</p>
+                <p class="text-[10px] text-slate-400 mt-2 italic">El código no es editable.</p>
             </x-form-group>
 
             <x-form-group label="Descripción" required :error="$errors->first('descripcion')">

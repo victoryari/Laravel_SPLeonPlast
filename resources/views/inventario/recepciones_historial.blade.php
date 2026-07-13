@@ -5,8 +5,8 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Historial de Recepciones</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Compras recibidas en almacén</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Historial de Recepciones</h1>
+            <p class="text-xs sm:text-sm text-slate-600">Compras recibidas en almacén</p>
         </div>
         <a href="{{ route('inventario.recepciones') }}"
            class="px-4 py-2 rounded-xl bg-primary hover:bg-primary-dark text-white text-sm font-semibold shadow transition">

@@ -15,13 +15,13 @@
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+                <i class="fas fa-search text-slate-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
         </div>
         
         <div class="md:w-1/3 flex gap-2">
-            <select id="tipoFilter" class="w-full px-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition cursor-pointer">
+            <select id="tipoFilter" class="w-full px-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition cursor-pointer">
                 <option value="">Todos los tipos de producto</option>
                 @foreach($tipos as $tipo)
                     <option value="{{ $tipo->codigo }}" {{ ($tipoFiltro ?? '') == $tipo->codigo ? 'selected' : '' }}>
@@ -74,11 +74,11 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-xs md:text-sm">
+                    <tbody class="divide-y divide-slate-100 text-xs md:text-sm">
                         @forelse ($productos as $pro)
                             <tr class="hover:bg-slate-50/50 transition duration-150">
-                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $pro->codigo }}</td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $pro->descripcion }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">{{ $pro->codigo }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">{{ $pro->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <x-badge color="slate">{{ $pro->tipo ? $pro->tipo->descripcion : 'Sin Tipo' }}</x-badge>
                                 </td>
@@ -110,7 +110,7 @@
             </div>
             
             @if ($productos->hasPages())
-                <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50/50">
+                <div class="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 bg-slate-50/50">
                     {{ $productos->links() }}
                 </div>
             @endif

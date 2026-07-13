@@ -111,9 +111,12 @@ class GuiaTercerosSalidaController extends Controller
                     ->where('codigo_producto', $item['codigo'])
                     ->where('stock_actual', '>', 0)
                     ->orderBy('id_inventario', 'asc')
-                    ->get();
+                    ->get();                $cantidadRestante = $item['cantidad'];
+                
+                $totalDescontado = 0;
+                $totalCostoLotes = 0;
+                $primerMovId = null;
 
-                $cantidadRestante = $item['cantidad'];
                 foreach ($lotes as $lote) {
                     if ($cantidadRestante <= 0) break;
 
@@ -144,32 +147,39 @@ class GuiaTercerosSalidaController extends Controller
                         'observaciones' => 'Salida para Tercero: ' . $guia->proveedor_destino,
                         'usuario_movimiento' => Auth::id() ?? 1,
                         'estado' => 1,
-                        'fecha_movimiento' => Carbon::parse($request->fecha_emision)->format('Y-m-d H:i:s'),
+                        'fecha_movimiento' => Carbon::parse($request->fecha_emision)->setTime(now()->hour, now()->minute, now()->second)->format('Y-m-d H:i:s'),
                         'tiene_kardex' => 1
                     ]);
 
+                    if (!$primerMovId) $primerMovId = $idMov;
+                    $totalDescontado += $cantidadDescontar;
+                    $totalCostoLotes += $totalSalidaLote;
+                    $cantidadRestante -= $cantidadDescontar;
+                }
+
+                if ($totalDescontado > 0) {
+                    $costoSalidaPromedio = $totalCostoLotes / $totalDescontado;
+                    
                     // Kardex
                     DB::table('kardex')->insert([
                         'codigo_almacen' => $request->codigo_almacen_origen,
                         'codigo_producto' => $item['codigo'],
-                        'codigo_unidad_medida' => $lote->codigo_unidad_medida,
-                        'codigo_referencia_movimiento' => $idMov,
-                        'fecha_movimiento' => Carbon::parse($request->fecha_emision)->format('Y-m-d H:i:s'),
+                        'codigo_unidad_medida' => $lote->codigo_unidad_medida ?? 'UND',
+                        'codigo_referencia_movimiento' => $primerMovId,
+                        'fecha_movimiento' => Carbon::parse($request->fecha_emision)->setTime(now()->hour, now()->minute, now()->second)->format('Y-m-d H:i:s'),
                         'tipo_movimiento' => 'SALIDA',
                         'documento' => 'GUIA_SALIDA_TERCEROS',
                         'numero_documento' => $guia->numero_guia,
                         'cantidad_entrada' => 0,
                         'costo_entrada' => 0,
                         'total_entrada' => 0,
-                        'cantidad_salida' => $cantidadDescontar,
-                        'costo_salida' => $lote->costo_promedio,
-                        'total_salida' => $totalSalidaLote,
-                        'observaciones' => 'Envío a Tercero: ' . $guia->proveedor_destino,
-                        'lote' => $lote->lote,
+                        'cantidad_salida' => $totalDescontado,
+                        'costo_salida' => $costoSalidaPromedio,
+                        'total_salida' => $totalCostoLotes,
+                        'observaciones' => 'Envio a Tercero: ' . $guia->proveedor_destino,
+                        'lote' => 'VARIOS LOTES',
                         'usuario_registro' => Auth::id() ?? 1
                     ]);
-
-                    $cantidadRestante -= $cantidadDescontar;
                 }
                 
                 // Recalcular el Kardex de este almacén para cuadrar saldos

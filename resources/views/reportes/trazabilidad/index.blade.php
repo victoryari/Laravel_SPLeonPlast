@@ -6,8 +6,8 @@
 <div class="container mx-auto max-w-6xl pb-8 md:pb-10">
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Trazabilidad de Lotes</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Rastreo de insumos, procesos y productos terminados.</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Trazabilidad de Lotes</h1>
+            <p class="text-xs sm:text-sm text-slate-600">Rastreo de insumos, procesos y productos terminados.</p>
         </div>
         @if(isset($resultados))
         <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow inline-flex items-center">

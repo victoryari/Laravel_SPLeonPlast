@@ -5,8 +5,8 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Registro de Recepciones</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Control de inventario y movimientos de almacén</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Registro de Recepciones</h1>
+            <p class="text-xs sm:text-sm text-slate-600">Control de inventario y movimientos de almacén</p>
         </div>
     </div>
 
@@ -83,7 +83,7 @@
                 </div>
             </div>
 
-            <div class="p-6 space-y-4 bg-gray-50">
+            <div class="p-6 space-y-4 bg-slate-50">
                 @forelse($comprasPendientes as $compra)
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
                         <div class="px-6 py-5 cursor-pointer border-l-4 border-amber-400 flex flex-col lg:flex-row justify-between gap-4"
@@ -213,7 +213,7 @@
                 </div>
             </div>
 
-            <div class="p-6 space-y-4 bg-gray-50">
+            <div class="p-6 space-y-4 bg-slate-50">
                 @forelse($guiasPendientes as $guia)
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
                         <div class="px-6 py-5 cursor-pointer border-l-4 border-blue-400 flex flex-col lg:flex-row justify-between gap-4"

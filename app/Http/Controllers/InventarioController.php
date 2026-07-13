@@ -18,15 +18,20 @@ class InventarioController extends Controller
             ->join('producto', 'inventario.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'inventario.codigo_almacen', '=', 'almacen.codigo_almacen')
             ->select(
-                'inventario.id_inventario',
                 'inventario.codigo_producto', 
                 'inventario.codigo_almacen',
                 'producto.descripcion as producto',
                 'almacen.descripcion as almacen',
-                'inventario.stock_actual',
-                'inventario.stock_minimo',
-                'inventario.stock_maximo',
-                'inventario.fecha_ultimo_movimiento'
+                DB::raw('SUM(inventario.stock_actual) as stock_actual'),
+                DB::raw('MAX(inventario.stock_minimo) as stock_minimo'),
+                DB::raw('MAX(inventario.stock_maximo) as stock_maximo'),
+                DB::raw('MAX(inventario.fecha_ultimo_movimiento) as fecha_ultimo_movimiento')
+            )
+            ->groupBy(
+                'inventario.codigo_producto',
+                'inventario.codigo_almacen',
+                'producto.descripcion',
+                'almacen.descripcion'
             );
 
         if ($request->search) {
@@ -39,6 +44,8 @@ class InventarioController extends Controller
         if ($request->filled('almacen') && $request->almacen !== 'todos') {
             $query->where('inventario.codigo_almacen', $request->almacen);
         }
+        
+        $query->havingRaw('SUM(inventario.stock_actual) > 0');
 
         $stocks = $query->orderBy('producto.descripcion')->paginate(10)->appends(request()->all());
         $almacenes = Almacen::where('activo', 1)->get();
@@ -244,9 +251,10 @@ class InventarioController extends Controller
             $idop = $ingreso->idop;
             $id_proceso = $ingreso->id_proceso;
             $usuario_movimiento = Auth::id() ?? 5;
+            $ingreso_base_fecha = \Carbon\Carbon::parse($ingreso->fecha_ingreso ?? now());
             $fecha_movimiento = $request->filled('fecha_recepcion') 
-                ? \Carbon\Carbon::parse($request->fecha_recepcion)->setTime(now()->hour, now()->minute, now()->second)->format('Y-m-d H:i:s') 
-                : now();
+                ? \Carbon\Carbon::parse($request->fecha_recepcion)->setTime($ingreso_base_fecha->hour, $ingreso_base_fecha->minute, $ingreso_base_fecha->second)->addSeconds(5)->format('Y-m-d H:i:s') 
+                : $ingreso_base_fecha->addSeconds(5)->format('Y-m-d H:i:s');
 
             $doc_ref = "PRODUCCION_PEP";
             $num_ref = "OP-{$idop}-PROC-{$id_proceso}";
@@ -383,9 +391,10 @@ class InventarioController extends Controller
 
             $usuario_movimiento = Auth::id() ?? 5;
             $kardexService = app(KardexService::class);
+            $ingreso_base_fecha = \Carbon\Carbon::parse($ingresos->last()->fecha_ingreso ?? now());
             $fecha_movimiento = $request->filled('fecha_recepcion') 
-                ? \Carbon\Carbon::parse($request->fecha_recepcion)->setTime(now()->hour, now()->minute, now()->second)->format('Y-m-d H:i:s') 
-                : now();
+                ? \Carbon\Carbon::parse($request->fecha_recepcion)->setTime($ingreso_base_fecha->hour, $ingreso_base_fecha->minute, $ingreso_base_fecha->second)->addSeconds(5)->format('Y-m-d H:i:s') 
+                : $ingreso_base_fecha->addSeconds(5)->format('Y-m-d H:i:s');
 
             foreach ($ingresos as $ingreso) {
                 $almacen_destino = !empty($request->codigo_almacen) ? trim($request->codigo_almacen) : $ingreso->codigo_almacen;

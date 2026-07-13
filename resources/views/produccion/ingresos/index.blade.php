@@ -33,7 +33,7 @@
     @endif
 
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="p-6 space-y-4 bg-gray-50">
+        <div class="p-6 space-y-4 bg-slate-50">
             @forelse($produccionPendientesAgrupada as $idop => $productos)
                 @php
                     $totalLotesOP = 0;

@@ -15,7 +15,7 @@
                 <div class="col-span-1">
                     <x-form-group label="Código">
                         <input type="text" id="codigo_almacen" value="{{ $almacen->codigo_almacen }}" class="input-field bg-slate-50 text-slate-400 font-mono cursor-not-allowed" readonly>
-                        <p class="text-xs text-gray-400 mt-1">El código no se puede modificar.</p>
+                        <p class="text-xs text-slate-400 mt-1">El código no se puede modificar.</p>
                     </x-form-group>
                 </div>
 

@@ -6,20 +6,20 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
-            <nav class="flex text-sm text-gray-500 mb-2">
+            <nav class="flex text-sm text-slate-500 mb-2">
                 <a href="{{ route('produccion.ordenes.index') }}" class="hover:text-primary font-medium transition-colors">📋 Volver a Órdenes</a>
                 <span class="mx-2">›</span>
-                <span class="text-gray-700">Orden #{{ $orden->codigo_op }}</span>
+                <span class="text-slate-700">Orden #{{ $orden->codigo_op }}</span>
             </nav>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-3">
                 Procesos de Producción
-                <span class="text-sm bg-gray-100 px-3 py-1 rounded-full text-gray-700 font-medium border border-gray-200">
+                <span class="text-sm bg-slate-100 px-3 py-1 rounded-full text-slate-700 font-medium border border-slate-200">
                     {{ $orden->codigo_op }}
                 </span>
             </h1>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1">
-                Producto: <span class="font-medium text-gray-700">{{ $orden->descripcion_producto_proceso ?? 'N/A' }}</span> | 
-                Fecha: <span class="font-medium text-gray-700">{{ \Carbon\Carbon::parse($orden->fecha)->format('d/m/Y') }}</span>
+            <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                Producto: <span class="font-medium text-slate-700">{{ $orden->descripcion_producto_proceso ?? 'N/A' }}</span> | 
+                Fecha: <span class="font-medium text-slate-700">{{ \Carbon\Carbon::parse($orden->fecha)->format('d/m/Y') }}</span>
             </p>
         </div>
         <div class="flex items-center gap-2">
@@ -63,16 +63,16 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-slate-200">
                     @foreach($procesos as $p)
-                        <tr class="hover:bg-gray-50 transition-colors">
+                        <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <x-badge color="slate">Prioridad: {{ $p->prioridad ?? 'Normal' }}</x-badge>
                             </td>
                             <td class="px-6 py-4">
-                                <strong class="text-gray-900 font-medium">{{ $p->proceso_desc }}</strong>
+                                <strong class="text-slate-900 font-medium">{{ $p->proceso_desc }}</strong>
                                 @if($p->observaciones)
-                                    <div class="text-xs text-gray-500 mt-1">
+                                    <div class="text-xs text-slate-500 mt-1">
                                         <i class="fas fa-info-circle mr-1"></i> {{ $p->observaciones }}
                                     </div>
                                 @endif
@@ -110,7 +110,7 @@
                                     </button>
                                 </div>
                                 @else
-                                <span class="text-xs text-gray-400"><i class="fas fa-lock mr-1"></i>Bloqueado</span>
+                                <span class="text-xs text-slate-400"><i class="fas fa-lock mr-1"></i>Bloqueado</span>
                                 @endif
                             </td>
                         </tr>
@@ -119,8 +119,8 @@
             </table>
         </div>
         @else
-        <div class="p-8 text-center text-gray-500">
-            <i class="fas fa-folder-open text-4xl text-gray-300 mb-3 block"></i>
+        <div class="p-8 text-center text-slate-500">
+            <i class="fas fa-folder-open text-4xl text-slate-300 mb-3 block"></i>
             No hay procesos registrados para esta orden.
         </div>
         @endif

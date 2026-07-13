@@ -33,7 +33,7 @@
                         </option>
                     @endforeach
                 </select>
-                <p class="text-xs text-gray-500 mt-1">Si selecciona un almacén, este proceso consumirá materias primas EXCLUSIVAMENTE de este almacén.</p>
+                <p class="text-xs text-slate-500 mt-1">Si selecciona un almacén, este proceso consumirá materias primas EXCLUSIVAMENTE de este almacén.</p>
                 @error('codigo_almacen')
                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                 @enderror

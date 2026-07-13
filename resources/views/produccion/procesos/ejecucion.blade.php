@@ -6,10 +6,10 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center">
                 Ejecución: {{ strtoupper($proceso->proceso_desc) }}
             </h1>
-            <p class="text-xs sm:text-sm text-gray-600 mt-1">
+            <p class="text-xs sm:text-sm text-slate-600 mt-1">
                 Orden #{{ $orden->idop }} - <span class="font-semibold">{{ $orden->descripcion_producto_proceso }}</span>
             </p>
         </div>
@@ -17,7 +17,7 @@
             <span class="px-3 py-1 text-xs font-semibold uppercase rounded-full text-white {{ $estado_proceso_actual == 'COMPLETADO' ? 'bg-green-600' : ($estado_proceso_actual == 'EN_PROCESO' ? 'bg-primary' : 'bg-slate-500') }}">
                 ESTADO: {{ $estado_proceso_actual }}
             </span>
-            <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
+            <a href="{{ route('ordenes.procesos.index', $orden->idop) }}" class="shrink-0 flex items-center justify-center bg-slate-500 hover:bg-slate-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
                 <i class="fas fa-arrow-left"></i>
                 <span class="hidden sm:inline ml-2">Volver</span>
             </a>
@@ -27,28 +27,28 @@
     <!-- Cargador de Fórmulas -->
     @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado) && $estado_proceso_actual !== 'COMPLETADO')
     <div class="bg-white rounded-xl shadow-md border-t-4 border-orange-500 mb-6 overflow-hidden">
-        <div class="bg-slate-50 border-b border-gray-200">
+        <div class="bg-slate-50 border-b border-slate-200">
             @if($es_inyectado || $es_troquelado || $es_horneado)
-            <ul class="flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200" id="op-tabs">
+            <ul class="flex flex-wrap text-sm font-medium text-center text-slate-500 border-b border-slate-200" id="op-tabs">
                 @if($es_inyectado || $es_troquelado || $es_horneado)
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('inyectado')" class="inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-gray-200 rounded-t-lg active" id="tab-inyectado">
+                    <a href="#" onclick="switchOpTab('inyectado')" class="inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-slate-200 rounded-t-lg active" id="tab-inyectado">
                         Producción ({{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : 'Inyectado') }})
                     </a>
                 </li>
                 @endif
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50 text-gray-500" id="tab-merma_pura">Merma Pura</a>
+                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-merma_pura">Merma Pura</a>
                 </li>
                 @if($es_inyectado)
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('recuperado_molido')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-recuperado_molido">Recuperado para Moler</a>
+                    <a href="#" onclick="switchOpTab('recuperado_molido')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-recuperado_molido">Recuperado para Moler</a>
                 </li>
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('limpieza')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-limpieza">Limpieza/Purga</a>
+                    <a href="#" onclick="switchOpTab('limpieza')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-limpieza">Limpieza/Purga</a>
                 </li>
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50" id="tab-recuperado_maquina">Recup. Máquina</a>
+                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-recuperado_maquina">Recup. Máquina</a>
                 </li>
                 @endif
             </ul>
@@ -77,11 +77,11 @@
                 </div>
                 <div class="flex items-center space-x-6 text-sm">
                     <div>
-                        <span class="text-gray-500 font-medium">Consumido:</span>
-                        <span class="font-bold ml-1 text-gray-700">{{ number_format($peso_consumido ?? 0, 2) }} KG</span>
+                        <span class="text-slate-500 font-medium">Consumido:</span>
+                        <span class="font-bold ml-1 text-slate-700">{{ number_format($peso_consumido ?? 0, 2) }} KG</span>
                     </div>
                     <div>
-                        <span class="text-gray-500 font-medium">Saldo:</span>
+                        <span class="text-slate-500 font-medium">Saldo:</span>
                         <span class="font-bold ml-1 {{ ($peso_neto - $peso_consumido) < 0 ? 'text-red-600' : 'text-emerald-600' }}">
                             {{ number_format(($peso_neto ?? 0) - ($peso_consumido ?? 0), 2) }} KG
                         </span>
@@ -97,8 +97,8 @@
                 
                 @if($es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado || $es_mezclado)
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : ($es_mezclado ? 'Mezcladora (Centro)' : 'Inyectora (Centro)')))) }}</label>
-                    <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : ($es_mezclado ? 'Mezcladora (Centro)' : 'Inyectora (Centro)')))) }}</label>
+                    <select id="centro_global" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
                             <option value="{{ $ct->codigo }}">{{ $ct->codigo }}</option>
@@ -109,8 +109,8 @@
                 
                 @if($es_inyectado)
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Molde a usar</label>
-                    <select id="molde_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3" onchange="vincularFormula()">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Molde a usar</label>
+                    <select id="molde_global" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3" onchange="vincularFormula()">
                         <option value="">-- Seleccione --</option>
                         @foreach($moldes as $m)
                             <option value="{{ $m->codigo }}" data-formula="{{ $m->codigo_formula ?? '' }}">
@@ -122,8 +122,8 @@
                 @endif
                 
                 <div class="flex-1 min-w-50">
-                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_formula">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado ? 'Producto a Ensamblar' : 'Fórmula/Color') }}</label>
-                    <select id="formula_selector" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl_formula">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado ? 'Producto a Ensamblar' : 'Fórmula/Color') }}</label>
+                    <select id="formula_selector" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($formulas_disponibles as $fm)
                             <option value="{{ $fm->codigo }}">{{ $fm->codigo }} - {{ $fm->descripcion }}</option>
@@ -132,8 +132,8 @@
                 </div>
                 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Cant. (KG)</label>
-                    <input type="number" id="cantidad_global" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3" step="0.01">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Cant. (KG)</label>
+                    <input type="number" id="cantidad_global" class="w-24 border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3" step="0.01">
                 </div>
             </div>
 
@@ -147,7 +147,7 @@
                     
                     <div id="container_cant_reciclado" class="flex items-center hidden ml-2">
                         <label class="text-xs text-orange-700 font-medium mr-2">Cant. Reciclado (KG):</label>
-                        <input type="number" id="cant_reciclado_global" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-sm py-1.5 px-2" step="0.01">
+                        <input type="number" id="cant_reciclado_global" class="w-24 border-slate-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-sm py-1.5 px-2" step="0.01">
                         <button type="button" onclick="autocompletarMaximoReciclado()" class="ml-2 px-2 py-1 bg-orange-200 text-orange-800 text-xs font-semibold rounded hover:bg-orange-300 transition" title="Autocompletar el 100% equivalente a materia virgen">
                             Máx (100%)
                         </button>
@@ -197,8 +197,8 @@
                 @endif
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Trabajador</label>
-                    <select id="trabajador_global" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Trabajador</label>
+                    <select id="trabajador_global" class="border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($trabajadores as $t)
                             <option value="{{ $t->codigo }}">{{ $t->nombre }}</option>
@@ -207,21 +207,21 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Fecha</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Fecha</label>
                     <input type="date" id="fecha_global" value="{{ $orden->fecha ?? date('Y-m-d') }}" max="{{ date('Y-m-d') }}"
-                        class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                        class="border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Inicio</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Hora Inicio</label>
                     <input type="time" id="hora_ini_global" value="08:00"
-                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                        class="w-28 border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Hora Fin</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Hora Fin</label>
                     <input type="time" id="hora_fin_global" value="17:00"
-                        class="w-28 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                        class="w-28 border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                 </div>
 
                 <div class="flex-1"></div>
@@ -233,8 +233,8 @@
 
             <div class="flex flex-wrap items-end gap-4 mt-2">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Almacén de Consumo</label>
-                    <select id="codigo_almacen_consumo" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3 w-64">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Almacén de Consumo</label>
+                    <select id="codigo_almacen_consumo" class="border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3 w-64">
                         <option value="">-- Seleccione Almacén --</option>
                         @foreach($almacenes as $almacen)
                             <option value="{{ $almacen->codigo_almacen }}" {{ $proceso_produccion_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>
@@ -266,7 +266,7 @@
     @endif
 
     <div class="bg-white rounded-xl shadow-md border-t-4 border-primary overflow-hidden mb-6">
-        <div class="bg-slate-50 border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <h2 class="text-lg font-bold text-slate-800">
                 <i class="fas fa-list-alt mr-2 text-primary"></i>Detalle de Materiales / Actividades
             </h2>
@@ -284,7 +284,7 @@
             </form>
                 
             <div class="overflow-x-auto min-h-87.5 pb-10">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
                         <thead class="bg-slate-800 text-white">
                             <tr>
                                 <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider">Tipo</th>
@@ -301,8 +301,8 @@
                                 <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wider">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody_items" class="bg-white divide-y divide-gray-200">
-                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado) && isset($cargas_agrupadas))
+                        <tbody id="tbody_items" class="bg-white divide-y divide-slate-200">
+                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado) && isset($cargas_agrupadas) && $cargas_agrupadas->count() > 0)
                                 @foreach($cargas_agrupadas as $key => $grupo)
                                     @php
                                         // Extraer datos comunes del primer componente del grupo
@@ -329,22 +329,22 @@
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">
-                                            <div class="text-sm text-gray-900 font-bold">
+                                            <div class="text-sm text-slate-900 font-bold">
                                                 {{ $nombreColorDisplay ?? ($first->descripcion_formula_produccion ?? 'Registro Manual') }}
                                                 @if($first->codigo_color)
-                                                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] bg-gray-200 text-gray-700">{{ $first->codigo_color }}</span>
+                                                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700">{{ $first->codigo_color }}</span>
                                                 @endif
                                             </div>
-                                            <div class="text-[10px] text-gray-500">{{ $first->codigo_formula_produccion ?? 'N/A' }}</div>
+                                            <div class="text-[10px] text-slate-500">{{ $first->codigo_formula_produccion ?? 'N/A' }}</div>
                                         </td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_centro_trabajo }}</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_molde ?? 'N/A' }}</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-gray-900">{{ number_format($totalKG, 2) }}</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">KG</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-gray-500">{{ $first->codigo_trabajador }}</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->fecha_inicio ?? $first->fecha ?? 'N/A' }}</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->hora_inicio }} - {{ $first->hora_fin }}</td>
-                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-gray-500">{{ $first->hora_inicio_maquina }} - {{ $first->hora_fin_maquina }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_centro_trabajo }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_molde ?? 'N/A' }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-slate-900">{{ number_format($totalKG, 2) }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">KG</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_trabajador }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-slate-500">{{ $first->fecha_inicio ?? $first->fecha ?? 'N/A' }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-slate-500">{{ $first->hora_inicio }} - {{ $first->hora_fin }}</td>
+                                        <td class="px-3 py-3 whitespace-nowrap text-xs text-slate-500">{{ $first->hora_inicio_maquina }} - {{ $first->hora_fin_maquina }}</td>
                                         @php
                                             $bgLabel = 'bg-blue-100 text-blue-800';
                                             $textLabel = 'PRODUCCIÓN';
@@ -371,16 +371,16 @@
                                             </span>
                                         </td>
                                         <td class="px-3 py-2">
-                                            <div class="text-xs text-gray-900 font-medium">{{ $r->descripcion_producto }}</div>
-                                            <div class="text-[9px] text-gray-500">{{ $r->codigo_producto }}</div>
+                                            <div class="text-xs text-slate-900 font-medium">{{ $r->descripcion_producto }}</div>
+                                            <div class="text-[9px] text-slate-500">{{ $r->codigo_producto }}</div>
                                         </td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_centro_trabajo }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_molde }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-gray-700">{{ number_format($r->cantidad, 4) }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_unidad_medida }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->codigo_trabajador }}</td>
-                                        <td colspan="2" class="px-3 py-2 text-xs text-gray-400">Detalle Interno</td>
-                                        <td class="px-3 py-2 text-center text-xs text-gray-400">—</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_centro_trabajo }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_molde }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-slate-700">{{ number_format($r->cantidad, 4) }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_unidad_medida }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_trabajador }}</td>
+                                        <td colspan="2" class="px-3 py-2 text-xs text-slate-400">Detalle Interno</td>
+                                        <td class="px-3 py-2 text-xs text-slate-500 max-w-[150px] truncate" title="{{ $r->observacion }}">{{ $r->observacion ?? '-' }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-center text-xs font-medium">
                                             @if($estado_proceso_actual !== 'COMPLETADO')
                                             <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-primary hover:text-primary mr-2" title="Editar">
@@ -403,17 +403,17 @@
                                     </span>
                                 </td>
                                 <td class="px-3 py-2">
-                                    <div class="text-sm text-gray-900 font-bold">{{ $r->descripcion_producto }}</div>
-                                    <div class="text-[10px] text-gray-500">{{ $r->codigo_producto }}</div>
+                                    <div class="text-sm text-slate-900 font-bold">{{ $r->descripcion_producto }}</div>
+                                    <div class="text-[10px] text-slate-500">{{ $r->codigo_producto }}</div>
                                 </td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_centro_trabajo }}</td>
-                                @if($es_inyectado) <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_molde }}</td> @endif
-                                <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-gray-900">{{ number_format($r->cantidad, 2) }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_unidad_medida }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{{ $r->codigo_trabajador }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->fecha_inicio ?? 'N/A' }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio }} - {{ $r->hora_fin }}</td>
-                                <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-500">{{ $r->hora_inicio_maquina }} - {{ $r->hora_fin_maquina }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-slate-500">{{ $r->codigo_centro_trabajo }}</td>
+                                @if($es_inyectado) <td class="px-3 py-2 whitespace-nowrap text-sm text-slate-500">{{ $r->codigo_molde }}</td> @endif
+                                <td class="px-3 py-2 whitespace-nowrap text-sm font-bold text-slate-900">{{ number_format($r->cantidad, 2) }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-slate-500">{{ $r->codigo_unidad_medida }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-sm text-slate-500">{{ $r->codigo_trabajador }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->fecha_inicio ?? 'N/A' }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->hora_inicio }} - {{ $r->hora_fin }}</td>
+                                <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->hora_inicio_maquina }} - {{ $r->hora_fin_maquina }}</td>
                                 @php
                                     $bgLabelR = 'bg-blue-100 text-blue-800';
                                     $textLabelR = 'PRODUCCIÓN';
@@ -425,6 +425,7 @@
                                 <td class="px-3 py-2 text-center whitespace-nowrap">
                                     <span class="px-2 py-1 text-[10px] font-semibold rounded-full {{ $bgLabelR }}">{{ $textLabelR }}</span>
                                 </td>
+                                <td class="px-3 py-2 text-xs text-slate-500 max-w-[150px] truncate" title="{{ $r->observacion }}">{{ $r->observacion ?? '-' }}</td>
                                 <td class="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
                                     @if($estado_proceso_actual !== 'COMPLETADO')
                                     <button type="button" onclick="editarRegistrado({{ $r->id_op_componentes }})" class="text-primary hover:text-primary mr-2" title="Editar">
@@ -439,20 +440,20 @@
                             </tr>
 
                             <tr id="row_edit_{{ $r->id_op_componentes }}" class="hidden">
-                                <td colspan="11" class="p-0 border-b border-gray-200">
+                                <td colspan="11" class="p-0 border-b border-slate-200">
                                     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 p-4 bg-primary-50 rounded-b-lg component-edit-container" data-id="{{ $r->id_op_componentes }}">
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Cantidad</label>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1">Cantidad</label>
                                             <input type="number" name="cantidad" step="0.01" min="0.01"
                                                 value="{{ $r->cantidad }}"
-                                                class="w-full border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary"
+                                                class="w-full border-slate-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary"
                                                 {{ $r->codigo_tipo_producto === 'ACT' ? 'readonly' : '' }}>
                                         </div>
 
                                         <div>
-                                            <label class="block text-xs font-semibold text-gray-600 mb-1">Trabajador</label>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1">Trabajador</label>
                                             <select name="codigo_trabajador"
-                                                class="w-full border-gray-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
+                                                class="w-full border-slate-300 rounded-md text-sm py-1.5 px-2 focus:ring-primary focus:border-primary">
                                                 <option value="">--</option>
                                                 @foreach($trabajadores as $t)
                                                     <option value="{{ $t->codigo }}" {{ $r->codigo_trabajador == $t->codigo ? 'selected' : '' }}>
@@ -463,42 +464,42 @@
                                         </div>
 
                                         <div>
-                                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">F. In/Fin (Hombre)</label>
+                                            <label class="block text-[10px] font-semibold text-slate-600 mb-1">F. In/Fin (Hombre)</label>
                                             <div class="flex gap-1">
                                                 <input type="date" name="fecha_inicio" value="{{ $r->fecha_inicio ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="date" name="fecha_fin" value="{{ $r->fecha_fin ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">H. In/Fin (Hombre)</label>
+                                            <label class="block text-[10px] font-semibold text-slate-600 mb-1">H. In/Fin (Hombre)</label>
                                             <div class="flex gap-1">
                                                 <input type="time" name="hora_inicio" value="{{ $r->hora_inicio ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="time" name="hora_fin" value="{{ $r->hora_fin ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">F. In/Fin (Máquina)</label>
+                                            <label class="block text-[10px] font-semibold text-slate-600 mb-1">F. In/Fin (Máquina)</label>
                                             <div class="flex gap-1">
                                                 <input type="date" name="fecha_inicio_maquina" value="{{ $r->fecha_inicio_maquina ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="date" name="fecha_fin_maquina" value="{{ $r->fecha_fin_maquina ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label class="block text-[10px] font-semibold text-gray-600 mb-1">H. In/Fin (Máquina)</label>
+                                            <label class="block text-[10px] font-semibold text-slate-600 mb-1">H. In/Fin (Máquina)</label>
                                             <div class="flex gap-1">
                                                 <input type="time" name="hora_inicio_maquina" value="{{ $r->hora_inicio_maquina ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                                 <input type="time" name="hora_fin_maquina" value="{{ $r->hora_fin_maquina ?? '' }}"
-                                                    class="w-1/2 border-gray-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
+                                                    class="w-1/2 border-slate-300 rounded-md text-sm py-1.5 px-1 focus:ring-primary focus:border-primary">
                                             </div>
                                         </div>
 
@@ -508,7 +509,7 @@
                                                 Guardar Cambios
                                             </button>
                                             <button type="button" onclick="cancelarEdicion({{ $r->id_op_componentes }})"
-                                                class="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold rounded-lg transition">
+                                                class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-lg transition">
                                                 Cancelar
                                             </button>
                                         </div>
@@ -522,8 +523,8 @@
                 </div>
 
                 <!-- Pagination Controls -->
-                <div id="pagination_controls" class="flex justify-between items-center mt-4 border-t border-gray-200 pt-4">
-                    <div class="text-sm text-gray-700">
+                <div id="pagination_controls" class="flex justify-between items-center mt-4 border-t border-slate-200 pt-4">
+                    <div class="text-sm text-slate-700">
                         Mostrando <span id="page_start_info" class="font-bold">0</span> a <span id="page_end_info" class="font-bold">0</span> de <span id="page_total_info" class="font-bold">0</span> registros
                     </div>
                     <div class="flex space-x-1" id="pagination_buttons">
@@ -533,7 +534,7 @@
 
                 @if($estado_proceso_actual !== 'COMPLETADO' && !$es_actividad)
                 <!-- Productos Resultantes -->
-                <div class="mt-6 pt-4 border-t border-gray-200">
+                <div class="mt-6 pt-4 border-t border-slate-200">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-base font-bold text-slate-800">
                             <i class="fas fa-arrow-right text-primary mr-2"></i>Productos Resultantes
@@ -543,7 +544,7 @@
                         </button>
                     </div>
                     <div class="overflow-x-auto pb-48">
-                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
                             <thead class="bg-slate-700 text-white">
                                 <tr>
                                     <th class="px-3 py-2 text-left text-xs font-semibold uppercase">Producto</th>
@@ -552,14 +553,14 @@
                                     <th class="px-3 py-2 text-center text-xs font-semibold uppercase w-16">Acción</th>
                                 </tr>
                             </thead>
-                            <tbody id="tbody_resultantes" class="bg-white divide-y divide-gray-200"></tbody>
+                            <tbody id="tbody_resultantes" class="bg-white divide-y divide-slate-200"></tbody>
                         </table>
                     </div>
                 </div>
                 @endif
 
                 <!-- Footer del Formulario -->
-                <div class="mt-6 pt-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="mt-6 pt-6 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
                     <div>
                         @if($estado_proceso_actual !== 'COMPLETADO')
                             <button type="button" onclick="confirmarCierre()" class="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition shadow-sm {{ !$tiene_componentes ? 'opacity-50 cursor-not-allowed' : '' }}" {{ !$tiene_componentes ? 'disabled' : '' }}>
@@ -603,6 +604,7 @@
     <input type="hidden" name="fecha_fin_maquina" id="upd_fecha_fin_maquina">
     <input type="hidden" name="hora_inicio_maquina" id="upd_hora_inicio_maquina">
     <input type="hidden" name="hora_fin_maquina" id="upd_hora_fin_maquina">
+    <input type="hidden" name="observacion" id="upd_observacion">
 </form>
 
 <script>
@@ -619,6 +621,12 @@
         document.getElementById('upd_fecha_fin_maquina').value = container.querySelector('input[name="fecha_fin_maquina"]').value;
         document.getElementById('upd_hora_inicio_maquina').value = container.querySelector('input[name="hora_inicio_maquina"]').value;
         document.getElementById('upd_hora_fin_maquina').value = container.querySelector('input[name="hora_fin_maquina"]').value;
+        const obsInput = container.querySelector('input[name="observacion"]');
+        if (obsInput) {
+            document.getElementById('upd_observacion').value = obsInput.value;
+        } else {
+            document.getElementById('upd_observacion').value = '';
+        }
         
         const form = document.getElementById('form_update_componente');
         form.action = `/produccion/ordenes/{{ $orden->idop }}/procesos/{{ $proceso->id }}/componentes/${id}`;
@@ -778,19 +786,19 @@
             let url = `/productos/search-ajax?q=${encodeURIComponent(filter)}`;
             if (tipo) url += `&tipo=${encodeURIComponent(tipo)}`;
 
-            optionsContainer.innerHTML = '<div class="p-2 text-sm text-gray-400">Buscando...</div>';
+            optionsContainer.innerHTML = '<div class="p-2 text-sm text-slate-400">Buscando...</div>';
 
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
                     optionsContainer.innerHTML = '';
                     if (data.length === 0) {
-                        optionsContainer.innerHTML = '<div class="p-2 text-sm text-gray-500">Sin resultados</div>';
+                        optionsContainer.innerHTML = '<div class="p-2 text-sm text-slate-500">Sin resultados</div>';
                         return;
                     }
                     data.forEach(p => {
                         const div = document.createElement('div');
-                        div.className = 'p-2 cursor-pointer border-b border-gray-100 text-xs hover:bg-primary-50 text-gray-700';
+                        div.className = 'p-2 cursor-pointer border-b border-slate-100 text-xs hover:bg-primary-50 text-slate-700';
                         div.textContent = `${p.id} - ${getProdName(p.text)}`;
                         div.onclick = () => {
                             searchInput.value = getProdName(p.text);
@@ -994,17 +1002,17 @@
         
         let html = `<tr id="${rowId}" class="nueva-fila-resultado bg-white hover:bg-slate-50 transition-colors">
             <td class="px-2 py-2 align-middle relative">
-                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Producto Resultante..." value="${displayVal}">
+                <input type="text" class="text-xs py-1.5 px-3 border border-slate-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[280px]" placeholder="Buscar Producto Resultante..." value="${displayVal}">
                 <input type="hidden" class="c-prod" value="${codigo_inicial}">
-                <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
+                <div class="custom-options hidden absolute bg-white border border-slate-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
             </td>
             
             <td class="px-2 py-2 align-middle">
-                <input type="number" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-cant w-full min-w-[100px]" value="" step="0.01" placeholder="Ej. 100">
+                <input type="number" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-cant w-full min-w-[100px]" value="" step="0.01" placeholder="Ej. 100">
             </td>
             
             <td class="px-2 py-2 align-middle">
-                <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[80px] c-um">${unitsHtml}</select>
+                <select class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary w-full min-w-[80px] c-um">${unitsHtml}</select>
             </td>
             
             <td class="px-2 py-2 align-middle text-center">
@@ -1025,7 +1033,7 @@
         
         let tiposHtml = tiposData.map(t=>`<option value="${t.codigo}" ${item.codigo_tipo_producto==t.codigo?'selected':''}>${t.codigo}</option>`).join('');
         let centrosHtml = '<option value="">--</option>' + centros.map(c=>`<option value="${c.codigo}" ${item.centro==c.codigo?'selected':''}>${c.codigo}</option>`).join('');
-        let moldesHtml = esInyectado ? `<select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[100px] c-molde">${moldesData.map(m=>`<option value="${m.codigo}" ${item.molde==m.codigo?'selected':''}>${m.codigo}</option>`).join('')}</select>` : '';
+        let moldesHtml = esInyectado ? `<select class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary w-full min-w-[100px] c-molde">${moldesData.map(m=>`<option value="${m.codigo}" ${item.molde==m.codigo?'selected':''}>${m.codigo}</option>`).join('')}</select>` : '';
         let unitsHtml = unidadesData.map(u=>`<option value="${u.codigo}" ${u.codigo=='KG'?'selected':''}>${u.codigo}</option>`).join('');
         let trabsHtml = '<option value="">--</option>' + trabajadores.map(t=>
             `<option value="${t.codigo}" ${item.codigo_trabajador==t.codigo?'selected':''}>${t.nombre}</option>`
@@ -1033,36 +1041,36 @@
 
         let html = `<tr id="${rowId}" class="nueva-fila bg-white hover:bg-slate-50 transition-colors">
             <td class="px-2 py-2 align-middle">
-                <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[80px] c-tipo" onchange="recalcularFormulaDesdeREC();">${tiposHtml}</select>
+                <select class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary w-full min-w-[80px] c-tipo" onchange="recalcularFormulaDesdeREC();">${tiposHtml}</select>
             </td>
             
             <td class="px-2 py-2 align-middle relative">
-                <input type="text" class="text-xs py-1.5 px-3 border border-gray-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[200px]" placeholder="Buscar Material/Actividad..." value="${item.descripcion_producto ? item.descripcion_producto : (item.codigo_producto ? item.codigo_producto : '')}">
+                <input type="text" class="text-xs py-1.5 px-3 border border-slate-300 rounded focus:ring-primary focus:border-primary c-prod-search w-full min-w-[200px]" placeholder="Buscar Material/Actividad..." value="${item.descripcion_producto ? item.descripcion_producto : (item.codigo_producto ? item.codigo_producto : '')}">
                 <input type="hidden" class="c-prod" value="${item.codigo_producto||''}">
-                <div class="custom-options hidden absolute bg-white border border-gray-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
+                <div class="custom-options hidden absolute bg-white border border-slate-200 max-h-48 overflow-y-auto w-full min-w-[300px] z-50 shadow-xl rounded-md mt-1"></div>
             </td>
             
             <td class="px-2 py-2 align-middle">
-                <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[90px] c-centro">${centrosHtml}</select>
+                <select class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary w-full min-w-[90px] c-centro">${centrosHtml}</select>
             </td>
             
             ${moldesHtml ? `<td class="px-2 py-2 align-middle">${moldesHtml}</td>` : ''}
             
             <td class="px-2 py-2 align-middle">
-                <input type="number" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-cant w-full min-w-[80px]" value="${item.cantidad||''}" step="0.01" oninput="recalcularFormulaDesdeREC(); verificarStock();">
+                <input type="number" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-cant w-full min-w-[80px]" value="${item.cantidad||''}" step="0.01" oninput="recalcularFormulaDesdeREC(); verificarStock();">
                 <span class="stock-cell hidden"></span>
             </td>
             
             <td class="px-2 py-2 align-middle">
-                <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[70px] c-um">${unitsHtml}</select>
+                <select class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary w-full min-w-[70px] c-um">${unitsHtml}</select>
             </td>
             
             <td class="px-2 py-2 align-middle">
-                <select class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary w-full min-w-[160px] c-trab">${trabsHtml}</select>
+                <select class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary w-full min-w-[160px] c-trab">${trabsHtml}</select>
             </td>
 
             <td class="px-2 py-2 align-middle">
-                <input type="date" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-fecha_ini w-[110px]" value="${today}" max="${today}" oninput="syncFechaMaq(this)">
+                <input type="date" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-fecha_ini w-[110px]" value="${today}" max="${today}" oninput="syncFechaMaq(this)">
             </td>
             
             <td style="display:none;">
@@ -1074,21 +1082,23 @@
             
             <td class="px-2 py-2 align-middle">
                 <div class="flex items-center space-x-1.5 w-max">
-                    <input type="time" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-hora_ini w-[90px]" value="${item.hora_ini||'08:00'}" oninput="syncHoraMaq(this)">
-                    <span class="text-gray-400 font-bold">-</span>
-                    <input type="time" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-hora_fin w-[90px]" value="${item.hora_fin||'17:00'}" oninput="syncHoraMaq(this)">
+                    <input type="time" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-hora_ini w-[90px]" value="${item.hora_ini||'08:00'}" oninput="syncHoraMaq(this)">
+                    <span class="text-slate-400 font-bold">-</span>
+                    <input type="time" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-hora_fin w-[90px]" value="${item.hora_fin||'17:00'}" oninput="syncHoraMaq(this)">
                 </div>
             </td>
 
             <td class="px-2 py-2 align-middle">
                 <div class="flex items-center space-x-1.5 w-max">
-                    <input type="time" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-hora_ini_maq w-[90px]" value="${item.hora_ini||'08:00'}">
-                    <span class="text-gray-400 font-bold">-</span>
-                    <input type="time" class="text-xs py-1.5 px-2 border border-gray-300 rounded focus:ring-primary focus:border-primary c-hora_fin_maq w-[90px]" value="${item.hora_fin||'17:00'}">
+                    <input type="time" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-hora_ini_maq w-[90px]" value="${item.hora_ini||'08:00'}">
+                    <span class="text-slate-400 font-bold">-</span>
+                    <input type="time" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-hora_fin_maq w-[90px]" value="${item.hora_fin||'17:00'}">
                 </div>
             </td>
             
-            <td class="px-2 py-2 align-middle"></td>
+            <td class="px-2 py-2 align-middle">
+                  <input type="text" class="text-xs py-1.5 px-2 border border-slate-300 rounded focus:ring-primary focus:border-primary c-obs w-full min-w-[150px]" placeholder="Observación...">
+              </td>
             
             <td class="px-2 py-2 align-middle text-center">
                 <button type="button" onclick="const r = document.getElementById('${rowId}'); r.remove(); recalcularFormulaDesdeREC(); verificarStock();" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors" title="Eliminar fila">
@@ -1152,7 +1162,8 @@
                 fecha_inicio_maquina: r.querySelector('.c-fecha_ini_maq').value,
                 hora_inicio_maquina: r.querySelector('.c-hora_ini_maq').value,
                 fecha_fin_maquina: r.querySelector('.c-fecha_fin_maq').value,
-                hora_fin_maquina: r.querySelector('.c-hora_fin_maq').value
+                hora_fin_maquina: r.querySelector('.c-hora_fin_maq').value,
+                observacion: r.querySelector('.c-obs') ? r.querySelector('.c-obs').value : null
             });
         });
         
@@ -1242,9 +1253,9 @@
             const el = document.getElementById('tab-' + t);
             if (el) {
                 if (t === tabName) {
-                    el.className = 'inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-gray-200 rounded-t-lg active';
+                    el.className = 'inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-slate-200 rounded-t-lg active';
                 } else {
-                    el.className = 'inline-block p-4 border-b-0 hover:text-gray-600 hover:bg-gray-50 text-gray-500';
+                    el.className = 'inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500';
                 }
             }
         });
@@ -1402,18 +1413,18 @@
         const paginationContainer = document.getElementById('pagination_buttons');
         let html = '';
         
-        html += `<button type="button" onclick="goToPage(${currentPage - 1})" class="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
+        html += `<button type="button" onclick="goToPage(${currentPage - 1})" class="px-3 py-1 border border-slate-300 rounded-md bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}>Anterior</button>`;
         
         for (let i = 1; i <= totalPages; i++) {
             if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                const isActive = i === currentPage ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50';
+                const isActive = i === currentPage ? 'bg-primary text-white border-primary' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50';
                 html += `<button type="button" onclick="goToPage(${i})" class="px-3 py-1 border rounded-md ${isActive}">${i}</button>`;
             } else if (i === currentPage - 2 || i === currentPage + 2) {
-                html += `<span class="px-2 py-1 text-gray-500">...</span>`;
+                html += `<span class="px-2 py-1 text-slate-500">...</span>`;
             }
         }
         
-        html += `<button type="button" onclick="goToPage(${currentPage + 1})" class="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
+        html += `<button type="button" onclick="goToPage(${currentPage + 1})" class="px-3 py-1 border border-slate-300 rounded-md bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-50" ${currentPage === totalPages ? 'disabled' : ''}>Siguiente</button>`;
 
         paginationContainer.innerHTML = html;
     }

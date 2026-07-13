@@ -16,11 +16,11 @@
         <div class="flex gap-2">
             <div class="relative flex-1">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
+                    <i class="fas fa-search text-slate-400"></i>
                 </div>
-                <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
+                <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por código o descripción...">
             </div>
-            <button id="btnClearSearch" type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 md:px-6 py-2 md:py-2.5 rounded-lg border border-gray-300 transition font-medium text-sm md:text-base flex items-center">
+            <button id="btnClearSearch" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 md:px-6 py-2 md:py-2.5 rounded-lg border border-slate-300 transition font-medium text-sm md:text-base flex items-center">
                 <i class="fas fa-times mr-2"></i> <span class="hidden sm:inline">Limpiar</span>
             </button>
         </div>
@@ -38,11 +38,11 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-xs md:text-sm" id="tbFormulas">
+                    <tbody class="divide-y divide-slate-100 text-xs md:text-sm" id="tbFormulas">
                         @forelse ($formulas as $formu)
                             <tr class="hover:bg-slate-50/50 transition duration-150">
-                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $formu->codigo }}</td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $formu->descripcion }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">{{ $formu->codigo }}</td>
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">{{ $formu->descripcion }}</td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                                     <x-badge color="{{ $formu->composiciones_count > 0 ? 'green' : 'red' }}">{{ $formu->composiciones_count }} comp.</x-badge>
                                 </td>
@@ -75,7 +75,7 @@
             </div>
             
             @if ($formulas->hasPages())
-                <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50/50">
+                <div class="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 bg-slate-50/50">
                     {{ $formulas->links() }}
                 </div>
             @endif

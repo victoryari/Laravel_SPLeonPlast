@@ -121,8 +121,8 @@
                         </select>
                         <div class="mt-2" id="wrapperLimpiezaMaquina" style="display: none;">
                             <label class="inline-flex items-center cursor-pointer {{ $tipo == 'limpieza' ? 'hidden' : '' }}">
-                                <input type="checkbox" id="chkLimpiezaMaquina" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50" {{ $tipo == 'limpieza' ? 'checked' : '' }}>
-                                <span class="ml-2 text-sm text-gray-700 font-medium">Merma por Limpieza de Máquina (Consumo proporcional de insumos)</span>
+                                <input type="checkbox" id="chkLimpiezaMaquina" class="rounded border-slate-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-offset-0 focus:ring-indigo-200 focus:ring-opacity-50" {{ $tipo == 'limpieza' ? 'checked' : '' }}>
+                                <span class="ml-2 text-sm text-slate-700 font-medium">Merma por Limpieza de Máquina (Consumo proporcional de insumos)</span>
                             </label>
                         </div>
                     </x-form-group>
@@ -439,7 +439,7 @@
                 html += '<td class="p-2 border">' + comp.codigo_producto + '<br><span class="text-xs text-slate-500">' + comp.descripcion + '</span></td>';
                 html += '<td class="p-2 border font-bold text-center">' + parseFloat(comp.stock_actual).toFixed(2) + ' <span class="text-xs text-slate-500 font-normal">' + (comp.codigo_unidad_medida || '') + '</span></td>';
                 
-                let readOnlyAttr = isLimpiezaMode ? 'readonly tabindex="-1" class="w-full border-gray-200 bg-gray-50 rounded-md py-1 px-2 pr-8 text-sm text-gray-500 pointer-events-none"' : 'class="w-full border-gray-300 rounded-md py-1 px-2 pr-8 text-sm cantidad-input"';
+                let readOnlyAttr = isLimpiezaMode ? 'readonly tabindex="-1" class="w-full border-slate-200 bg-slate-50 rounded-md py-1 px-2 pr-8 text-sm text-slate-500 pointer-events-none"' : 'class="w-full border-slate-300 rounded-md py-1 px-2 pr-8 text-sm cantidad-input"';
                 
                 let namePura = comp.activo ? `name="componentes[${comp.codigo_producto}][pura]"` : '';
                 let nameRecu = comp.activo ? `name="componentes[${comp.codigo_producto}][recuperada]"` : '';

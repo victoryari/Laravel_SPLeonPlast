@@ -16,8 +16,8 @@
     <x-table :headers="['Código', 'Descripción', ['label' => 'Acciones', 'class' => 'text-center']]">
         @forelse ($tipos as $tipo)
             <tr class="hover:bg-slate-50/50 transition duration-150">
-                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">{{ $tipo->codigo }}</td>
-                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">{{ $tipo->descripcion }}</td>
+                <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">{{ $tipo->codigo }}</td>
+                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">{{ $tipo->descripcion }}</td>
                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
                     <div class="flex items-center justify-center gap-2 md:gap-3">
                         <a href="{{ route('tipos_producto.edit', $tipo->codigo) }}" class="inline-flex items-center justify-center w-8 h-8 md:w-10 md:h-10 text-primary bg-primary-50 hover:bg-primary hover:text-white rounded-lg transition-all" title="Editar">

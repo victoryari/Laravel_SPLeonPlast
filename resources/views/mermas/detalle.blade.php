@@ -1,31 +1,31 @@
 <div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase">Código y Producto Origen</p>
-            <p class="text-sm font-semibold text-gray-900">{{ $merma->codigo_producto }}</p>
-            <p class="text-sm text-gray-700">{{ $merma->descripcion_producto }}</p>
+            <p class="text-xs text-slate-500 font-bold uppercase">Código y Producto Origen</p>
+            <p class="text-sm font-semibold text-slate-900">{{ $merma->codigo_producto }}</p>
+            <p class="text-sm text-slate-700">{{ $merma->descripcion_producto }}</p>
         </div>
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase">Orden de Producción</p>
-            <p class="text-sm font-semibold text-gray-900">OP-{{ $merma->ordenProduccion->codigo_op ?? 'N/A' }}</p>
-            <p class="text-sm text-gray-700">{{ $merma->ordenProduccion->descripcion_producto_proceso ?? 'N/A' }}</p>
+            <p class="text-xs text-slate-500 font-bold uppercase">Orden de Producción</p>
+            <p class="text-sm font-semibold text-slate-900">OP-{{ $merma->ordenProduccion->codigo_op ?? 'N/A' }}</p>
+            <p class="text-sm text-slate-700">{{ $merma->ordenProduccion->descripcion_producto_proceso ?? 'N/A' }}</p>
         </div>
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase">Fecha y Almacén</p>
-            <p class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($merma->fecha_merma)->format('d/m/Y') }} | {{ $merma->codigo_almacen }}</p>
+            <p class="text-xs text-slate-500 font-bold uppercase">Fecha y Almacén</p>
+            <p class="text-sm text-slate-900">{{ \Carbon\Carbon::parse($merma->fecha_merma)->format('d/m/Y') }} | {{ $merma->codigo_almacen }}</p>
         </div>
         <div>
-            <p class="text-xs text-gray-500 font-bold uppercase">Trabajador y Horario</p>
+            <p class="text-xs text-slate-500 font-bold uppercase">Trabajador y Horario</p>
             @if($merma->trabajador)
-                <p class="text-sm text-gray-900 font-semibold">{{ $merma->trabajador->nombre }}</p>
-                <p class="text-xs text-gray-600">{{ $merma->hora_inicio ? \Carbon\Carbon::parse($merma->hora_inicio)->format('H:i') : '--:--' }} a {{ $merma->hora_fin ? \Carbon\Carbon::parse($merma->hora_fin)->format('H:i') : '--:--' }}</p>
+                <p class="text-sm text-slate-900 font-semibold">{{ $merma->trabajador->nombre }}</p>
+                <p class="text-xs text-slate-600">{{ $merma->hora_inicio ? \Carbon\Carbon::parse($merma->hora_inicio)->format('H:i') : '--:--' }} a {{ $merma->hora_fin ? \Carbon\Carbon::parse($merma->hora_fin)->format('H:i') : '--:--' }}</p>
             @else
-                <p class="text-sm text-gray-500 italic">No asignado</p>
+                <p class="text-sm text-slate-500 italic">No asignado</p>
             @endif
         </div>
         <div class="md:col-span-2">
-            <p class="text-xs text-gray-500 font-bold uppercase">Motivo</p>
-            <p class="text-sm text-gray-700">{{ $merma->motivo ?: 'Sin motivo especificado' }}</p>
+            <p class="text-xs text-slate-500 font-bold uppercase">Motivo</p>
+            <p class="text-sm text-slate-700">{{ $merma->motivo ?: 'Sin motivo especificado' }}</p>
         </div>
     </div>
 
@@ -40,7 +40,7 @@
                     <th class="px-4 py-2 font-bold uppercase text-right">Costo Total</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
+            <tbody class="divide-y divide-slate-100">
                 @forelse($movimientos as $mov)
                 <tr>
                     <td class="px-4 py-2 text-center">
@@ -51,7 +51,7 @@
                         @endif
                     </td>
                     <td class="px-4 py-2">
-                        <div class="font-bold text-gray-900">{{ $mov->codigo_producto }}</div>
+                        <div class="font-bold text-slate-900">{{ $mov->codigo_producto }}</div>
                     </td>
                     <td class="px-4 py-2 text-right font-medium">
                         {{ number_format($mov->tipo_movimiento === 'SALIDA' ? $mov->cantidad_salida : $mov->cantidad_entrada, 2) }}
@@ -62,7 +62,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="4" class="px-4 py-6 text-center text-gray-500 italic">No se encontraron movimientos para esta merma.</td>
+                    <td colspan="4" class="px-4 py-6 text-center text-slate-500 italic">No se encontraron movimientos para esta merma.</td>
                 </tr>
                 @endforelse
             </tbody>

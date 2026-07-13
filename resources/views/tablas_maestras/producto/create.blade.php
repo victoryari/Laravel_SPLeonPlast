@@ -63,11 +63,11 @@
 
                 <div class="col-span-1 md:col-span-2 flex items-center mt-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
                     <input type="hidden" name="es_producto_proceso" value="0">
-                    <input type="checkbox" name="es_producto_proceso" id="es_producto_proceso" value="1" {{ old('es_producto_proceso') == '1' ? 'checked' : '' }} class="w-5 h-5 text-primary bg-white border-gray-300 rounded focus:ring-primary focus:ring-2 cursor-pointer">
-                    <label for="es_producto_proceso" class="ml-3 text-sm font-medium text-gray-800 cursor-pointer">
+                    <input type="checkbox" name="es_producto_proceso" id="es_producto_proceso" value="1" {{ old('es_producto_proceso') == '1' ? 'checked' : '' }} class="w-5 h-5 text-primary bg-white border-slate-300 rounded focus:ring-primary focus:ring-2 cursor-pointer">
+                    <label for="es_producto_proceso" class="ml-3 text-sm font-medium text-slate-800 cursor-pointer">
                         Es Producto en Proceso (PEP)
                     </label>
-                    <span class="ml-2 text-xs text-gray-500">(Marcar si este producto es un intermedio en la producción)</span>
+                    <span class="ml-2 text-xs text-slate-500">(Marcar si este producto es un intermedio en la producción)</span>
                 </div>
             </div>
 

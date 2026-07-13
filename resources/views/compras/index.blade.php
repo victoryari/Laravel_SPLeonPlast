@@ -17,25 +17,25 @@
             
             <div class="flex items-center gap-2">
                 <div class="flex flex-col">
-                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Desde</label>
-                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
+                    <label class="text-[10px] uppercase text-slate-500 font-bold mb-1">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
                 </div>
                 <div class="flex flex-col">
-                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Hasta</label>
-                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
+                    <label class="text-[10px] uppercase text-slate-500 font-bold mb-1">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
                 </div>
             </div>
 
 
 
             <div class="flex-1 flex flex-col">
-                <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Búsqueda</label>
+                <label class="text-[10px] uppercase text-slate-500 font-bold mb-1">Búsqueda</label>
                 <div class="relative w-full">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-gray-400"></i>
+                        <i class="fas fa-search text-slate-400"></i>
                     </div>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por documento o proveedor..." 
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm outline-none">
+                        class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary text-sm outline-none">
                 </div>
             </div>
 
@@ -43,18 +43,18 @@
                 <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">
                     <i class="fas fa-filter mr-1"></i> Filtrar
                 </button>
-                <a href="{{ route('compras.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-300">
+                <a href="{{ route('compras.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-slate-300">
                     Limpiar
                 </a>
             </div>
         </form>
     </div>
 
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-600 border-b border-gray-200 text-[11px] md:text-xs">
+                    <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-[11px] md:text-xs">
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">N° Documento / Fecha</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">Proveedor</th>
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-right">Total</th>
@@ -63,27 +63,27 @@
                         <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 text-xs md:text-sm">
+                <tbody class="divide-y divide-slate-100 text-xs md:text-sm">
                     @forelse ($compras as $compra)
                         <tr class="hover:bg-slate-50/50 transition">
                             <td class="px-4 md:px-6 py-3 md:py-4">
-                                <div class="font-bold text-gray-900 uppercase">
+                                <div class="font-bold text-slate-900 uppercase">
                                     {{ $compra->tipo_documento }} {{ $compra->serie_documento }}-{{ $compra->numero_documento }}
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-slate-500">
                                     {{ \Carbon\Carbon::parse($compra->fecha_compra)->format('d/m/Y') }}
                                 </div>
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4">
-                                <div class="text-gray-800 font-medium">
+                                <div class="text-slate-800 font-medium">
                                     {{ $compra->datosProveedor->razon_social ?? 'Proveedor No Encontrado' }}
                                 </div>
-                                <div class="text-xs text-gray-500">RUC: {{ $compra->ruc_proveedor ?? '-' }}</div>
+                                <div class="text-xs text-slate-500">RUC: {{ $compra->ruc_proveedor ?? '-' }}</div>
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-right font-bold text-primary">
                                 {{ $compra->moneda === 'USD' ? '$' : 'S/' }} {{ number_format($compra->total, 2) }}
                             </td>
-                            <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
+                            <td class="px-4 md:px-6 py-3 md:py-4 text-slate-600">
                                 {{ $compra->creador->nombre_usuario ?? 'Sistema' }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
@@ -129,13 +129,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-gray-500 italic">No se encontraron compras registradas.</td>
+                            <td colspan="6" class="px-6 py-10 text-center text-slate-500 italic">No se encontraron compras registradas.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="px-4 md:px-6 py-3 border-t bg-gray-50/50">
+        <div class="px-4 md:px-6 py-3 border-t bg-slate-50/50">
             {{ $compras->links() }}
         </div>
     </div>

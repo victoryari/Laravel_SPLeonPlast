@@ -6,8 +6,8 @@
 <div class="container mx-auto pb-8 md:pb-10">
     <div class="flex justify-between items-center mb-6 gap-4">
         <div>
-            <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Órdenes de Producción</h1>
-            <p class="text-xs sm:text-sm text-gray-600">Administración de las órdenes activas en el sistema</p>
+            <h1 class="text-xl sm:text-2xl font-bold text-slate-800">Órdenes de Producción</h1>
+            <p class="text-xs sm:text-sm text-slate-600">Administración de las órdenes activas en el sistema</p>
         </div>
         <a href="{{ route('produccion.ordenes.create') }}" class="shrink-0 flex items-center justify-center bg-primary hover:bg-primary-dark text-white font-semibold py-2 px-3 sm:px-4 rounded-lg shadow transition">
             <i class="fas fa-plus"></i>
@@ -21,23 +21,23 @@
             
             <div class="flex items-center gap-2">
                 <div class="flex flex-col">
-                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Desde</label>
-                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
+                    <label class="text-[10px] uppercase text-slate-500 font-bold mb-1">Fecha Desde</label>
+                    <input type="date" name="fecha_desde" value="{{ $fecha_desde }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
                 </div>
                 <div class="flex flex-col">
-                    <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Fecha Hasta</label>
-                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
+                    <label class="text-[10px] uppercase text-slate-500 font-bold mb-1">Fecha Hasta</label>
+                    <input type="date" name="fecha_hasta" value="{{ $fecha_hasta }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" max="{{ date('Y-m-d') }}">
                 </div>
             </div>
 
             <div class="flex-1 flex flex-col">
-                <label class="text-[10px] uppercase text-gray-500 font-bold mb-1">Búsqueda</label>
+                <label class="text-[10px] uppercase text-slate-500 font-bold mb-1">Búsqueda</label>
                 <div class="relative w-full">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i class="fas fa-search text-gray-400"></i>
+                        <i class="fas fa-search text-slate-400"></i>
                     </div>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar por OP o producto..." 
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm outline-none">
+                        class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary text-sm outline-none">
                 </div>
             </div>
 
@@ -45,7 +45,7 @@
                 <button type="submit" class="bg-primary hover:bg-primary-dark text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors">
                     <i class="fas fa-filter mr-1"></i> Filtrar
                 </button>
-                <a href="{{ route('produccion.ordenes.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-300">
+                <a href="{{ route('produccion.ordenes.index') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-slate-300">
                     Limpiar
                 </a>
             </div>
@@ -67,19 +67,19 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-white divide-y divide-slate-200">
                     @forelse($ordenes as $o)
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="p-4 border-r border-slate-200 text-center font-medium text-gray-900">
+                            <td class="p-4 border-r border-slate-200 text-center font-medium text-slate-900">
                                 {{ $o->codigo_op }}
                             </td>
                             <td class="p-4 border-r border-slate-200">
                                 {{ $o->descripcion_producto_proceso ?? 'N/A' }}
                             </td>
-                            <td class="p-4 border-r border-slate-200 text-sm text-gray-600">
+                            <td class="p-4 border-r border-slate-200 text-sm text-slate-600">
                                 {{ $o->texto_obs ?? '-' }}
                             </td>
-                            <td class="p-4 border-r border-slate-200 text-center text-gray-600">
+                            <td class="p-4 border-r border-slate-200 text-center text-slate-600">
                                 {{ \Carbon\Carbon::parse($o->fecha)->format('d/m/Y') }}
                             </td>
                             <td class="p-4 border-r border-slate-200 text-center">
@@ -106,7 +106,7 @@
                                 <form action="{{ route('produccion.ordenes.destroy', $o->idop) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Está seguro de que desea eliminar/anular esta Orden de Producción?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-gray-600 hover:bg-gray-700 shadow-sm transition-colors" title="Eliminar Orden">
+                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-lg text-white bg-slate-600 hover:bg-slate-700 shadow-sm transition-colors" title="Eliminar Orden">
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                 </form>
@@ -115,8 +115,8 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="p-8 text-center text-gray-500">
-                                <i class="fas fa-folder-open text-4xl text-gray-300 mb-3 block"></i>
+                            <td colspan="5" class="p-8 text-center text-slate-500">
+                                <i class="fas fa-folder-open text-4xl text-slate-300 mb-3 block"></i>
                                 No se encontraron órdenes de producción en el sistema.
                             </td>
                         </tr>
@@ -126,7 +126,7 @@
         </div>
         
         @if($ordenes->hasPages())
-            <div class="px-6 py-4 border-t border-slate-200 bg-gray-50">
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50">
                 {{ $ordenes->links() }}
             </div>
         @endif

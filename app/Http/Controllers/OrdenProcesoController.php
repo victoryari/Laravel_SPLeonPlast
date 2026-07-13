@@ -1191,6 +1191,16 @@ class OrdenProcesoController extends Controller
 
             DB::table('orden_produccion_global')->where('idop', $idop)->where('estado', 'PENDIENTE')->update(['estado' => 'EN_PROCESO']);
 
+            $kardexService = app(\App\Services\KardexService::class);
+            $recalculados = [];
+            foreach ($consumosResumen as $res) {
+                $k = $res['producto'] . '|' . $res['almacen'];
+                if (!isset($recalculados[$k])) {
+                    $kardexService->recalcular($res['producto'], $res['almacen']);
+                    $recalculados[$k] = true;
+                }
+            }
+
             DB::commit();
             if ($request->ajax()) {
                 return response()->json(['success' => true, 'message' => "Componentes guardados. Movimientos: $trace_movimientos, PEPs: $ingresos_creados."]);
@@ -1671,8 +1681,11 @@ class OrdenProcesoController extends Controller
 
             // 3. Distribuir Costos y Actualizar Inventario
             $pep_movimientos = DB::table('movimientos_inventario')
-                ->where('documento_referencia', 'PRODUCCION_PEP')
-                ->where('numero_referencia', "OP-{$idop}-PROC-{$id}")
+                ->whereIn('documento_referencia', ['PRODUCCION_PEP', 'PRODUCCION_PEP_GLOBAL'])
+                ->where(function($q) use ($idop, $id) {
+                    $q->where('numero_referencia', "OP-{$idop}-PROC-{$id}")
+                      ->orWhere('numero_referencia', "OP-{$idop}-PROC-{$id}-G");
+                })
                 ->where('tipo_movimiento', 'INGRESO')
                 ->where('estado', 1)
                 ->get();
@@ -1696,7 +1709,7 @@ class OrdenProcesoController extends Controller
 
                     DB::table('kardex')
                         ->where('codigo_referencia_movimiento', $mov->id_movimiento)
-                        ->where('documento', 'RECEPCION_PEP')
+                        ->whereIn('documento', ['RECEPCION_PEP', 'RECEPCION_PEP_GLOBAL'])
                         ->update([
                             'costo_entrada' => $costo_unitario_real,
                             'total_entrada' => $nuevo_total

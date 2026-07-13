@@ -13,7 +13,7 @@
                 @method('PUT')
                 
                 <x-form-group label="Código">
-                    <input type="text" name="codigo" id="codigo" value="{{ $producto->codigo }}" disabled class="input-field bg-gray-50" />
+                    <input type="text" name="codigo" id="codigo" value="{{ $producto->codigo }}" disabled class="input-field bg-slate-50" />
                 </x-form-group>
 
                 <x-form-group label="Descripción" required :error="$errors->first('descripcion')">

@@ -68,7 +68,7 @@
                     </div>
                     <label class="inline-flex items-center cursor-pointer ml-2 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-200">
                         <input type="checkbox" class="sr-only peer omitir-linea-checkbox" data-index="{{ $index }}" {{ count($linea['lotes']) == 0 ? 'checked disabled' : '' }}>
-                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
                         <span class="ms-2 text-xs font-bold text-slate-600 uppercase tracking-wide">Omitir</span>
                     </label>
                 </div>

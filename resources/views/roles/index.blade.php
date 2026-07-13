@@ -23,13 +23,13 @@
                         <th class="p-4 text-center">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
+                <tbody class="divide-y divide-slate-100">
                     @forelse ($roles as $rol)
                         <tr class="hover:bg-slate-50/50 transition duration-150">
-                            <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-gray-900">
+                            <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">
                                 <i class="fas fa-user-shield text-primary mr-2"></i> {{ $rol->nombre }}
                             </td>
-                            <td class="px-4 md:px-6 py-3 md:py-4 text-gray-600">
+                            <td class="px-4 md:px-6 py-3 md:py-4 text-slate-600">
                                 {{ $rol->descripcion ?? 'Sin descripción' }}
                             </td>
                             <td class="px-4 md:px-6 py-3 md:py-4 text-center">
@@ -55,9 +55,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-10 md:py-16 text-center text-gray-500">
+                            <td colspan="4" class="px-6 py-10 md:py-16 text-center text-slate-500">
                                 <div class="flex flex-col items-center">
-                                    <i class="fas fa-shield-alt text-3xl md:text-4xl mb-3 text-gray-200"></i>
+                                    <i class="fas fa-shield-alt text-3xl md:text-4xl mb-3 text-slate-200"></i>
                                     <p class="text-sm md:text-base">No se encontraron roles creados.</p>
                                 </div>
                             </td>

@@ -16,13 +16,13 @@
     <div class="bg-white p-3 md:p-4 rounded-xl shadow-md mb-6 flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+                <i class="fas fa-search text-slate-400"></i>
             </div>
-            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por usuario, email o rol...">
+            <input type="text" id="searchInput" value="{{ $search ?? '' }}" class="w-full pl-10 pr-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition" placeholder="Buscar por usuario, email o rol...">
         </div>
         
         <div class="md:w-1/4">
-            <select id="rolFilter" class="w-full px-4 py-2 md:py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition cursor-pointer">
+            <select id="rolFilter" class="w-full px-4 py-2 md:py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm md:text-base transition cursor-pointer">
                 <option value="">Todos los roles</option>
                 <option value="Administrador" {{ request('rol') == 'Administrador' ? 'selected' : '' }}>Administrador</option>
                 <option value="Supervisor" {{ request('rol') == 'Supervisor' ? 'selected' : '' }}>Supervisor</option>
@@ -45,21 +45,21 @@
                             <th class="p-4 border-r border-slate-700 text-center">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-100 text-xs md:text-sm">
+                    <tbody class="divide-y divide-slate-100 text-xs md:text-sm">
                         @forelse ($usuarios as $user)
                             <tr class="hover:bg-slate-50/50 transition duration-150">
                                 <td class="px-4 md:px-6 py-3 md:py-4">
-                                    <div class="font-bold text-gray-900">{{ $user->nombre_usuario }}</div>
-                                    <div class="text-[10px] md:text-xs text-gray-500">{{ $user->email ?? 'Sin email' }}</div>
+                                    <div class="font-bold text-slate-900">{{ $user->nombre_usuario }}</div>
+                                    <div class="text-[10px] md:text-xs text-slate-500">{{ $user->email ?? 'Sin email' }}</div>
                                 </td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-700">
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">
                                     @if($user->trabajador)
                                         <span class="inline-flex items-center gap-1">
                                             <i class="fas fa-user-tie text-slate-400 text-[10px]"></i>
                                             {{ $user->trabajador->nombre }}
                                         </span>
                                     @else
-                                        <span class="text-gray-400">—</span>
+                                        <span class="text-slate-400">—</span>
                                     @endif
                                 </td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
@@ -74,7 +74,7 @@
                                         {{ $user->rol }}
                                     </span>
                                 </td>
-                                <td class="px-4 md:px-6 py-3 md:py-4 text-gray-500 text-center hidden md:table-cell">
+                                <td class="px-4 md:px-6 py-3 md:py-4 text-slate-500 text-center hidden md:table-cell">
                                     {{ $user->ultimo_login ? \Carbon\Carbon::parse($user->ultimo_login)->format('d/m/Y H:i') : 'Nunca' }}
                                 </td>
                                 <td class="px-4 md:px-6 py-3 md:py-4 text-center">
@@ -95,9 +95,9 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-10 md:py-16 text-center text-gray-500">
+                                <td colspan="5" class="px-6 py-10 md:py-16 text-center text-slate-500">
                                     <div class="flex flex-col items-center">
-                                        <i class="fas fa-users text-3xl md:text-4xl mb-3 text-gray-200"></i>
+                                        <i class="fas fa-users text-3xl md:text-4xl mb-3 text-slate-200"></i>
                                         <p class="text-sm md:text-base">No se encontraron usuarios con los criterios ingresados.</p>
                                     </div>
                                 </td>
@@ -108,7 +108,7 @@
             </div>
             
             @if ($usuarios->hasPages())
-                <div class="px-4 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gray-50/50">
+                <div class="px-4 md:px-6 py-3 md:py-4 border-t border-slate-100 bg-slate-50/50">
                     {{ $usuarios->links() }}
                 </div>
             @endif
