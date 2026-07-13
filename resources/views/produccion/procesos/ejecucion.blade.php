@@ -91,13 +91,13 @@
             @endif
         </div>
         <div class="p-6 bg-white">
-            <input type="hidden" id="tipo_operacion" value="inyectado">
+            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado || $es_troquelado || $es_horneado ? 'inyectado' : ($es_mezclado ? 'mezclado' : '') }}">
             
             <div class="flex flex-wrap items-end gap-4">
                 
-                @if($es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado)
+                @if($es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado || $es_mezclado)
                 <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : 'Inyectora (Centro)'))) }}</label>
+                    <label class="block text-xs font-semibold text-gray-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : ($es_mezclado ? 'Mezcladora (Centro)' : 'Inyectora (Centro)')))) }}</label>
                     <select id="centro_global" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
@@ -138,6 +138,64 @@
             </div>
 
             <div class="flex flex-wrap items-end gap-4 mt-2">
+                @if($es_inyectado || $es_mezclado)
+                <div class="flex items-center mt-2 border border-orange-200 bg-orange-50 rounded-lg p-2 gap-3" id="panel_reciclado">
+                    <label class="flex items-center text-sm font-semibold text-orange-800 cursor-pointer">
+                        <input type="checkbox" id="chk_usar_reciclado" class="rounded text-orange-600 focus:ring-orange-500 mr-2" onchange="togglePanelReciclado()">
+                        Utilizar Material Reciclado (Equivalente de la Fórmula)
+                    </label>
+                    
+                    <div id="container_cant_reciclado" class="flex items-center hidden ml-2">
+                        <label class="text-xs text-orange-700 font-medium mr-2">Cant. Reciclado (KG):</label>
+                        <input type="number" id="cant_reciclado_global" class="w-24 border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-sm py-1.5 px-2" step="0.01">
+                        <button type="button" onclick="autocompletarMaximoReciclado()" class="ml-2 px-2 py-1 bg-orange-200 text-orange-800 text-xs font-semibold rounded hover:bg-orange-300 transition" title="Autocompletar el 100% equivalente a materia virgen">
+                            Máx (100%)
+                        </button>
+                    </div>
+                </div>
+                
+                <script>
+                    function autocompletarMaximoReciclado() {
+                        const f = document.getElementById('formula_selector').value;
+                        const c = parseFloat(document.getElementById('cantidad_global').value || 0);
+                        if (!f || c <= 0) return window.toast('Seleccione Fórmula y especifique Cant. Global.', 'warning');
+                        
+                        let url = `{{ $url_api_formula ?? '/api/formulas/composicion' }}?codigo_formula=${encodeURIComponent(f)}`;
+                        fetch(url).then(r => r.json()).then(data => {
+                            if (data.success) {
+                                let pesoVirgin = 0;
+                                data.componentes.forEach(comp => {
+                                    const desc = (comp.descripcion_producto || '').toUpperCase();
+                                    const esPigmento = desc.includes('COLOR') || desc.includes('MASTERBATCH') || desc.includes('PIGMENTO') || comp.codigo_tipo_producto === 'PIG';
+                                    if (!esPigmento) {
+                                        pesoVirgin += parseFloat(comp.cantidad_nominal) || 0;
+                                    }
+                                });
+                                const esInyectado = document.getElementById('tipo_operacion') && document.getElementById('tipo_operacion').value === 'inyectado';
+                                let max = c;
+                                if (!esInyectado) {
+                                    max = c * pesoVirgin;
+                                }
+                                document.getElementById('cant_reciclado_global').value = max.toFixed(2);
+                            }
+                        });
+                    }
+
+                    function togglePanelReciclado() {
+                        const chk = document.getElementById('chk_usar_reciclado');
+                        const container = document.getElementById('container_cant_reciclado');
+                        const inputCant = document.getElementById('cant_reciclado_global');
+                        if (chk.checked) {
+                            container.classList.remove('hidden');
+                            inputCant.focus();
+                        } else {
+                            container.classList.add('hidden');
+                            inputCant.value = '';
+                        }
+                    }
+                </script>
+                @endif
+
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Trabajador</label>
                     <select id="trabajador_global" class="border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
@@ -169,7 +227,7 @@
                 <div class="flex-1"></div>
 
                 <button type="button" onclick="cargarEjecucionAgrupada()" class="px-5 py-2 {{ $es_inyectado || $es_troquelado || $es_horneado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition" id="btn_cargar">
-                    <i class="fas fa-box-open mr-2"></i>Cargar {{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : 'Inyectado') }}
+                    <i class="fas fa-box-open mr-2"></i>Cargar {{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : ($es_mezclado ? 'Fórmula' : ($es_ensamblado ? 'Ensamblado' : ($es_molido ? 'Molido' : 'Inyectado')))) }}
                 </button>
             </div>
 
@@ -244,7 +302,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody_items" class="bg-white divide-y divide-gray-200">
-                            @if($es_inyectado && isset($cargas_agrupadas))
+                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado) && isset($cargas_agrupadas))
                                 @foreach($cargas_agrupadas as $key => $grupo)
                                     @php
                                         // Extraer datos comunes del primer componente del grupo
@@ -798,9 +856,9 @@
             molde = document.getElementById('molde_global').value;
             if (!centro || !molde) return window.toast('Seleccione Inyectora y Molde.', 'warning');
             url += `&codigo_molde=${encodeURIComponent(molde)}`;
-        } else if (esEnsamblado || esMolido) {
-            centro = document.getElementById('centro_global').value;
-            if (!centro) return window.toast(`Seleccione ${esMolido ? 'Molino' : 'Ensambladora'} (Centro).`, 'warning');
+        } else if (esEnsamblado || esMolido || (typeof esMezclado !== 'undefined' && esMezclado) || document.getElementById('tipo_operacion')?.value === 'mezclado' || document.getElementById('centro_global')) {
+            centro = document.getElementById('centro_global') ? document.getElementById('centro_global').value : '';
+            if (!centro) return window.toast(`Seleccione ${esMolido ? 'Molino' : 'Centro de Trabajo'}.`, 'warning');
             const almacenConsumo = document.getElementById('codigo_almacen_consumo')?.value;
             if (almacenConsumo) {
                 url += `&codigo_almacen=${encodeURIComponent(almacenConsumo)}`;
@@ -812,6 +870,11 @@
         const fechaGlobal = document.getElementById('fecha_global') ? document.getElementById('fecha_global').value : '';
         const horaIni    = document.getElementById('hora_ini_global').value;
         const horaFin    = document.getElementById('hora_fin_global').value;
+        
+        const chkReciclado = document.getElementById('chk_usar_reciclado');
+        const inputCantReciclado = document.getElementById('cant_reciclado_global');
+        const usar_reciclado = chkReciclado && chkReciclado.checked ? 1 : 0;
+        const extraCantReciclado = usar_reciclado ? (parseFloat(inputCantReciclado.value) || 0) : 0;
 
         // Calcular si hay REC previos
         let sumRec = 0;
@@ -825,37 +888,77 @@
 
         fetch(url).then(r => r.json()).then(data => {
             if (data.success) {
+                let pesoVirgin = 0;
                 let pesoTotalFormula = 0;
-                if (esEnsamblado || esMolido) {
-                    data.componentes.forEach(c => {
-                        pesoTotalFormula += parseFloat(c.cantidad_nominal) || 0;
-                    });
-                }
+                data.componentes.forEach(comp => {
+                    pesoTotalFormula += parseFloat(comp.cantidad_nominal) || 0;
+                    const desc = (comp.descripcion_producto || '').toUpperCase();
+                    const esPigmento = desc.includes('COLOR') || desc.includes('MASTERBATCH') || desc.includes('PIGMENTO') || comp.codigo_tipo_producto === 'PIG';
+                    if (!esPigmento) {
+                        pesoVirgin += parseFloat(comp.cantidad_nominal) || 0;
+                    }
+                });
+
+                // nuevaCantEfectiva represents remaining Virgen material overall
+                let nuevaCantEfectiva = Math.max(0, cantEfectiva - extraCantReciclado);
 
                 data.componentes.forEach(comp => {
-                    let cant = cantEfectiva * parseFloat(comp.cantidad_nominal);
+                    const desc = (comp.descripcion_producto || '').toUpperCase();
+                    const esPigmento = desc.includes('COLOR') || desc.includes('MASTERBATCH') || desc.includes('PIGMENTO') || comp.codigo_tipo_producto === 'PIG';
+                    
+                    let cant = 0;
                     let um = comp.codigo_unidad_medida;
                     
                     if (esEnsamblado || esMolido) {
-                        // Opción A: Cálculo por Proporción de Kilos
                         if (pesoTotalFormula > 0) {
-                            cant = cantEfectiva * (parseFloat(comp.cantidad_nominal) / pesoTotalFormula);
-                        } else {
-                            cant = 0;
+                            cant = nuevaCantEfectiva * (parseFloat(comp.cantidad_nominal) / pesoTotalFormula);
                         }
                         comp.codigo_unidad_medida = 'KG';
+                    } else if (document.getElementById('tipo_operacion') && document.getElementById('tipo_operacion').value === 'mezclado') { 
+                        // Es Mezclado
+                        if (esPigmento) {
+                            cant = cantEfectiva * parseFloat(comp.cantidad_nominal);
+                        } else {
+                            if (pesoVirgin > 0) {
+                                const totalVirgenRequerido = cantEfectiva * pesoVirgin;
+                                const virgenRestante = Math.max(0, totalVirgenRequerido - extraCantReciclado);
+                                cant = virgenRestante * (parseFloat(comp.cantidad_nominal) / pesoVirgin);
+                            } else {
+                                cant = 0;
+                            }
+                        }
+                        if (um === 'GR') {
+                            cant = cant / 1000;
+                            comp.codigo_unidad_medida = 'KG';
+                        }
                     } else {
-                        // Convertir gramos a kilos ya que el inventario y UI manejan KG
+                        // Es Inyectado
+                        cant = nuevaCantEfectiva * parseFloat(comp.cantidad_nominal);
                         if (um === 'GR') {
                             cant = cant / 1000;
                             comp.codigo_unidad_medida = 'KG';
                         }
                     }
 
-                    // Forzar a mostrar 4 decimales para mayor precisión en KG
-                    agregarFila({ ...comp, cantidad: cant.toFixed(4), formula: f, centro, molde,
-                                 codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin, fecha: fechaGlobal });
+                    if (cant > 0) {
+                        // Forzar a mostrar 4 decimales para mayor precisión en KG
+                        agregarFila({ ...comp, cantidad: cant.toFixed(4), formula: f, centro, molde,
+                                     codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin, fecha: fechaGlobal });
+                    }
                 });
+                
+                if (extraCantReciclado > 0 && data.codigo_material_reciclado) {
+                    agregarFila({ 
+                        codigo_producto: data.codigo_material_reciclado,
+                        descripcion_producto: data.descripcion_material_reciclado || 'MATERIAL RECICLADO / MEZCLADO',
+                        codigo_tipo_producto: 'REC', 
+                        descripcion_tipo_producto: 'RECICLADO',
+                        cantidad: extraCantReciclado.toFixed(4), 
+                        codigo_unidad_medida: 'KG',
+                        formula: f, centro, molde,
+                        codigo_trabajador: trabajador, hora_ini: horaIni, hora_fin: horaFin, fecha: fechaGlobal 
+                    });
+                }
                 verificarStock();
             } else {
                 window.toast(data.message, 'error');
@@ -1199,6 +1302,11 @@
             return;
         }
 
+        const chkReciclado = document.getElementById('chk_usar_reciclado');
+        const inputCantReciclado = document.getElementById('cant_reciclado_global');
+        const usar_reciclado = chkReciclado && chkReciclado.checked ? 1 : 0;
+        const cantidad_reciclado = usar_reciclado ? (parseFloat(inputCantReciclado.value) || 0) : 0;
+
         const payload = {
             _token: '{{ csrf_token() }}',
             tipo_operacion: tipo_operacion,
@@ -1211,7 +1319,9 @@
             hora_inicio: hora_ini,
             hora_fin: hora_fin,
             codigo_almacen_consumo: almacen,
-            codigo_color: color
+            codigo_color: color,
+            usar_reciclado: usar_reciclado,
+            cantidad_reciclado: cantidad_reciclado
         };
 
         Swal.fire({

@@ -27,6 +27,22 @@
                 @enderror
             </div>
 
+            <div class="mb-6">
+                <label for="codigo_material_reciclado" class="block text-sm font-medium text-gray-700 mb-1">Material Reciclado Equivalente (Opcional)</label>
+                <select name="codigo_material_reciclado" id="codigo_material_reciclado" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-yellow-500 focus:border-yellow-500 @error('codigo_material_reciclado') border-red-500 @enderror">
+                    <option value="">-- No admite reciclado o no especificado --</option>
+                    @foreach($materialesReciclados as $mat)
+                        <option value="{{ $mat->codigo }}" {{ old('codigo_material_reciclado', $formula->codigo_material_reciclado) == $mat->codigo ? 'selected' : '' }}>
+                            {{ $mat->codigo }} - {{ $mat->descripcion }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Material que puede ser usado como reemplazo del 100% virgen en procesos de inyectado.</p>
+                @error('codigo_material_reciclado')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div class="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-100">
                 <a href="{{ route('formulas.index') }}" class="px-6 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition">Cancelar</a>
                 <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-6 rounded-lg shadow transition">

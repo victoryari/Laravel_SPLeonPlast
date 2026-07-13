@@ -36,7 +36,12 @@ class FormulaController extends Controller
 
     public function create()
     {
-        return view('tablas_maestras.formula.create');
+        $materialesReciclados = \Illuminate\Support\Facades\DB::table('producto')
+            ->whereIn('codigo_tipo_producto', ['REC', 'PEP'])
+            ->where('estado', 1)
+            ->get();
+            
+        return view('tablas_maestras.formula.create', compact('materialesReciclados'));
     }
 
     public function store(Request $request)
@@ -44,11 +49,13 @@ class FormulaController extends Controller
         $request->validate([
             'codigo' => 'required|string|max:20|unique:formula_produccion,codigo',
             'descripcion' => 'required|string|max:150',
+            'codigo_material_reciclado' => 'nullable|string|exists:producto,codigo'
         ]);
 
         FormulaProduccion::create([
             'codigo' => strtoupper($request->codigo),
             'descripcion' => $request->descripcion,
+            'codigo_material_reciclado' => $request->codigo_material_reciclado,
             'estado' => 1,
             'fecha_creacion' => Carbon::now(),
         ]);
@@ -61,14 +68,27 @@ class FormulaController extends Controller
     {
         $formula = FormulaProduccion::where('codigo', $codigo)->firstOrFail();
         if ($formula->estado == 0) return redirect()->route('formulas.index')->with('error', 'Fórmula anulada.');
-        return view('tablas_maestras.formula.edit', compact('formula'));
+        
+        $materialesReciclados = \Illuminate\Support\Facades\DB::table('producto')
+            ->whereIn('codigo_tipo_producto', ['REC', 'PEP'])
+            ->where('estado', 1)
+            ->get();
+            
+        return view('tablas_maestras.formula.edit', compact('formula', 'materialesReciclados'));
     }
 
     public function update(Request $request, $codigo)
     {
         $formula = FormulaProduccion::where('codigo', $codigo)->firstOrFail();
-        $request->validate(['descripcion' => 'required|string|max:150']);
-        $formula->update(['descripcion' => $request->descripcion]);
+        $request->validate([
+            'descripcion' => 'required|string|max:150',
+            'codigo_material_reciclado' => 'nullable|string|exists:producto,codigo'
+        ]);
+        
+        $formula->update([
+            'descripcion' => $request->descripcion,
+            'codigo_material_reciclado' => $request->codigo_material_reciclado
+        ]);
         
         return redirect()->route('formulas.index')->with('success', 'Fórmula actualizada.');
     }

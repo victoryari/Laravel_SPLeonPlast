@@ -19,7 +19,8 @@ class FormulaProduccion extends Model
         'codigo',
         'descripcion',
         'estado',
-        'fecha_creacion'
+        'fecha_creacion',
+        'codigo_material_reciclado'
     ];
 
     protected $casts = [

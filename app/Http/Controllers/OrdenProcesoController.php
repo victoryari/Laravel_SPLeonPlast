@@ -533,7 +533,20 @@ class OrdenProcesoController extends Controller
             return response()->json(['success' => false, 'message' => 'La fórmula no tiene componentes o no coinciden los parámetros de stock/molde.']);
         }
 
-        return response()->json(['success' => true, 'componentes' => $componentes->values()]);
+        $formulaData = DB::table('formula_produccion')->where('codigo', $codigo_formula)->first();
+        $codigo_material_reciclado = $formulaData ? $formulaData->codigo_material_reciclado : null;
+
+        $descripcion_material_reciclado = null;
+        if ($codigo_material_reciclado) {
+            $descripcion_material_reciclado = DB::table('producto')->where('codigo', $codigo_material_reciclado)->value('descripcion');
+        }
+
+        return response()->json([
+            'success' => true, 
+            'componentes' => $componentes->values(),
+            'codigo_material_reciclado' => $codigo_material_reciclado,
+            'descripcion_material_reciclado' => $descripcion_material_reciclado
+        ]);
     }
 
     public function verificarStock(Request $request)
@@ -2023,21 +2036,61 @@ class OrdenProcesoController extends Controller
                 }
             }
 
-            // Segundo pase: Preparar los componentes a insertar con la distribución correcta
+            $usar_reciclado = $request->input('usar_reciclado', 0);
+            $cantidad_reciclado = floatval($request->input('cantidad_reciclado', 0));
+            $extraCantReciclado = ($usar_reciclado == 1) ? $cantidad_reciclado : 0;
+
+            if ($extraCantReciclado > 0) {
+                if (empty($formula_data['codigo_material_reciclado'])) {
+                    throw new \Exception("La fórmula seleccionada no tiene configurado un Material Reciclado en Tablas Maestras.");
+                }
+            }
+
+            $nueva_cantidad_total = max(0, $cantidad_total - $extraCantReciclado);
+
+            // Segundo pase: Preparar los componentes a insertar con la distribucion correcta
+            $pesoVirgin = 0;
+            foreach ($componentes_a_procesar as $comp) {
+                $desc = strtoupper($comp['descripcion_producto'] ?? '');
+                $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO') || $comp['codigo_tipo_producto'] === 'PIG';
+                if (!$esPigmento) {
+                    $pesoVirgin += floatval($comp['cantidad_nominal']);
+                }
+            }
+
             $componentes_a_insertar = [];
             foreach ($componentes_a_procesar as $comp) {
                 $cant = floatval($comp['cantidad_nominal']);
                 $um = $comp['codigo_unidad_medida'];
+                $desc = strtoupper($comp['descripcion_producto'] ?? '');
+                $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO') || $comp['codigo_tipo_producto'] === 'PIG';
 
                 if ($es_ensamblado_molido || $es_limpieza) {
                     if ($pesoTotalFormula > 0) {
-                        $cant = $cantidad_total * ($cant / $pesoTotalFormula);
+                        $cant = $nueva_cantidad_total * ($cant / $pesoTotalFormula);
                     } else {
                         $cant = 0;
                     }
                     $um = 'KG';
+                } else if ($tipo_operacion === 'mezclado') {
+                    if ($esPigmento) {
+                        $cant = $cantidad_total * $cant;
+                    } else {
+                        if ($pesoVirgin > 0) {
+                            $totalVirgenRequerido = $cantidad_total * $pesoVirgin;
+                            $virgenRestante = max(0, $totalVirgenRequerido - $extraCantReciclado);
+                            $cant = $virgenRestante * ($cant / $pesoVirgin);
+                        } else {
+                            $cant = 0;
+                        }
+                    }
+                    if ($um === 'GR') {
+                        $cant = $cant / 1000;
+                        $um = 'KG';
+                    }
                 } else {
-                    $cant = $cantidad_total * $cant;
+                    // Es Inyectado
+                    $cant = $nueva_cantidad_total * $cant;
                     if ($um === 'GR') {
                         $cant = $cant / 1000;
                         $um = 'KG';
@@ -2053,6 +2106,16 @@ class OrdenProcesoController extends Controller
                         'codigo_tipo_producto' => $comp['codigo_tipo_producto']
                     ];
                 }
+            }
+
+            if ($extraCantReciclado > 0 && !empty($formula_data["codigo_material_reciclado"])) {
+                $componentes_a_insertar[] = [
+                    "codigo_producto" => $formula_data["codigo_material_reciclado"],
+                    "cantidad" => $extraCantReciclado,
+                    "codigo_unidad_medida" => "KG",
+                    "codigo_molde" => $codigo_molde,
+                    "codigo_tipo_producto" => "REC"
+                ];
             }
 
             // 2. Construir el arreglo en formato de la función original
