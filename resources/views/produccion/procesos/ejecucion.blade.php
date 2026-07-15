@@ -38,7 +38,7 @@
                 </li>
                 @endif
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-merma_pura">Merma Pura</a>
+                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-merma_pura">Merma</a>
                 </li>
                 @if($es_inyectado)
                 <li class="me-2">
@@ -48,7 +48,7 @@
                     <a href="#" onclick="switchOpTab('limpieza')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-limpieza">Limpieza/Purga</a>
                 </li>
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-recuperado_maquina">Recup. Máquina</a>
+                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-recuperado_maquina">Molido de Máquina</a>
                 </li>
                 @endif
             </ul>
@@ -91,7 +91,7 @@
             @endif
         </div>
         <div class="p-6 bg-white">
-            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado || $es_troquelado || $es_horneado ? 'inyectado' : ($es_mezclado ? 'mezclado' : '') }}">
+            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado || $es_troquelado || $es_horneado ? 'inyectado' : ($es_mezclado ? 'mezclado' : ($es_ensamblado ? 'ensamblado' : '')) }}">
             
             <div class="flex flex-wrap items-end gap-4">
                 
@@ -142,15 +142,17 @@
                 <div class="flex items-center mt-2 border border-orange-200 bg-orange-50 rounded-lg p-2 gap-3" id="panel_reciclado">
                     <label class="flex items-center text-sm font-semibold text-orange-800 cursor-pointer">
                         <input type="checkbox" id="chk_usar_reciclado" class="rounded text-orange-600 focus:ring-orange-500 mr-2" onchange="togglePanelReciclado()">
-                        Utilizar Material Reciclado (Equivalente de la Fórmula)
+                        {{ $es_inyectado ? 'Viene de Mezclado' : 'Utilizar Material Reciclado (Equivalente de la Fórmula)' }}
                     </label>
                     
                     <div id="container_cant_reciclado" class="flex items-center hidden ml-2">
-                        <label class="text-xs text-orange-700 font-medium mr-2">Cant. Reciclado (KG):</label>
+                        <label class="text-xs text-orange-700 font-medium mr-2">{{ $es_inyectado ? 'Cant. (KG) :' : 'Cant. Reciclado (KG):' }}</label>
                         <input type="number" id="cant_reciclado_global" class="w-24 border-slate-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-sm py-1.5 px-2" step="0.01">
+                        @if(!$es_inyectado)
                         <button type="button" onclick="autocompletarMaximoReciclado()" class="ml-2 px-2 py-1 bg-orange-200 text-orange-800 text-xs font-semibold rounded hover:bg-orange-300 transition" title="Autocompletar el 100% equivalente a materia virgen">
                             Máx (100%)
                         </button>
+                        @endif
                     </div>
                 </div>
                 
@@ -302,7 +304,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody_items" class="bg-white divide-y divide-slate-200">
-                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado) && isset($cargas_agrupadas) && $cargas_agrupadas->count() > 0)
+                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado || $es_ensamblado || $es_molido) && isset($cargas_agrupadas) && $cargas_agrupadas->count() > 0)
                                 @foreach($cargas_agrupadas as $key => $grupo)
                                     @php
                                         // Extraer datos comunes del primer componente del grupo
@@ -338,7 +340,9 @@
                                             <div class="text-[10px] text-slate-500">{{ $first->codigo_formula_produccion ?? 'N/A' }}</div>
                                         </td>
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_centro_trabajo }}</td>
+                                        @if($es_inyectado)
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_molde ?? 'N/A' }}</td>
+                                        @endif
                                         <td class="px-3 py-3 whitespace-nowrap text-sm font-bold text-slate-900">{{ number_format($totalKG, 2) }}</td>
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">KG</td>
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_trabajador }}</td>
@@ -375,8 +379,10 @@
                                             <div class="text-[9px] text-slate-500">{{ $r->codigo_producto }}</div>
                                         </td>
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_centro_trabajo }}</td>
+                                        @if($es_inyectado)
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_molde }}</td>
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-slate-700">{{ number_format($r->cantidad, 4) }}</td>
+                                        @endif
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-slate-700">{{ number_format(floor($r->cantidad * 100) / 100, 2, '.', '') }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_unidad_medida }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_trabajador }}</td>
                                         <td colspan="2" class="px-3 py-2 text-xs text-slate-400">Detalle Interno</td>
@@ -842,13 +848,29 @@
         });
 
         let cantEfectiva = Math.max(0, cantGlobal - sumRec);
+        const esMezcladoOp = document.getElementById('tipo_operacion') && document.getElementById('tipo_operacion').value === 'mezclado';
 
         filas.forEach(row => {
             const nominalInput = row.querySelector('.c-nominal');
             if (nominalInput && nominalInput.value) {
                 const nominal = parseFloat(nominalInput.value);
                 const cantInput = row.querySelector('.c-cant');
-                cantInput.value = (cantEfectiva * nominal).toFixed(2);
+                let cantFinal = cantEfectiva * nominal;
+                
+                if (esMezcladoOp && cantEfectiva <= 1) {
+                    const descInput = row.querySelector('.c-prod-search');
+                    if (descInput) {
+                        const desc = descInput.value.toUpperCase();
+                        const esPigmento = desc.includes('COLOR') || desc.includes('MASTERBATCH') || desc.includes('PIGMENTO');
+                        if (esPigmento) {
+                            cantFinal = cantEfectiva; // 100% de la diferencia es pigmento
+                        } else {
+                            cantFinal = 0; // 0 resina
+                        }
+                    }
+                }
+                
+                cantInput.value = cantFinal.toFixed(2);
             }
         });
     }
@@ -924,16 +946,14 @@
                         comp.codigo_unidad_medida = 'KG';
                     } else if (document.getElementById('tipo_operacion') && document.getElementById('tipo_operacion').value === 'mezclado') { 
                         // Es Mezclado
-                        if (esPigmento) {
-                            cant = cantEfectiva * parseFloat(comp.cantidad_nominal);
-                        } else {
-                            if (pesoVirgin > 0) {
-                                const totalVirgenRequerido = cantEfectiva * pesoVirgin;
-                                const virgenRestante = Math.max(0, totalVirgenRequerido - extraCantReciclado);
-                                cant = virgenRestante * (parseFloat(comp.cantidad_nominal) / pesoVirgin);
+                        if (nuevaCantEfectiva <= 1) {
+                            if (esPigmento) {
+                                cant = nuevaCantEfectiva; // Usa la diferencia total (ej: 1kg completo)
                             } else {
                                 cant = 0;
                             }
+                        } else {
+                            cant = nuevaCantEfectiva * parseFloat(comp.cantidad_nominal);
                         }
                         if (um === 'GR') {
                             cant = cant / 1000;

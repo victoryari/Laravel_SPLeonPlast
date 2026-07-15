@@ -27,6 +27,14 @@ class KardexExport implements FromCollection, WithHeadings, WithMapping, WithSty
             ->join('producto', 'kardex.codigo_producto', '=', 'producto.codigo')
             ->join('almacen', 'kardex.codigo_almacen', '=', 'almacen.codigo_almacen')
             ->where('kardex.codigo_almacen', '!=', 'ALM04')
+            ->where(function($q) {
+                $q->whereNull('kardex.observaciones')
+                  ->orWhere(function($subq) {
+                      $subq->where('kardex.observaciones', 'NOT LIKE', '%[ANULADO]%')
+                           ->where('kardex.observaciones', 'NOT LIKE', '%[EXTORNADO]%');
+                  });
+            })
+            ->where('kardex.tipo_movimiento', '!=', 'EXTORNO')
             ->select('kardex.*', 'producto.descripcion as producto', 'almacen.descripcion as almacen');
 
         if (!empty($this->filtros['documento'])) {

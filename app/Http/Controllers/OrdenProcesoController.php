@@ -198,6 +198,13 @@ class OrdenProcesoController extends Controller
                         'observaciones'        => "Anulación de PEP por anulación de proceso OP-{$orden_id}",
                         'usuario_registro'     => $usuario_id
                     ]);
+
+                    // Marcar el original como anulado
+                    DB::table('kardex')
+                        ->where('numero_documento', $numero_ref_prefijo)
+                        ->where('tipo_movimiento', 'INGRESO')
+                        ->where('documento', 'RECEPCION_PEP')
+                        ->update(['observaciones' => DB::raw("CONCAT(COALESCE(observaciones, ''), ' [ANULADO]')")]);
                 }
             }
             
@@ -291,6 +298,13 @@ class OrdenProcesoController extends Controller
                     'observaciones'        => "Devolución de MTP por anulación de proceso OP-{$orden_id}",
                     'usuario_registro'     => $usuario_id
                 ]);
+
+                // Marcar los consumos originales como anulados
+                DB::table('kardex')
+                    ->where('numero_documento', 'LIKE', $numero_ref_prefijo . '%')
+                    ->where('tipo_movimiento', 'SALIDA')
+                    ->where('documento', 'PRODUCCION')
+                    ->update(['observaciones' => DB::raw("CONCAT(COALESCE(observaciones, ''), ' [ANULADO]')")]);
             }
             
             // 4. BAJA LÓGICA
@@ -366,7 +380,7 @@ class OrdenProcesoController extends Controller
 
         // Agrupar por fórmula y fecha de creación (Cargas)
         $cargas_agrupadas = collect();
-        if ($es_inyectado) {
+        if ($es_inyectado || $es_mezclado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado) {
             $cargas_agrupadas = $registrados->groupBy(function($item) {
                 // If it doesn't have a formula, group it as MANUAL
                 $formula = $item->codigo_formula_produccion ?? 'MANUAL';
@@ -520,6 +534,10 @@ class OrdenProcesoController extends Controller
                     // Solo incluir si coincide con el molde en stock
                     if ($comp->codigo_molde === $productosConMolde[$comp->codigo_producto]) {
                         $componentesFiltrados->push($comp);
+                    } else {
+                        $moldeRequerido = $comp->codigo_molde;
+                        $moldeEnStock = $productosConMolde[$comp->codigo_producto] ?? 'Ninguno';
+                        return response()->json(['success' => false, 'message' => "El producto {$comp->descripcion_producto} requiere el molde {$moldeRequerido}, pero el stock disponible proviene del molde: {$moldeEnStock}."]);
                     }
                 } else {
                     // Si no tiene molde (ej. Clip) se incluye directamente
@@ -1541,8 +1559,8 @@ class OrdenProcesoController extends Controller
                     if ($pepRow->estado === 'APROBADO' && $diferencia < 0) {
                         throw new \Exception("No se puede reducir la cantidad porque el PEP asociado ya fue recibido en almacén.");
                     }
-                    $nuevaCantidadPEP = max(0, $pepRow->cantidad + $diferencia);
-                    if ($nuevaCantidadPEP <= 0) {
+                    $nuevaCantidadPEP = round(max(0, $pepRow->cantidad + $diferencia), 4);
+                    if ($nuevaCantidadPEP <= 0.0001) {
                         DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->delete();
                     } else {
                         DB::table('produccion_ingresos_proceso')->where('id', $pepRow->id)->update(['cantidad' => $nuevaCantidadPEP]);
@@ -1827,9 +1845,21 @@ class OrdenProcesoController extends Controller
                         'usuario_registro'     => $usuario_id
                     ]);
 
+                    // Marcar el original como anulado
+                    DB::table('kardex')
+                        ->where('numero_documento', $mov->numero_referencia)
+                        ->where('tipo_movimiento', 'SALIDA')
+                        ->where('documento', 'PRODUCCION')
+                        ->where('codigo_producto', $mov->codigo_producto)
+                        ->where('cantidad_salida', $mov->cantidad)
+                        ->update(['observaciones' => DB::raw("CONCAT(COALESCE(observaciones, ''), ' [ANULADO]')")]);
+
                     DB::table('movimientos_inventario')
                         ->where('id_movimiento', $mov->id_movimiento)
                         ->update(['tiene_kardex' => true]);
+
+                    // Reconstruir saldos del Kardex para mantener la consistencia al ocultar
+                    $this->reconstruirSaldosKardex($mov->codigo_producto, $mov->codigo_almacen);
                 }
             }
 
@@ -1866,8 +1896,8 @@ class OrdenProcesoController extends Controller
                             throw new \Exception("No se puede eliminar el componente porque el PEP asociado ya fue recibido en almacén.");
                         }
                         
-                        $nuevaCantidadPEP = max(0, $pepRow->cantidad - $componente->cantidad);
-                        if ($nuevaCantidadPEP <= 0) {
+                        $nuevaCantidadPEP = round(max(0, $pepRow->cantidad - $componente->cantidad), 4);
+                        if ($nuevaCantidadPEP <= 0.0001) {
                             DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->delete();
                         } else {
                             DB::table('produccion_ingresos_proceso')->where('id_ingreso', $pepRow->id_ingreso)->update(['cantidad' => $nuevaCantidadPEP]);
@@ -1898,7 +1928,7 @@ class OrdenProcesoController extends Controller
                         ->sum('cantidad') ?? 0;
 
                     // LO QUE DEBERIA QUEDAR PENDIENTE
-                    $deberiaEstarPendiente = max(0, $totalActivoFormula - $totalAprobado);
+                    $deberiaEstarPendiente = round(max(0, $totalActivoFormula - $totalAprobado), 4);
 
                     // ACTUALIZAR ROWS PENDIENTES
                     $pendientes = DB::table('produccion_ingresos_proceso')
@@ -2030,7 +2060,7 @@ class OrdenProcesoController extends Controller
             
             // Si es Molido o Ensamblado o Limpieza, necesitamos el peso total para sacar proporción (KG)
             $pesoTotalFormula = 0;
-            $es_ensamblado_molido = in_array($tipo_operacion, ['recuperado_molido', 'recuperado_maquina']) || ($proceso->codigo_proceso == '3'); // 3 = ensamblado
+            $es_ensamblado_molido = in_array($tipo_operacion, ['recuperado_molido', 'recuperado_maquina', 'ensamblado']) || ($proceso->codigo_proceso == '10'); // 10 = ensamblado
             $es_limpieza = ($tipo_operacion === 'limpieza');
             
             // Primer pase: Filtrar y calcular el peso total de los componentes que quedan
@@ -2086,16 +2116,14 @@ class OrdenProcesoController extends Controller
                     }
                     $um = 'KG';
                 } else if ($tipo_operacion === 'mezclado') {
-                    if ($esPigmento) {
-                        $cant = $cantidad_total * $cant;
-                    } else {
-                        if ($pesoVirgin > 0) {
-                            $totalVirgenRequerido = $cantidad_total * $pesoVirgin;
-                            $virgenRestante = max(0, $totalVirgenRequerido - $extraCantReciclado);
-                            $cant = $virgenRestante * ($cant / $pesoVirgin);
+                    if ($nueva_cantidad_total <= 1) {
+                        if ($esPigmento) {
+                            $cant = $nueva_cantidad_total; // 100% de la diferencia es pigmento
                         } else {
-                            $cant = 0;
+                            $cant = 0; // 0 resina
                         }
+                    } else {
+                        $cant = $nueva_cantidad_total * $cant;
                     }
                     if ($um === 'GR') {
                         $cant = $cant / 1000;

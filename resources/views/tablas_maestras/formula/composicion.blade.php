@@ -93,8 +93,8 @@
                             <tr class="hover:bg-slate-50 transition duration-150" data-id="row-{{ $idx }}">
                                 <td class="px-3 md:px-6 py-2 md:py-4 text-producto">{{ $comp->producto ? $comp->producto->descripcion : $comp->codigo_producto }}</td>
                                 <td class="px-3 md:px-6 py-2 md:py-4 text-tipo-desc">{{ $comp->producto && $comp->producto->tipo ? $comp->producto->tipo->descripcion : $comp->codigo_tipo_producto }}</td>
-                                <td class="px-3 md:px-6 py-2 md:py-4 text-center text-nominal">{{ number_format($comp->cantidad_nominal, 4, '.', '') }}</td>
-                                <td class="px-3 md:px-6 py-2 md:py-4 text-center font-bold text-real">{{ number_format($comp->cantidad_real, 4, '.', '') }}</td>
+                                <td class="px-3 md:px-6 py-2 md:py-4 text-center text-nominal">{{ number_format(floor($comp->cantidad_nominal * 10000) / 10000, 4, '.', '') }}</td>
+                                <td class="px-3 md:px-6 py-2 md:py-4 text-center font-bold text-real">{{ number_format(floor($comp->cantidad_real * 10000) / 10000, 4, '.', '') }}</td>
                                 <td class="px-3 md:px-6 py-2 md:py-4 text-unidad">{{ $comp->codigo_unidad_medida ?? 'N/A' }}</td>
                                 <td class="px-3 md:px-6 py-2 md:py-4 font-semibold text-purple-600 text-molde">{{ $comp->codigo_molde ?? 'Sin Molde' }}</td>
                                 <td class="px-3 md:px-6 py-2 md:py-4 text-center space-x-2 md:space-x-3">
@@ -149,7 +149,7 @@
             <button type="button" onclick="cerrarModal()" class="text-slate-400 hover:text-red-500 transition p-2"><i class="fas fa-times text-lg md:text-xl"></i></button>
         </div>
         
-        <form id="formModal" class="p-4 md:p-6 overflow-y-auto flex-1">
+        <form id="formModal" class="p-4 md:p-6 overflow-y-auto flex-1 allow-double-submit">
             <input type="hidden" id="modalRowId">
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-5">
@@ -381,8 +381,8 @@
             prodTxt: $('#modalProducto option:selected').text(),
             tipoVal: $('#modalTipo').val(),
             tipoTxt: $('#modalTipoDesc').val(),
-            nominal: parseFloat(document.getElementById('modalNominal').value || 0).toFixed(4),
-            real: parseFloat(document.getElementById('modalReal').value).toFixed(4),
+            nominal: (Math.floor(parseFloat(document.getElementById('modalNominal').value || 0) * 10000) / 10000).toFixed(4),
+            real: (Math.floor(parseFloat(document.getElementById('modalReal').value || 0) * 10000) / 10000).toFixed(4),
             uniVal: document.getElementById('modalUnidad').value,
             molde: document.getElementById('modalMolde').value || 'Sin Molde'
         };
