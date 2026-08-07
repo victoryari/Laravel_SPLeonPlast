@@ -12,16 +12,16 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
-                        <th class="p-4 border-b border-slate-200">Proveedor</th>
-                        <th class="p-4 border-b border-slate-200">Guía Envío</th>
-                        <th class="p-4 border-b border-slate-200">Fecha</th>
-                        <th class="p-4 border-b border-slate-200">Producto</th>
-                        <th class="p-4 border-b border-slate-200 text-right">Enviado (KG)</th>
-                        <th class="p-4 border-b border-slate-200 text-right">Devuelto (KG)</th>
-                        <th class="p-4 border-b border-slate-200 text-right">Saldo / Merma</th>
-                        <th class="p-4 border-b border-slate-200 text-center">Estado</th>
-                        <th class="p-4 border-b border-slate-200 text-center">Acciones</th>
+                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                        <th class="p-4 border-r border-slate-800">Proveedor</th>
+                        <th class="p-4 border-r border-slate-800">Guía Envío</th>
+                        <th class="p-4 border-r border-slate-800">Fecha</th>
+                        <th class="p-4 border-r border-slate-800">Producto</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Enviado (KG)</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Devuelto (KG)</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Saldo / Merma</th>
+                        <th class="p-4 border-r border-slate-800 text-center">Estado</th>
+                        <th class="p-4 border-r border-slate-800 last:border-r-0 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">

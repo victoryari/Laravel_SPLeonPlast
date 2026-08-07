@@ -10,9 +10,9 @@
         <table class="w-full text-sm">
             @if(count($headers) > 0)
             <thead>
-                <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider text-xs">
+                <tr class="bg-slate-900 text-slate-200 uppercase tracking-wider text-xs font-bold">
                     @foreach($headers as $index => $header)
-                        <th class="px-4 py-3.5 text-left font-semibold {{ $index < count($headers) - 1 ? 'border-r border-slate-700' : '' }} {{ isset($header['class']) ? $header['class'] : '' }}">
+                        <th class="px-4 py-3.5 text-left font-bold {{ $index < count($headers) - 1 ? 'border-r border-slate-800' : '' }} {{ isset($header['class']) ? $header['class'] : '' }}">
                             {{ $header['label'] ?? $header }}
                         </th>
                     @endforeach

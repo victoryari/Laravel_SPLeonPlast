@@ -83,7 +83,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead>
-                            <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
+                            <tr class="bg-slate-900 text-[11px] uppercase text-slate-200 tracking-wider font-bold">
                                 <th class="p-3 font-semibold">Producto</th>
                                 <th class="p-3 font-semibold">Origen</th>
                                 <th class="p-3 font-semibold">Destino</th>
@@ -146,7 +146,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead>
-                            <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
+                            <tr class="bg-slate-900 text-[11px] uppercase text-slate-200 tracking-wider font-bold">
                                 <th class="p-3 font-semibold">Lote</th>
                                 <th class="p-3 font-semibold text-right">Cantidad</th>
                                 <th class="p-3 font-semibold">Fecha Despacho</th>

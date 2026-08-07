@@ -18,14 +18,14 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
-                    <tr class="bg-red-600 text-white uppercase tracking-wider font-semibold">
-                        <th class="p-3">Producto</th>
-                        <th class="p-3">Almacén</th>
-                        <th class="p-3 text-right">Stock Actual</th>
-                        <th class="p-3 text-right">Stock Mínimo</th>
-                        <th class="p-3 text-right">Stock Máximo</th>
-                        <th class="p-3 text-right">Déficit</th>
-                        <th class="p-3 text-center">Estado</th>
+                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                        <th class="p-4 border-r border-slate-800">Producto</th>
+                        <th class="p-4 border-r border-slate-800">Almacén</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Stock Actual</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Stock Mínimo</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Stock Máximo</th>
+                        <th class="p-4 border-r border-slate-800 text-right">Déficit</th>
+                        <th class="p-4 border-r border-slate-800 last:border-r-0 text-center">Estado</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">

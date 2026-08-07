@@ -82,13 +82,13 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-500 uppercase tracking-wider text-[11px] font-semibold">
-                        <th class="p-3 border-b border-slate-200 text-center">Item</th>
-                        <th class="p-3 border-b border-slate-200">Producto</th>
-                        <th class="p-3 border-b border-slate-200 text-center">Cant.</th>
-                        <th class="p-3 border-b border-slate-200 text-center">U.M.</th>
-                        <th class="p-3 border-b border-slate-200 text-center">Lote</th>
-                        <th class="p-3 border-b border-slate-200 text-center">Venc.</th>
+                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                        <th class="p-3.5 border-r border-slate-800 text-center">Item</th>
+                        <th class="p-3.5 border-r border-slate-800">Producto</th>
+                        <th class="p-3.5 border-r border-slate-800 text-center">Cant.</th>
+                        <th class="p-3.5 border-r border-slate-800 text-center">U.M.</th>
+                        <th class="p-3.5 border-r border-slate-800 text-center">Lote</th>
+                        <th class="p-3.5 text-center">Venc.</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">

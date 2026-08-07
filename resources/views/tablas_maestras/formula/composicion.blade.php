@@ -78,14 +78,14 @@
             <div class="overflow-x-auto pb-2">
                 <table class="w-full text-left whitespace-nowrap min-w-[800px]">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-[11px] md:text-xs">
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider">Producto (Materia Prima)</th>
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider">Tipo</th>
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider text-center">C. Nominal</th>
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider text-center">C. Real</th>
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider">U.M.</th>
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider">Molde Asignado</th>
-                            <th class="px-3 md:px-6 py-2 md:py-4 font-bold uppercase tracking-wider text-center">Acciones</th>
+                        <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800">Producto (Materia Prima)</th>
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800">Tipo</th>
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800 text-center">C. Nominal</th>
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800 text-center">C. Real</th>
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800">U.M.</th>
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800">Molde Asignado</th>
+                            <th class="px-3 md:px-6 py-3.5 border-r border-slate-800 last:border-r-0 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-xs md:text-sm" id="tbComposicion">

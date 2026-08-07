@@ -188,12 +188,12 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
-                                    <tr class="bg-slate-100">
-                                        <th class="p-2 border">Componente</th>
-                                        <th class="p-2 border">Stock en Almacén</th>
-                                        <th class="p-2 border">Merma Pura</th>
-                                        <th class="p-2 border">Merma Recuperada</th>
-                                        <th class="p-2 border text-center col-action" style="display:none;">Acción</th>
+                                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                                        <th class="p-2.5 border border-slate-800">Componente</th>
+                                        <th class="p-2.5 border border-slate-800">Stock en Almacén</th>
+                                        <th class="p-2.5 border border-slate-800">Merma Pura</th>
+                                        <th class="p-2.5 border border-slate-800">Merma Recuperada</th>
+                                        <th class="p-2.5 border border-slate-800 text-center col-action" style="display:none;">Acción</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyComponentesEnsamblado">

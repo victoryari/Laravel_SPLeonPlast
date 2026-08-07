@@ -45,11 +45,11 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs sm:text-sm">
                 <thead>
-                    <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold">
-                        <th class="p-4">OP</th>
-                        <th class="p-4">Producto</th>
-                        <th class="p-4">Fecha</th>
-                        <th class="p-4 text-center">Estado</th>
+                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                        <th class="p-4 border-r border-slate-800">OP</th>
+                        <th class="p-4 border-r border-slate-800">Producto</th>
+                        <th class="p-4 border-r border-slate-800">Fecha</th>
+                        <th class="p-4 border-r border-slate-800 last:border-r-0 text-center">Estado</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">

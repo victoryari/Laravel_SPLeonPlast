@@ -94,12 +94,12 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-xs">
                         <thead>
-                            <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
-                                <th class="p-2 font-semibold">Almacén Origen</th>
-                                <th class="p-2 font-semibold">Lote</th>
-                                <th class="p-2 font-semibold">Fecha Venc.</th>
-                                <th class="p-2 font-semibold text-right">Stock Disponible ({{ $det->producto->unidad->abreviatura ?? 'U.M.' }})</th>
-                                <th class="p-2 font-semibold text-center">Cantidad a Retirar ({{ $det->producto->unidad->abreviatura ?? 'U.M.' }})</th>
+                            <tr class="bg-slate-900 text-[11px] uppercase text-slate-200 tracking-wider font-bold">
+                                <th class="p-2.5 font-bold border-r border-slate-800">Almacén Origen</th>
+                                <th class="p-2.5 font-bold border-r border-slate-800">Lote</th>
+                                <th class="p-2.5 font-bold border-r border-slate-800">Fecha Venc.</th>
+                                <th class="p-2.5 font-bold text-right border-r border-slate-800">Stock Disponible ({{ $det->producto->unidad->abreviatura ?? 'U.M.' }})</th>
+                                <th class="p-2.5 font-bold text-center">Cantidad a Retirar ({{ $det->producto->unidad->abreviatura ?? 'U.M.' }})</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">

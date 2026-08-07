@@ -71,11 +71,11 @@
                                     <col class="w-[15%]">
                                 </colgroup>
                                 <thead>
-                                    <tr class="bg-slate-100 text-[11px] uppercase text-slate-500 tracking-wider">
-                                        <th class="p-2 font-semibold">Producto</th>
-                                        <th class="p-2 font-semibold text-center">Cantidad</th>
-                                        <th class="p-2 font-semibold text-center">U.M.</th>
-                                        <th class="p-2 font-semibold text-center"><i class="fas fa-cog"></i></th>
+                                    <tr class="bg-slate-900 text-[11px] uppercase text-slate-200 tracking-wider font-bold">
+                                        <th class="p-2.5 font-bold border-r border-slate-800">Producto</th>
+                                        <th class="p-2.5 font-bold text-center border-r border-slate-800">Cantidad</th>
+                                        <th class="p-2.5 font-bold text-center border-r border-slate-800">U.M.</th>
+                                        <th class="p-2.5 font-bold text-center"><i class="fas fa-cog"></i></th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100" id="tbodyProductos">

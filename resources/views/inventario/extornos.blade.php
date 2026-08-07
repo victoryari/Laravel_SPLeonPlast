@@ -50,13 +50,13 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
                 <thead>
-                    <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold border-b border-slate-700">
-                        <th class="p-4 border-r border-slate-700">Fecha / Hora</th>
-                        <th class="p-4 border-r border-slate-700">Producto y Almacén</th>
-                        <th class="p-4 border-r border-slate-700">Tipo</th>
-                        <th class="p-4 border-r border-slate-700">Documento</th>
-                        <th class="p-4 border-r border-slate-700 text-center">Cantidad</th>
-                        <th class="p-4 text-center">Acción</th>
+                    <tr class="bg-slate-900 text-slate-200 uppercase tracking-wider font-bold text-xs border-b border-slate-800">
+                        <th class="p-4 border-r border-slate-800">Fecha / Hora</th>
+                        <th class="p-4 border-r border-slate-800">Producto y Almacén</th>
+                        <th class="p-4 border-r border-slate-800">Tipo</th>
+                        <th class="p-4 border-r border-slate-800">Documento</th>
+                        <th class="p-4 border-r border-slate-800 text-center">Cantidad</th>
+                        <th class="p-4 border-r border-slate-800 last:border-r-0 text-center">Acción</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">

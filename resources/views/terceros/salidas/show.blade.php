@@ -59,11 +59,11 @@
             <div class="overflow-x-auto border border-slate-200 rounded-xl">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wider font-bold">
-                            <th class="p-4 border-b border-slate-200">Ítem</th>
-                            <th class="p-4 border-b border-slate-200">Código de Producto</th>
-                            <th class="p-4 border-b border-slate-200">Descripción</th>
-                            <th class="p-4 border-b border-slate-200 text-right">Cantidad</th>
+                        <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                            <th class="p-4 border-r border-slate-800">Ítem</th>
+                            <th class="p-4 border-r border-slate-800">Código de Producto</th>
+                            <th class="p-4 border-r border-slate-800">Descripción</th>
+                            <th class="p-4 text-right">Cantidad</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-sm">

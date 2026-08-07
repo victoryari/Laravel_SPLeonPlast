@@ -116,16 +116,16 @@
                             </p>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-xs">
-                                    <thead>
-                                        <tr class="border-b border-amber-200 text-amber-700">
-                                            <th class="text-left py-2 px-2 font-semibold">Fecha</th>
-                                            <th class="text-left py-2 px-2 font-semibold">Tipo</th>
-                                            <th class="text-left py-2 px-2 font-semibold">Documento</th>
-                                            <th class="text-right py-2 px-2 font-semibold">Entrada</th>
-                                            <th class="text-right py-2 px-2 font-semibold">Salida</th>
-                                            <th class="text-right py-2 px-2 font-semibold">Saldo</th>
+                                     <thead>
+                                        <tr class="bg-slate-900 text-slate-200 text-xs font-bold uppercase tracking-wider">
+                                            <th class="text-left p-2.5 font-bold border-r border-slate-800">Fecha</th>
+                                            <th class="text-left p-2.5 font-bold border-r border-slate-800">Tipo</th>
+                                            <th class="text-left p-2.5 font-bold border-r border-slate-800">Documento</th>
+                                            <th class="text-right p-2.5 font-bold border-r border-slate-800">Entrada</th>
+                                            <th class="text-right p-2.5 font-bold border-r border-slate-800">Salida</th>
+                                            <th class="text-right p-2.5 font-bold">Saldo</th>
                                         </tr>
-                                    </thead>
+                                     </thead>
                                     <tbody>
                                         @foreach($movimientosPosteriores as $m)
                                         <tr class="border-b border-amber-100 text-amber-900">

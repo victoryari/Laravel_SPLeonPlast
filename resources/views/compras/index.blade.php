@@ -54,13 +54,13 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left whitespace-nowrap">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-600 border-b border-slate-200 text-[11px] md:text-xs">
-                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">N° Documento / Fecha</th>
-                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">Proveedor</th>
-                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-right">Total</th>
-                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider">Creado Por</th>
-                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-center">Estado</th>
-                        <th class="px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-center">Acciones</th>
+                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                        <th class="px-4 md:px-6 py-3.5 border-r border-slate-800">N° Documento / Fecha</th>
+                        <th class="px-4 md:px-6 py-3.5 border-r border-slate-800">Proveedor</th>
+                        <th class="px-4 md:px-6 py-3.5 border-r border-slate-800 text-right">Total</th>
+                        <th class="px-4 md:px-6 py-3.5 border-r border-slate-800">Creado Por</th>
+                        <th class="px-4 md:px-6 py-3.5 border-r border-slate-800 text-center">Estado</th>
+                        <th class="px-4 md:px-6 py-3.5 border-r border-slate-800 last:border-r-0 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs md:text-sm">

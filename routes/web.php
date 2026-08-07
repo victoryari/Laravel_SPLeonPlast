@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Route;
     OrdenProduccionController, OrdenProcesoController, ReporteController,
     ParametroSistemaController, GuiaRemisionCompraController,
     RequerimientoMaterialController, DespachoRequerimientoController,
-    RutasProduccionController, TrazabilidadController, MapeoTerceroController
+    RutasProduccionController, TrazabilidadController, MapeoTerceroController,
+    NotificacionController,
+    PerfilController
 };
 use App\Models\Usuario;
 use Illuminate\Support\Facades\Hash;
@@ -46,6 +48,19 @@ Route::middleware('auth')->group(function () {
     
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Módulo de Notificaciones
+    Route::get('/notificaciones', [NotificacionController::class, 'index'])->name('notificaciones.index');
+    Route::get('/notificaciones/api/unread', [NotificacionController::class, 'getUnreadApi'])->name('notificaciones.api.unread');
+    Route::get('/notificaciones/{id}', [NotificacionController::class, 'show'])->name('notificaciones.show');
+    Route::post('/notificaciones/{id}/marcar-leida', [NotificacionController::class, 'marcarLeida'])->name('notificaciones.marcar_leida');
+    Route::post('/notificaciones/marcar-todas-leidas', [NotificacionController::class, 'marcarTodasLeidas'])->name('notificaciones.marcar_todas_leidas');
+    Route::delete('/notificaciones/{id}', [NotificacionController::class, 'destroy'])->name('notificaciones.destroy');
+
+    // Módulo de Perfil de Usuario
+    Route::get('/perfil', [PerfilController::class, 'index'])->name('perfil.index');
+    Route::post('/perfil/password', [PerfilController::class, 'updatePassword'])->name('perfil.update_password');
+    Route::post('/perfil/reportar-problema', [PerfilController::class, 'storeReporteProblema'])->name('perfil.store_reporte');
 
     Route::get('/productos/search-ajax', [ProductoController::class, 'searchAjax'])->name('api.productos.search');
 

@@ -15,12 +15,12 @@
 
     <div class="flex h-screen overflow-hidden">
 
-        <div id="sidebar" class="fixed md:relative z-50 inset-y-0 left-0 w-64 h-full bg-sidebar text-white flex flex-col shrink-0 shadow-xl -translate-x-full md:translate-x-0 transition-transform duration-200 ease-out">
-            <div class="p-6 flex justify-center border-b border-slate-700 shrink-0 bg-white">
-                <img src="{{ asset('img/logo.png') }}" alt="LEON PLAST" class="h-10 w-auto object-contain">
+        <div id="sidebar" class="fixed md:relative z-50 inset-y-0 left-0 w-64 h-full bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 flex flex-col shrink-0 shadow-2xl border-r border-slate-800/80 -translate-x-full md:translate-x-0 transition-transform duration-200 ease-out">
+            <div class="h-20 flex items-center justify-center border-b border-slate-800/80 shrink-0 bg-white/95 px-6">
+                <img src="{{ asset('img/logo.png') }}" alt="LEON PLAST" class="h-11 w-auto object-contain">
             </div>
 
-            <nav class="flex-1 mt-4 px-4 pb-4 overflow-y-auto scrollbar-thin">
+            <nav class="flex-1 mt-4 px-3.5 pb-4 overflow-y-auto scrollbar-thin space-y-6">
                 <div class="space-y-1">
                     @php
                         $routeDash = '#';
@@ -30,65 +30,58 @@
                         elseif(Auth::user()->rol == 'ALMACEN') $routeDash = route('almacen.dashboard');
                         else $routeDash = route('dashboard');
                     @endphp
-                    <a href="{{ $routeDash }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('*.dashboard') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-chart-line w-6"></i>
+                    <a href="{{ $routeDash }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('*.dashboard') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-chart-line w-6 text-base"></i>
                         <span>Dashboard</span>
                     </a>
 
-
                     @if(Auth::user()->hasAnyAccess(['procesos_produccion.index', 'formulas.index', 'productos.index', 'productos_proceso.index', 'tipos_producto.index', 'unidades_medida.index', 'operaciones_produccion.index', 'centros_trabajo.index', 'trabajadores.index', 'proveedores.index', 'actividades.index', 'moldes.index', 'colores.index']))
                     <div>
-                        <button type="button" id="btnTablasMaestras" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                        <button type="button" id="btnTablasMaestras" class="w-full flex items-center justify-between p-3 text-sm font-semibold rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
-                                <i class="fas fa-database w-6"></i>
+                                <i class="fas fa-database w-6 text-base"></i>
                                 <span>Tablas Maestras</span>
                             </div>
                             <i id="iconTablasMaestras" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
                         </button>
 
-                        <div id="menuTablasMaestras" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
-                            @if(Auth::user()->hasAccess('procesos_produccion.index'))<a href="{{ route('procesos_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('procesos_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Procesos de producción</a>@endif
-                            @if(Auth::user()->hasAccess('formulas.index'))<a href="{{ route('formulas.index') }}" class="block p-2 text-sm {{ request()->routeIs('formulas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Fórmulas</a>@endif
-                            @if(Auth::user()->hasAccess('productos.index'))<a href="{{ route('productos.index') }}" class="block p-2 text-sm {{ request()->routeIs('productos.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Productos</a>@endif
-                            @if(Auth::user()->hasAccess('productos_proceso.index'))<a href="{{ route('productos_proceso.index') }}" class="block p-2 text-sm {{ request()->routeIs('productos_proceso.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Productos de proceso</a>@endif
-                            @if(Auth::user()->hasAccess('tipos_producto.index'))<a href="{{ route('tipos_producto.index') }}" class="block p-2 text-sm {{ request()->routeIs('tipos_producto.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Tipo de productos</a>@endif
-                            @if(Auth::user()->hasAccess('unidades_medida.index'))<a href="{{ route('unidades_medida.index') }}" class="block p-2 text-sm {{ request()->routeIs('unidades_medida.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Unidad de medida</a>@endif
-                            @if(Auth::user()->hasAccess('operaciones_produccion.index'))<a href="{{ route('operaciones_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('operaciones_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Operaciones</a>@endif
-                            @if(Auth::user()->hasAccess('centros_trabajo.index'))<a href="{{ route('centros_trabajo.index') }}" class="block p-2 text-sm {{ request()->routeIs('centros_trabajo.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Centros de trabajo</a>@endif
-                            @if(Auth::user()->rol == 'Administrador')<a href="{{ route('mapeo-terceros.index') }}" class="block p-2 text-sm {{ request()->routeIs('mapeo-terceros.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Mapeo a Terceros</a>@endif
-                            @if(Auth::user()->hasAccess('trabajadores.index'))<a href="{{ route('trabajadores.index') }}" class="block p-2 text-sm {{ request()->routeIs('trabajadores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Trabajadores</a>@endif
-                            @if(Auth::user()->hasAccess('actividades.index'))<a href="{{ route('actividades.index') }}" class="block p-2 text-sm {{ request()->routeIs('actividades.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Actividades</a>@endif
-                            @if(Auth::user()->hasAccess('moldes.index'))<a href="{{ route('moldes.index') }}" class="block p-2 text-sm {{ request()->routeIs('moldes.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Moldes</a>@endif
-                            @if(Auth::user()->hasAccess('colores.index'))<a href="{{ route('colores.index') }}" class="block p-2 text-sm {{ request()->routeIs('colores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Color</a>@endif
-                            @if(Auth::user()->rol == 'Administrador')<a href="{{ route('parametros.index') }}" class="block p-2 text-sm {{ request()->routeIs('parametros.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">Parámetros del Sistema</a>@endif
+                        <div id="menuTablasMaestras" class="hidden flex-col mt-1 pl-9 pr-1 space-y-1">
+                            @if(Auth::user()->hasAccess('procesos_produccion.index'))<a href="{{ route('procesos_produccion.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('procesos_produccion.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Procesos de producción</a>@endif
+                            @if(Auth::user()->hasAccess('formulas.index'))<a href="{{ route('formulas.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('formulas.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Fórmulas</a>@endif
+                            @if(Auth::user()->hasAccess('productos.index'))<a href="{{ route('productos.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('productos.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Productos</a>@endif
+                            @if(Auth::user()->hasAccess('productos_proceso.index'))<a href="{{ route('productos_proceso.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('productos_proceso.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Productos de proceso</a>@endif
+                            @if(Auth::user()->hasAccess('tipos_producto.index'))<a href="{{ route('tipos_producto.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('tipos_producto.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Tipo de productos</a>@endif
+                            @if(Auth::user()->hasAccess('unidades_medida.index'))<a href="{{ route('unidades_medida.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('unidades_medida.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Unidad de medida</a>@endif
+                            @if(Auth::user()->hasAccess('operaciones_produccion.index'))<a href="{{ route('operaciones_produccion.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('operaciones_produccion.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Operaciones</a>@endif
+                            @if(Auth::user()->hasAccess('centros_trabajo.index'))<a href="{{ route('centros_trabajo.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('centros_trabajo.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Centros de trabajo</a>@endif
+                            @if(Auth::user()->rol == 'Administrador')<a href="{{ route('mapeo-terceros.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('mapeo-terceros.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Mapeo a Terceros</a>@endif
+                            @if(Auth::user()->hasAccess('trabajadores.index'))<a href="{{ route('trabajadores.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('trabajadores.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Trabajadores</a>@endif
+                            @if(Auth::user()->hasAccess('actividades.index'))<a href="{{ route('actividades.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('actividades.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Actividades</a>@endif
+                            @if(Auth::user()->hasAccess('moldes.index'))<a href="{{ route('moldes.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('moldes.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Moldes</a>@endif
+                            @if(Auth::user()->hasAccess('colores.index'))<a href="{{ route('colores.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('colores.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Color</a>@endif
+                            @if(Auth::user()->rol == 'Administrador')<a href="{{ route('parametros.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('parametros.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all">Parámetros del Sistema</a>@endif
                         </div>
                     </div>
                     @endif
 
                     @if(Auth::user()->hasAnyAccess(['compras.index', 'proveedores.index']))
                     <div>
-                        <button type="button" id="btnCuentasPagar" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                        <button type="button" id="btnCuentasPagar" class="w-full flex items-center justify-between p-3 text-sm font-semibold rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
-                                <i class="fas fa-file-invoice-dollar w-6"></i>
+                                <i class="fas fa-file-invoice-dollar w-6 text-base"></i>
                                 <span>Cuentas por Pagar</span>
                             </div>
                             <i id="iconCuentasPagar" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
                         </button>
 
-                        <div id="menuCuentasPagar" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                        <div id="menuCuentasPagar" class="hidden flex-col mt-1 pl-9 pr-1 space-y-1">
                             @if(Auth::user()->hasAccess('proveedores.index'))
-                            <a href="{{ route('proveedores.index') }}" class="block p-2 text-sm {{ request()->routeIs('proveedores.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-truck w-5"></i>
-                                Proveedores
-                            </a>
+                            <a href="{{ route('proveedores.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('proveedores.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-truck w-4 mr-1"></i> Proveedores</a>
                             @endif
 
                             @if(Auth::user()->hasAccess('compras.index'))
-                            <a href="{{ route('guia_compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('guia_compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-shipping-fast w-5"></i>
-                                Guías de Remisión
-                            </a>
-                            <a href="{{ route('compras.index') }}" class="block p-2 text-sm {{ request()->routeIs('compras.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-shopping-cart w-5"></i>
-                                Compras
-                            </a>
+                            <a href="{{ route('guia_compras.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('guia_compras.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-shipping-fast w-4 mr-1"></i> Guías de Remisión</a>
+                            <a href="{{ route('compras.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('compras.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-shopping-cart w-4 mr-1"></i> Compras</a>
                             @endif
                         </div>
                     </div>
@@ -96,35 +89,31 @@
 
                     @if(Auth::user()->hasAnyAccess(['inventario.index', 'inventario.recepciones', 'inventario.kardex', 'inventario.ajuste', 'inventario.extornos']))
                     <div>
-                        <button type="button" id="btnInventario" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                        <button type="button" id="btnInventario" class="w-full flex items-center justify-between p-3 text-sm font-semibold rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
-                                <i class="fas fa-boxes w-6"></i>
+                                <i class="fas fa-boxes w-6 text-base"></i>
                                 <span>Inventario</span>
                             </div>
                             <i id="iconInventario" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
                         </button>
 
-                        <div id="menuInventario" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                        <div id="menuInventario" class="hidden flex-col mt-1 pl-9 pr-1 space-y-1">
                             @if(Auth::user()->hasAccess('requerimientos_materiales.atender') || Auth::user()->hasAccess('inventario.despachos'))
-                            <a href="{{ route('inventario.despachos.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.despachos*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
-                                <i class="fas fa-box-open mr-1 text-indigo-300"></i> Despachos a Producción
-                            </a>
+                            <a href="{{ route('inventario.despachos.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.despachos*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-box-open mr-1 text-indigo-300"></i> Despachos</a>
                             @endif
 
-                            @if(Auth::user()->hasAccess('inventario.index'))<a href="{{ route('inventario.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.index') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-boxes mr-1.5"></i>Existencias</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.index'))<a href="{{ route('inventario.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.index') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-boxes mr-1.5"></i>Existencias</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.alertas_stock'))<a href="{{ route('inventario.alertas_stock') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.alertas*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exclamation-triangle text-yellow-400 mr-1.5"></i>Alertas de Stock</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.alertas_stock'))<a href="{{ route('inventario.alertas_stock') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.alertas*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-exclamation-triangle text-amber-400 mr-1.5"></i>Alertas Stock</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.recepciones'))<a href="{{ route('inventario.recepciones') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.recepciones') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-box mr-1.5"></i>Recepciones Pendientes</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.recepciones'))<a href="{{ route('inventario.recepciones') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.recepciones') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-box mr-1.5"></i>Recepciones</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-edit mr-1.5"></i>Lista de Ajustes</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.ajuste'))<a href="{{ route('inventario.ajuste.lista') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.ajuste.lista') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-edit mr-1.5"></i>Ajustes</a>@endif
 
-                            @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.extornos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-exchange-alt mr-1.5"></i>Extornos</a>@endif
+                            @if(Auth::user()->hasAccess('inventario.extornos'))<a href="{{ route('inventario.extornos') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.extornos') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-exchange-alt mr-1.5"></i>Extornos</a>@endif
 
                             @if(Auth::user()->hasAccess('inventario.transferencias.index'))
-                            <a href="{{ route('inventario.transferencias.index') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.transferencias*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
-                                <i class="fas fa-exchange-alt mr-1 text-blue-300"></i> Transferencias
-                            </a>
+                            <a href="{{ route('inventario.transferencias.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.transferencias*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-exchange-alt mr-1 text-blue-300"></i> Transferencias</a>
                             @endif
                         </div>
                     </div>
@@ -132,19 +121,17 @@
 
                     @if(Auth::user()->hasAnyAccess(['inventario.kardex']))
                     <div>
-                        <button type="button" id="btnContabilidad" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                        <button type="button" id="btnContabilidad" class="w-full flex items-center justify-between p-3 text-sm font-semibold rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
-                                <i class="fas fa-book w-6"></i>
+                                <i class="fas fa-book w-6 text-base"></i>
                                 <span>Contabilidad</span>
                             </div>
                             <i id="iconContabilidad" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
                         </button>
 
-                        <div id="menuContabilidad" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                        <div id="menuContabilidad" class="hidden flex-col mt-1 pl-9 pr-1 space-y-1">
                             @if(Auth::user()->hasAccess('inventario.kardex'))
-                            <a href="{{ route('inventario.kardex') }}" class="block p-2 text-sm {{ request()->routeIs('inventario.kardex') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-book-open mr-1 text-green-400"></i>
-                                Kardex de Movimientos
-                            </a>
+                            <a href="{{ route('inventario.kardex') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('inventario.kardex') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-book-open mr-1 text-emerald-400"></i> Kardex Movimientos</a>
                             @endif
                         </div>
                     </div>
@@ -152,93 +139,87 @@
 
                     @if(Auth::user()->hasAnyAccess(['produccion.ordenes.index', 'mermas.index', 'produccion.ingresos', 'requerimientos_materiales.index']))
                     <div>
-                        <button type="button" id="btnProduccion" class="w-full flex items-center justify-between p-3 text-sm font-medium rounded-lg text-sidebar-text hover:bg-sidebar-hover hover:text-white transition-all duration-150 focus:outline-none">
+                        <button type="button" id="btnProduccion" class="w-full flex items-center justify-between p-3 text-sm font-semibold rounded-xl text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all duration-150 focus:outline-none">
                             <div class="flex items-center">
-                                <i class="fas fa-industry w-6"></i>
+                                <i class="fas fa-industry w-6 text-base"></i>
                                 <span>Producción</span>
                             </div>
                             <i id="iconProduccion" class="fas fa-chevron-down text-xs transition-transform duration-200"></i>
                         </button>
 
-                        <div id="menuProduccion" class="hidden flex-col mt-1 pl-10 pr-2 space-y-1">
+                        <div id="menuProduccion" class="hidden flex-col mt-1 pl-9 pr-1 space-y-1">
                             @if(Auth::user()->hasAccess('requerimientos_materiales.index'))
-                            <a href="{{ route('requerimientos_materiales.index') }}" class="block p-2 text-sm {{ request()->routeIs('requerimientos_materiales*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150">
-                                <i class="fas fa-clipboard-list w-5"></i> Requerimientos
-                            </a>
+                            <a href="{{ route('requerimientos_materiales.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('requerimientos_materiales*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-clipboard-list w-4 mr-1"></i> Requerimientos</a>
                             @endif
                             @if(Auth::user()->hasAccess('produccion.ordenes.index'))
-                            <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-tasks w-5"></i>
-                                Órdenes de Producción
-                            </a>
+                            <a href="{{ route('produccion.ordenes.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('produccion.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-tasks w-4 mr-1"></i> Órdenes de Producción</a>
                             @endif
                             @if(Auth::user()->hasAccess('admin.rutas_produccion.index'))
-                            <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-sm {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-route w-5"></i>
-                                Rutas de Producción
-                            </a>
+                            <a href="{{ route('admin.rutas_produccion.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('admin.rutas_produccion.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-route w-4 mr-1"></i> Rutas de Producción</a>
                             @endif
                             @if(Auth::user()->hasAccess('mermas.index'))
-                            <a href="{{ route('mermas.index') }}" class="block p-2 text-sm {{ request()->routeIs('mermas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Recuperados</a>
+                            <a href="{{ route('mermas.index') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('mermas.*') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-recycle mr-1 text-slate-300"></i> Mermas y Recuperados</a>
                             @endif
                             @if(Auth::user()->hasAccess('produccion.ingresos'))
-                            <a href="{{ route('produccion.ingresos') }}" class="block p-2 text-sm {{ request()->routeIs('produccion.ingresos') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} rounded transition-all duration-150"><i class="fas fa-industry w-5 text-emerald-300"></i> Ingresos de Producción</a>
+                            <a href="{{ route('produccion.ingresos') }}" class="block p-2 text-xs font-semibold {{ request()->routeIs('produccion.ingresos') ? 'bg-emerald-600/20 text-emerald-400 font-bold border-l-2 border-emerald-500' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40' }} rounded-r-lg transition-all"><i class="fas fa-industry w-4 mr-1 text-emerald-300"></i> Ingresos Producción</a>
                             @endif
                         </div>
                     </div>
                     @endif
 
                     @if(Auth::user()->hasAccess('almacenes.index'))
-                    <a href="{{ route('almacenes.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('almacenes.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-warehouse w-6"></i>
+                    <a href="{{ route('almacenes.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('almacenes.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-warehouse w-6 text-base"></i>
                         <span>Almacén</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('terceros.salidas.index'))
-                    <a href="{{ route('terceros.salidas.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('terceros.salidas.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-truck-loading w-6"></i>
+                    <a href="{{ route('terceros.salidas.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('terceros.salidas.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-truck-loading w-6 text-base"></i>
                         <span>Terceros - Envíos</span>
                     </a>
                     @endif
                     @if(Auth::user()->hasAccess('terceros.liquidacion.index'))
-                    <a href="{{ route('terceros.liquidacion.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('terceros.liquidacion.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-balance-scale w-6"></i>
+                    <a href="{{ route('terceros.liquidacion.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('terceros.liquidacion.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-balance-scale w-6 text-base"></i>
                         <span>Terceros</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('reportes.index'))
-                    <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.index') || request()->routeIs('reportes.produccion') || request()->routeIs('reportes.inventario') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-file-invoice-dollar w-6"></i>
+                    <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('reportes.index') || request()->routeIs('reportes.produccion') || request()->routeIs('reportes.inventario') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-file-invoice-dollar w-6 text-base"></i>
                         <span>Reportes</span>
                     </a>
                     @endif
                     @if(Auth::user()->hasAccess('reportes.trazabilidad'))
-                    <a href="{{ route('reportes.trazabilidad') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('reportes.trazabilidad') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-project-diagram w-6"></i>
+                    <a href="{{ route('reportes.trazabilidad') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('reportes.trazabilidad') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-project-diagram w-6 text-base"></i>
                         <span>Trazabilidad</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('usuarios.index'))
-                    <a href="{{ route('usuarios.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('usuarios.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-users-cog w-6"></i>
+                    <a href="{{ route('usuarios.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('usuarios.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-users-cog w-6 text-base"></i>
                         <span>Usuarios</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('roles.index'))
-                    <a href="{{ route('roles.index') }}" class="flex items-center p-3 text-sm font-medium rounded-lg {{ request()->routeIs('roles.*') ? 'bg-sidebar-active text-white shadow-lg' : 'text-sidebar-text hover:bg-sidebar-hover hover:text-white' }} transition-all duration-150">
-                        <i class="fas fa-user-shield w-6"></i>
+                    <a href="{{ route('roles.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('roles.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                        <i class="fas fa-user-shield w-6 text-base"></i>
                         <span>Roles y Permisos</span>
                     </a>
                     @endif
                 </div>
 
-                <div class="mt-4 pt-4 border-t border-slate-700 shrink-0">
+                <div class="mt-4 pt-4 border-t border-slate-800/80 shrink-0">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="w-full flex items-center p-3 text-sm font-medium rounded-lg text-red-400 hover:bg-red-900/20 transition-all duration-150">
-                            <i class="fas fa-sign-out-alt w-6"></i>
+                        <button type="submit" class="w-full flex items-center p-3 text-sm font-semibold rounded-xl text-red-400 hover:bg-red-500/10 transition-all duration-150">
+                            <i class="fas fa-sign-out-alt w-6 text-base"></i>
                             <span>Cerrar Sesión</span>
                         </button>
                     </form>
@@ -249,18 +230,93 @@
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
             <div id="overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden"></div>
 
-            <header class="bg-white border-b border-slate-200 h-14 shrink-0 flex items-center justify-between px-6 z-30">
-                <button id="menuBtn" class="md:hidden text-slate-600 p-2 rounded-md hover:bg-slate-100 transition-colors">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
+            <header class="bg-white/95 backdrop-blur-md border-b border-slate-200/80 h-20 shrink-0 flex items-center justify-between px-6 sm:px-8 z-30 shadow-xs">
+                <div class="flex items-center space-x-4">
+                    <button id="menuBtn" class="md:hidden text-slate-600 p-2.5 rounded-xl hover:bg-slate-100 transition-colors">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
 
-                <div class="flex items-center ml-auto md:ml-0">
-                    <div class="mr-4 text-right hidden sm:block">
-                        <p class="text-sm font-semibold text-slate-700">{{ Auth::user()->nombre_usuario }}</p>
-                        <p class="text-xs text-slate-500 uppercase tracking-wider">{{ Auth::user()->rol }}</p>
+                <div class="flex items-center space-x-5 ml-auto">
+                    <!-- Gestor de Notificaciones (Campanita) -->
+                    <div class="relative" id="notification-bell-wrapper">
+                        <button id="btnNotificaciones" class="relative p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all focus:outline-none" title="Notificaciones">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notification-badge" class="hidden absolute top-0.5 right-0.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white bg-red-600 rounded-full shadow-md animate-pulse">
+                                0
+                            </span>
+                        </button>
+
+                        <!-- Menú Desplegable de Notificaciones -->
+                        <div id="notification-dropdown" class="hidden absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden transition-all duration-200">
+                            <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-bell text-emerald-600 text-base"></i>
+                                    <span class="font-bold text-slate-800 text-sm">Notificaciones</span>
+                                </div>
+                                <button id="btnMarcarTodasLeidasHeader" class="text-xs text-emerald-600 hover:text-emerald-800 hover:underline font-semibold hidden">
+                                    Marcar todas leídas
+                                </button>
+                            </div>
+                            <div id="notification-list" class="max-h-80 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+                                <div class="p-4 text-center text-slate-400 text-sm">Cargando...</div>
+                            </div>
+                            <div class="p-3 bg-slate-50 border-t border-slate-200 text-center">
+                                <a href="{{ route('notificaciones.index') }}" class="text-xs text-emerald-700 hover:text-emerald-900 font-bold inline-flex items-center space-x-1">
+                                    <span>Ver todas las notificaciones</span>
+                                    <i class="fas fa-chevron-right text-[10px]"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-white font-bold shadow-sm uppercase">
-                        {{ substr(Auth::user()->nombre_usuario, 0, 1) }}
+
+                    <div class="h-8 w-px bg-slate-200 hidden sm:block"></div>
+
+                    <!-- Usuario Logueado (Lado Derecho con Dropdown) -->
+                    <div class="relative" id="user-dropdown-container">
+                        <button type="button" id="user-dropdown-btn" class="flex items-center space-x-3.5 pl-1 cursor-pointer hover:opacity-80 transition-opacity focus:outline-none">
+                            <div class="text-right hidden sm:block">
+                                <p class="text-sm font-bold text-slate-800 leading-tight">{{ Auth::user()->nombre_usuario }}</p>
+                                <div class="flex items-center justify-end space-x-1.5 mt-0.5">
+                                    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">{{ Auth::user()->rol }}</span>
+                                </div>
+                            </div>
+                            <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-base shadow-md shadow-emerald-900/20 uppercase shrink-0 ring-2 ring-emerald-500/30">
+                                {{ substr(Auth::user()->nombre_usuario, 0, 1) }}
+                            </div>
+                        </button>
+
+                        <!-- Dropdown Menu -->
+                        <div id="user-dropdown-menu" class="hidden absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden transition-all duration-200">
+                            <div class="p-3 bg-slate-50 border-b border-slate-200">
+                                <p class="text-sm font-bold text-slate-800">{{ Auth::user()->nombre_usuario }}</p>
+                                <p class="text-xs text-slate-500">{{ Auth::user()->email ?? Auth::user()->rol }}</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="{{ route('perfil.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                                    <i class="fas fa-user-circle text-slate-400 w-5 text-center"></i>
+                                    <span class="font-medium">Mi Perfil</span>
+                                </a>
+                                <a href="{{ route('perfil.index', ['tab' => 'password']) }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                                    <i class="fas fa-key text-slate-400 w-5 text-center"></i>
+                                    <span class="font-medium">Cambiar Contraseña</span>
+                                </a>
+                                <a href="{{ route('perfil.index', ['tab' => 'reporte']) }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors">
+                                    <i class="fas fa-bug text-slate-400 w-5 text-center"></i>
+                                    <span class="font-medium">Reportar Problema</span>
+                                </a>
+                            </div>
+                            <div class="border-t border-slate-200 py-1">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                        <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                                        <span class="font-medium">Cerrar Sesión</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -502,6 +558,160 @@
                 }, 10);
             });
         });
+
+        // ==========================================
+        // Lógica del Gestor de Notificaciones Header
+        // ==========================================
+        const btnNotif = document.getElementById('btnNotificaciones');
+        const dropdownNotif = document.getElementById('notification-dropdown');
+        const badgeNotif = document.getElementById('notification-badge');
+        const listNotif = document.getElementById('notification-list');
+        const btnMarcarTodasHeader = document.getElementById('btnMarcarTodasLeidasHeader');
+
+        function fetchNotificaciones() {
+            fetch('{{ route("notificaciones.api.unread") }}', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (data.unread_count > 0) {
+                        badgeNotif.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
+                        badgeNotif.classList.remove('hidden');
+                        if (btnMarcarTodasHeader) btnMarcarTodasHeader.classList.remove('hidden');
+                    } else {
+                        badgeNotif.classList.add('hidden');
+                        if (btnMarcarTodasHeader) btnMarcarTodasHeader.classList.add('hidden');
+                    }
+
+                    if (data.notifications.length === 0) {
+                        listNotif.innerHTML = `
+                            <div class="p-6 text-center text-slate-400 text-xs">
+                                <i class="fas fa-bell-slash text-2xl mb-2 text-slate-300 block"></i>
+                                No tienes notificaciones por ahora.
+                            </div>`;
+                        return;
+                    }
+
+                    let html = '';
+                    data.notifications.forEach(n => {
+                        const iconMap = {
+                            warning: 'fa-exclamation-triangle text-amber-500 bg-amber-50',
+                            danger: 'fa-exclamation-circle text-red-500 bg-red-50',
+                            success: 'fa-check-circle text-emerald-500 bg-emerald-50',
+                            info: 'fa-info-circle text-blue-500 bg-blue-50'
+                        };
+                        const iconClass = iconMap[n.tipo] || iconMap.info;
+                        const bgUnread = !n.leido ? 'bg-emerald-50/40 font-medium' : '';
+                        // Normalize links: extract path if host doesn't match current
+                        let normalizedLink = n.link;
+                        if (normalizedLink) {
+                            try {
+                                const linkUrl = new URL(normalizedLink);
+                                if (linkUrl.host !== window.location.host) {
+                                    normalizedLink = linkUrl.pathname + linkUrl.search;
+                                }
+                            } catch(e) { /* keep as-is if not a valid URL */ }
+                        }
+                        const href = normalizedLink ? `href="${normalizedLink}"` : 'href="javascript:void(0)"';
+
+                        html += `
+                            <div class="p-3 text-xs hover:bg-slate-50 transition-colors flex items-start space-x-3 ${bgUnread}">
+                                <div class="h-7 w-7 rounded-full shrink-0 flex items-center justify-center ${iconClass} text-xs mt-0.5">
+                                    <i class="fas ${iconClass.split(' ')[0]}"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <a ${href} onclick="marcarLeidaHeader(event, ${n.id}, '${normalizedLink || ''}')" class="block">
+                                        <p class="font-bold text-slate-800 hover:text-emerald-700 truncate">${n.titulo}</p>
+                                        <p class="text-slate-600 mt-0.5 line-clamp-2">${n.mensaje}</p>
+                                        <p class="text-[10px] text-slate-400 mt-1">${n.tiempo_hace}</p>
+                                    </a>
+                                </div>
+                            </div>`;
+                    });
+                    listNotif.innerHTML = html;
+                }
+            })
+            .catch(() => {});
+        }
+
+        window.marcarLeidaHeader = function(event, id, link) {
+            // Normalize link for redirect
+            var redirectLink = link;
+            if (redirectLink) {
+                try {
+                    var linkUrl = new URL(redirectLink, window.location.origin);
+                    if (linkUrl.host !== window.location.host) {
+                        redirectLink = linkUrl.pathname + linkUrl.search;
+                    }
+                } catch(e) { /* keep as-is */ }
+            }
+            fetch(`/notificaciones/${id}/marcar-leida`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(() => {
+                if (redirectLink && redirectLink !== 'javascript:void(0)') {
+                    window.location.href = redirectLink;
+                } else {
+                    fetchNotificaciones();
+                }
+            });
+        };
+
+        if (btnNotif) {
+            btnNotif.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownNotif.classList.toggle('hidden');
+                fetchNotificaciones();
+            });
+        }
+
+        if (btnMarcarTodasHeader) {
+            btnMarcarTodasHeader.addEventListener('click', () => {
+                fetch('{{ route("notificaciones.marcar_todas_leidas") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(() => fetchNotificaciones());
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (dropdownNotif && !dropdownNotif.contains(e.target) && !btnNotif?.contains(e.target)) {
+                dropdownNotif.classList.add('hidden');
+            }
+            // Close user dropdown when clicking outside
+            const userDropdownMenu = document.getElementById('user-dropdown-menu');
+            const userDropdownBtn = document.getElementById('user-dropdown-btn');
+            if (userDropdownMenu && !userDropdownMenu.contains(e.target) && !userDropdownBtn?.contains(e.target)) {
+                userDropdownMenu.classList.add('hidden');
+            }
+        });
+
+        // ==========================================
+        // User Profile Dropdown Toggle
+        // ==========================================
+        const userDropdownBtn = document.getElementById('user-dropdown-btn');
+        const userDropdownMenu = document.getElementById('user-dropdown-menu');
+        if (userDropdownBtn && userDropdownMenu) {
+            userDropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdownMenu.classList.toggle('hidden');
+                // Close notification dropdown if open
+                if (dropdownNotif) dropdownNotif.classList.add('hidden');
+            });
+        }
+
+        // Polling cada 30 segundos
+        fetchNotificaciones();
+        setInterval(fetchNotificaciones, 30000);
     </script>
 </body>
 </html>

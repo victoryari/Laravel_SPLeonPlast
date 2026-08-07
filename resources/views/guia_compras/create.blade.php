@@ -80,14 +80,14 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse min-w-[700px]">
                     <thead>
-                        <tr class="bg-slate-100 text-slate-600 text-xs uppercase tracking-wider font-bold">
-                            <th class="p-3 border-b border-slate-200 w-12 text-center">Item</th>
-                            <th class="p-3 border-b border-slate-200">Código - Descripción</th>
-                            <th class="p-3 border-b border-slate-200 w-32 text-center">Cant. <span class="text-red-500">*</span></th>
-                            <th class="p-3 border-b border-slate-200 w-24 text-center">U.M.</th>
-                            <th class="p-3 border-b border-slate-200 w-32 text-center">Lote</th>
-                            <th class="p-3 border-b border-slate-200 w-32 text-center">Venc.</th>
-                            <th class="p-3 border-b border-slate-200 w-16 text-center"></th>
+                        <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                            <th class="p-3.5 border-r border-slate-800 w-12 text-center">Item</th>
+                            <th class="p-3.5 border-r border-slate-800">Código - Descripción</th>
+                            <th class="p-3.5 border-r border-slate-800 w-32 text-center">Cant. <span class="text-red-400">*</span></th>
+                            <th class="p-3.5 border-r border-slate-800 w-24 text-center">U.M.</th>
+                            <th class="p-3.5 border-r border-slate-800 w-32 text-center">Lote</th>
+                            <th class="p-3.5 border-r border-slate-800 w-32 text-center">Venc.</th>
+                            <th class="p-3.5 w-16 text-center"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100" id="tabla-detalles">

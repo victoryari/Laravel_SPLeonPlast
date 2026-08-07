@@ -27,12 +27,12 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
-                        <th class="p-4 border-b border-slate-100">ID</th>
-                        <th class="p-4 border-b border-slate-100">Producto Origen (Sale)</th>
-                        <th class="p-4 border-b border-slate-100">Producto Destino (Retorna)</th>
-                        <th class="p-4 border-b border-slate-100">Descripción Proceso</th>
-                        <th class="p-4 border-b border-slate-100 text-center">Acciones</th>
+                    <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                        <th class="p-4 border-r border-slate-800">ID</th>
+                        <th class="p-4 border-r border-slate-800">Producto Origen (Sale)</th>
+                        <th class="p-4 border-r border-slate-800">Producto Destino (Retorna)</th>
+                        <th class="p-4 border-r border-slate-800">Descripción Proceso</th>
+                        <th class="p-4 border-r border-slate-800 last:border-r-0 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">

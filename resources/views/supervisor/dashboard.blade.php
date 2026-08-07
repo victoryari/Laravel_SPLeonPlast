@@ -54,7 +54,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-600 uppercase text-xs">
+                        <tr class="bg-slate-900 text-slate-200 uppercase text-xs font-bold">
                             <th class="px-4 py-2 font-semibold">OP</th>
                             <th class="px-4 py-2 font-semibold">Producto</th>
                             <th class="px-4 py-2 font-semibold">Estado</th>
@@ -86,7 +86,7 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead>
-                        <tr class="bg-slate-50 text-slate-600 uppercase text-xs">
+                        <tr class="bg-slate-900 text-slate-200 uppercase text-xs font-bold">
                             <th class="px-4 py-2 font-semibold">Producto</th>
                             <th class="px-4 py-2 font-semibold">Cantidad</th>
                             <th class="px-4 py-2 font-semibold">Fecha</th>

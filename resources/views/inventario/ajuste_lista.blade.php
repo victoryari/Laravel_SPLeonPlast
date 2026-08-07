@@ -62,16 +62,16 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                                <th class="text-left py-3 px-4 font-semibold">#</th>
-                                <th class="text-left py-3 px-4 font-semibold">Fecha</th>
-                                <th class="text-left py-3 px-4 font-semibold">Documento</th>
-                                <th class="text-left py-3 px-4 font-semibold">Producto</th>
-                                <th class="text-left py-3 px-4 font-semibold">Almacén</th>
-                                <th class="text-center py-3 px-4 font-semibold">Tipo</th>
-                                <th class="text-right py-3 px-4 font-semibold">Cantidad</th>
-                                <th class="text-right py-3 px-4 font-semibold">U.M.</th>
-                                <th class="text-center py-3 px-4 font-semibold">Acciones</th>
+                            <tr class="bg-slate-900 text-slate-200 text-xs uppercase tracking-wider font-bold">
+                                <th class="text-left p-4 font-bold border-r border-slate-800">#</th>
+                                <th class="text-left p-4 font-bold border-r border-slate-800">Fecha</th>
+                                <th class="text-left p-4 font-bold border-r border-slate-800">Documento</th>
+                                <th class="text-left p-4 font-bold border-r border-slate-800">Producto</th>
+                                <th class="text-left p-4 font-bold border-r border-slate-800">Almacén</th>
+                                <th class="text-center p-4 font-bold border-r border-slate-800">Tipo</th>
+                                <th class="text-right p-4 font-bold border-r border-slate-800">Cantidad</th>
+                                <th class="text-right p-4 font-bold border-r border-slate-800">U.M.</th>
+                                <th class="text-center p-4 font-bold border-r border-slate-800 last:border-r-0">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>

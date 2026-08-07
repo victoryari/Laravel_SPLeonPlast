@@ -81,25 +81,25 @@
     <div class="card overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
-                <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold text-center">
-                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Fecha</th>
-                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Producto / Almacén</th>
-                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Tipo Operac.</th>
-                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Documento</th>
-                    <th class="p-2 border border-slate-700" colspan="3">Entradas</th>
-                    <th class="p-2 border border-slate-700" colspan="3">Salidas</th>
-                    <th class="p-2 border border-slate-700" colspan="3">Saldo Final</th>
+                <tr class="bg-slate-900 text-slate-200 uppercase tracking-wider font-bold text-center text-xs">
+                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Fecha</th>
+                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Producto / Almacén</th>
+                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Tipo Operac.</th>
+                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Documento</th>
+                    <th class="p-2 border border-slate-800" colspan="3">Entradas</th>
+                    <th class="p-2 border border-slate-800" colspan="3">Salidas</th>
+                    <th class="p-2 border border-slate-800" colspan="3">Saldo Final</th>
                 </tr>
-                <tr class="bg-slate-700 text-slate-400 text-[10px] uppercase tracking-wider text-center">
-                    <th class="p-2 border border-slate-600">Cantidad</th>
-                    <th class="p-2 border border-slate-600">C. Unitario</th>
-                    <th class="p-2 border border-slate-600">Costo Total</th>
-                    <th class="p-2 border border-slate-600">Cantidad</th>
-                    <th class="p-2 border border-slate-600">C. Unitario</th>
-                    <th class="p-2 border border-slate-600">Costo Total</th>
-                    <th class="p-2 border border-slate-600">Cantidad</th>
-                    <th class="p-2 border border-slate-600">C. Unitario</th>
-                    <th class="p-2 border border-slate-600">Costo Total</th>
+                <tr class="bg-slate-800 text-slate-300 text-[10px] uppercase tracking-wider font-bold text-center">
+                    <th class="p-2 border border-slate-700">Cantidad</th>
+                    <th class="p-2 border border-slate-700">C. Unitario</th>
+                    <th class="p-2 border border-slate-700">Costo Total</th>
+                    <th class="p-2 border border-slate-700">Cantidad</th>
+                    <th class="p-2 border border-slate-700">C. Unitario</th>
+                    <th class="p-2 border border-slate-700">Costo Total</th>
+                    <th class="p-2 border border-slate-700">Cantidad</th>
+                    <th class="p-2 border border-slate-700">C. Unitario</th>
+                    <th class="p-2 border border-slate-700">Costo Total</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
