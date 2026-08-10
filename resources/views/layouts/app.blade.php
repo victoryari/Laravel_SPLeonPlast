@@ -13,9 +13,17 @@
 </head>
 <body class="font-sans leading-normal tracking-normal text-slate-800">
 
+    <!-- Global Page Loader -->
+    <div id="global-loader" class="fixed inset-0 z-9999 bg-slate-900/50 backdrop-blur-sm items-center justify-center hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-emerald-600 mb-4"></i>
+            <p class="text-slate-700 font-semibold animate-pulse">Cargando...</p>
+        </div>
+    </div>
+
     <div class="flex h-screen overflow-hidden">
 
-        <div id="sidebar" class="fixed md:relative z-50 inset-y-0 left-0 w-64 h-full bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 flex flex-col shrink-0 shadow-2xl border-r border-slate-800/80 -translate-x-full md:translate-x-0 transition-transform duration-200 ease-out">
+        <div id="sidebar" class="fixed md:relative z-50 inset-y-0 left-0 w-64 h-full bg-linear-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-300 flex flex-col shrink-0 shadow-2xl border-r border-slate-800/80 -translate-x-full md:translate-x-0 transition-transform duration-200 ease-out">
             <div class="h-20 flex items-center justify-center border-b border-slate-800/80 shrink-0 bg-white/95 px-6">
                 <img src="{{ asset('img/logo.png') }}" alt="LEON PLAST" class="h-11 w-auto object-contain">
             </div>
@@ -30,7 +38,7 @@
                         elseif(Auth::user()->rol == 'ALMACEN') $routeDash = route('almacen.dashboard');
                         else $routeDash = route('dashboard');
                     @endphp
-                    <a href="{{ $routeDash }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('*.dashboard') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ $routeDash }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('*.dashboard') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-chart-line w-6 text-base"></i>
                         <span>Dashboard</span>
                     </a>
@@ -168,47 +176,47 @@
                     @endif
 
                     @if(Auth::user()->hasAccess('almacenes.index'))
-                    <a href="{{ route('almacenes.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('almacenes.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('almacenes.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('almacenes.*') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-warehouse w-6 text-base"></i>
                         <span>Almacén</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('terceros.salidas.index'))
-                    <a href="{{ route('terceros.salidas.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('terceros.salidas.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('terceros.salidas.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('terceros.salidas.*') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-truck-loading w-6 text-base"></i>
                         <span>Terceros - Envíos</span>
                     </a>
                     @endif
                     @if(Auth::user()->hasAccess('terceros.liquidacion.index'))
-                    <a href="{{ route('terceros.liquidacion.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('terceros.liquidacion.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('terceros.liquidacion.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('terceros.liquidacion.*') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-balance-scale w-6 text-base"></i>
                         <span>Terceros</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('reportes.index'))
-                    <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('reportes.index') || request()->routeIs('reportes.produccion') || request()->routeIs('reportes.inventario') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('reportes.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('reportes.index') || request()->routeIs('reportes.produccion') || request()->routeIs('reportes.inventario') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-file-invoice-dollar w-6 text-base"></i>
                         <span>Reportes</span>
                     </a>
                     @endif
                     @if(Auth::user()->hasAccess('reportes.trazabilidad'))
-                    <a href="{{ route('reportes.trazabilidad') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('reportes.trazabilidad') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('reportes.trazabilidad') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('reportes.trazabilidad') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-project-diagram w-6 text-base"></i>
                         <span>Trazabilidad</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('usuarios.index'))
-                    <a href="{{ route('usuarios.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('usuarios.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('usuarios.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('usuarios.*') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-users-cog w-6 text-base"></i>
                         <span>Usuarios</span>
                     </a>
                     @endif
 
                     @if(Auth::user()->hasAccess('roles.index'))
-                    <a href="{{ route('roles.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('roles.*') ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
+                    <a href="{{ route('roles.index') }}" class="flex items-center p-3 text-sm font-semibold rounded-xl {{ request()->routeIs('roles.*') ? 'bg-linear-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-950/50' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' }} transition-all duration-150">
                         <i class="fas fa-user-shield w-6 text-base"></i>
                         <span>Roles y Permisos</span>
                     </a>
@@ -242,7 +250,7 @@
                     <div class="relative" id="notification-bell-wrapper">
                         <button id="btnNotificaciones" class="relative p-2.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all focus:outline-none" title="Notificaciones">
                             <i class="fas fa-bell text-xl"></i>
-                            <span id="notification-badge" class="hidden absolute top-0.5 right-0.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white bg-red-600 rounded-full shadow-md animate-pulse">
+                            <span id="notification-badge" class="hidden absolute top-0.5 right-0.5 items-center justify-center px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white bg-red-600 rounded-full shadow-md animate-pulse">
                                 0
                             </span>
                         </button>
@@ -282,7 +290,7 @@
                                     <span class="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">{{ Auth::user()->rol }}</span>
                                 </div>
                             </div>
-                            <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-base shadow-md shadow-emerald-900/20 uppercase shrink-0 ring-2 ring-emerald-500/30">
+                            <div class="h-10 w-10 rounded-full bg-linear-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white font-black text-base shadow-md shadow-emerald-900/20 uppercase shrink-0 ring-2 ring-emerald-500/30">
                                 {{ substr(Auth::user()->nombre_usuario, 0, 1) }}
                             </div>
                         </button>
@@ -578,9 +586,11 @@
                     if (data.unread_count > 0) {
                         badgeNotif.textContent = data.unread_count > 99 ? '99+' : data.unread_count;
                         badgeNotif.classList.remove('hidden');
+                        badgeNotif.classList.add('inline-flex');
                         if (btnMarcarTodasHeader) btnMarcarTodasHeader.classList.remove('hidden');
                     } else {
                         badgeNotif.classList.add('hidden');
+                        badgeNotif.classList.remove('inline-flex');
                         if (btnMarcarTodasHeader) btnMarcarTodasHeader.classList.add('hidden');
                     }
 
@@ -712,6 +722,24 @@
         // Polling cada 30 segundos
         fetchNotificaciones();
         setInterval(fetchNotificaciones, 30000);
+
+        // ==========================================
+        // Global Page Loader for Navigation
+        // ==========================================
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link) return;
+            
+            const href = link.getAttribute('href');
+            // Check if it's a valid internal link for navigation
+            if (href && !href.startsWith('#') && !href.startsWith('javascript:') && link.getAttribute('target') !== '_blank') {
+                const loader = document.getElementById('global-loader');
+                if (loader) {
+                    loader.classList.remove('hidden');
+                    loader.classList.add('flex');
+                }
+            }
+        });
     </script>
 </body>
 </html>
