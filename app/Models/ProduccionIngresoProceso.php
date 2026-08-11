@@ -26,4 +26,9 @@ class ProduccionIngresoProceso extends Model
         'usuario_registro',
         'estado'
     ];
+
+    public function producto()
+    {
+        return $this->belongsTo(Producto::class, 'codigo_producto_proceso', 'codigo');
+    }
 }

@@ -15,6 +15,25 @@
 
     <form action="{{ route('compras.store') }}" method="POST" id="formCompra">
         @csrf
+
+        @if ($errors->any())
+        <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm">
+            <div class="flex items-start">
+                <div class="shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-500 mt-0.5"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-bold text-red-800">No se pudo registrar la compra debido a los siguientes errores:</h3>
+                    <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
             <div class="lg:col-span-8 xl:col-span-9 space-y-6">
@@ -91,11 +110,19 @@
                         <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
                             <i class="fas fa-boxes text-primary"></i> Detalle de Recepción
                         </h2>
-                        <div class="bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-lg shadow-sm">
-                            <label class="inline-flex items-center cursor-pointer">
-                                <input type="checkbox" name="igv_incluido" id="checkIgv" class="form-checkbox rounded text-indigo-600 h-5 w-5 focus:ring-indigo-500 border-indigo-300 transition-colors" onchange="recalcularTotales()">
-                                <span class="ml-2 text-xs text-indigo-800 font-bold tracking-wide uppercase">Precios Incluyen IGV</span>
-                            </label>
+                        <div class="flex items-center gap-3">
+                            <div class="bg-amber-50 border border-amber-200 px-4 py-2 rounded-lg shadow-sm">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="inafecto_igv" id="checkInafecto" class="form-checkbox rounded text-amber-600 h-5 w-5 focus:ring-amber-500 border-amber-300 transition-colors" onchange="recalcularTotales()">
+                                    <span class="ml-2 text-xs text-amber-800 font-bold tracking-wide uppercase">No afecto al IGV</span>
+                                </label>
+                            </div>
+                            <div class="bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-lg shadow-sm">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="igv_incluido" id="checkIgv" class="form-checkbox rounded text-indigo-600 h-5 w-5 focus:ring-indigo-500 border-indigo-300 transition-colors" onchange="recalcularTotales()">
+                                    <span class="ml-2 text-xs text-indigo-800 font-bold tracking-wide uppercase">Precios Incluyen IGV</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="p-4">
@@ -313,13 +340,32 @@
         let st = 0;
         document.querySelectorAll('.out-sub').forEach(el => st += parseFloat(el.value) || 0);
         
-        let isIgvIncluido = document.getElementById('checkIgv') && document.getElementById('checkIgv').checked;
+        let checkIgv = document.getElementById('checkIgv');
+        let checkInafecto = document.getElementById('checkInafecto');
+        
+        if (checkInafecto && checkInafecto.checked) {
+            if (checkIgv) {
+                checkIgv.checked = false;
+                checkIgv.disabled = true;
+            }
+        } else {
+            if (checkIgv) {
+                checkIgv.disabled = false;
+            }
+        }
+
+        let isIgvIncluido = checkIgv && checkIgv.checked;
+        let isInafecto = checkInafecto && checkInafecto.checked;
         
         let subtotal = 0;
         let igv = 0;
         let total = 0;
         
-        if (isIgvIncluido) {
+        if (isInafecto) {
+            subtotal = st;
+            igv = 0;
+            total = st;
+        } else if (isIgvIncluido) {
             total = st; // The sum is the Total
             subtotal = total / 1.18;
             igv = total - subtotal;
@@ -532,21 +578,16 @@
 
         $('#tablaProductos').on('click', function (e) {
             if ($(e.target).closest('.btn-del').length) {
-                const tbody = document.getElementById('tbodyProductos');
-                if (tbody.querySelectorAll('.fila-producto').length > 1) {
-                    $(e.target).closest('tr').remove();
-                    recalcularTotales();
-                    
-                    // Reenumerar filas
-                    document.querySelectorAll('.fila-producto').forEach((fila, index) => {
-                        const itemNumber = fila.querySelector('.row-item-number');
-                        if (itemNumber) {
-                            itemNumber.textContent = index + 1;
-                        }
-                    });
-                } else {
-                    window.toast('Debe haber al menos un producto.', 'warning');
-                }
+                $(e.target).closest('tr').remove();
+                recalcularTotales();
+                
+                // Reenumerar filas
+                document.querySelectorAll('.fila-producto').forEach((fila, index) => {
+                    const itemNumber = fila.querySelector('.row-item-number');
+                    if (itemNumber) {
+                        itemNumber.textContent = index + 1;
+                    }
+                });
             }
         });
 

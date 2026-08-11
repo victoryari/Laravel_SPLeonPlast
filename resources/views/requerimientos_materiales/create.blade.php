@@ -55,6 +55,16 @@
                                     <input type="text" name="motivo" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none" placeholder="Ej: Abastecimiento para producción" maxlength="500">
                                 </x-form-group>
                             </div>
+                            <div>
+                                <x-form-group label="Almacén de Destino" required>
+                                    <select name="codigo_almacen" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none" required>
+                                        <option value="">-- Seleccione Almacén --</option>
+                                        @foreach($almacenes as $almacen)
+                                            <option value="{{ $almacen->codigo_almacen }}">{{ $almacen->descripcion }}</option>
+                                        @endforeach
+                                    </select>
+                                </x-form-group>
+                            </div>
                         </div>
                         <x-form-group label="Observaciones">
                             <textarea name="observaciones" class="input-field" rows="2" placeholder="Notas adicionales..."></textarea>

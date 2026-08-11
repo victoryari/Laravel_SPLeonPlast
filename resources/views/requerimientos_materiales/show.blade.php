@@ -49,6 +49,10 @@
                         <p class="text-slate-700">{{ $requerimiento->ordenProduccion->codigo_op ?? 'OP#' . $requerimiento->idop }}</p>
                     </div>
                     @endif
+                    <div>
+                        <span class="text-xs text-slate-500 font-semibold uppercase">Almacén Destino</span>
+                        <p class="text-slate-700">{{ $requerimiento->almacen->descripcion ?? $requerimiento->codigo_almacen ?? '-' }}</p>
+                    </div>
                     @if($requerimiento->aprobador)
                     <div>
                         <span class="text-xs text-slate-500 font-semibold uppercase">Aprobado Por</span>

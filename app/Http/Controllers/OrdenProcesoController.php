@@ -1859,7 +1859,7 @@ class OrdenProcesoController extends Controller
                         ->update(['tiene_kardex' => true]);
 
                     // Reconstruir saldos del Kardex para mantener la consistencia al ocultar
-                    $this->reconstruirSaldosKardex($mov->codigo_producto, $mov->codigo_almacen);
+                    app(\App\Services\KardexService::class)->recalcular($mov->codigo_producto, $mov->codigo_almacen);
                 }
             }
 

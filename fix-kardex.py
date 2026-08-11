@@ -1,4 +1,8 @@
-@extends('layouts.app')
+import codecs
+
+filepath = r'C:\laragon\www\LeonPlast\LeonPlast-Laravel\resources\views\inventario\kardex.blade.php'
+
+content = """@extends('layouts.app')
 @section('title', 'Kardex Valorizado')
 
 @section('content')
@@ -81,25 +85,25 @@
     <div class="card overflow-x-auto">
         <table class="w-full text-left border-collapse text-xs sm:text-sm">
             <thead>
-                <tr class="bg-slate-900 text-slate-200 uppercase tracking-wider font-bold text-center text-xs">
-                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Fecha</th>
-                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Producto / Almacén</th>
-                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Tipo Operac.</th>
-                    <th class="p-3 border border-slate-800 align-middle" rowspan="2">Documento</th>
-                    <th class="p-2 border border-slate-800" colspan="3">Entradas</th>
-                    <th class="p-2 border border-slate-800" colspan="3">Salidas</th>
-                    <th class="p-2 border border-slate-800" colspan="3">Saldo Final</th>
+                <tr class="bg-slate-800 text-slate-300 uppercase tracking-wider font-semibold text-center">
+                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Fecha</th>
+                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Producto / Almacén</th>
+                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Tipo Operac.</th>
+                    <th class="p-3 border border-slate-700 align-middle" rowspan="2">Documento</th>
+                    <th class="p-2 border border-slate-700" colspan="3">Entradas</th>
+                    <th class="p-2 border border-slate-700" colspan="3">Salidas</th>
+                    <th class="p-2 border border-slate-700" colspan="3">Saldo Final</th>
                 </tr>
-                <tr class="bg-slate-800 text-slate-300 text-[10px] uppercase tracking-wider font-bold text-center">
-                    <th class="p-2 border border-slate-700">Cantidad</th>
-                    <th class="p-2 border border-slate-700">C. Unitario</th>
-                    <th class="p-2 border border-slate-700">Costo Total</th>
-                    <th class="p-2 border border-slate-700">Cantidad</th>
-                    <th class="p-2 border border-slate-700">C. Unitario</th>
-                    <th class="p-2 border border-slate-700">Costo Total</th>
-                    <th class="p-2 border border-slate-700">Cantidad</th>
-                    <th class="p-2 border border-slate-700">C. Unitario</th>
-                    <th class="p-2 border border-slate-700">Costo Total</th>
+                <tr class="bg-slate-700 text-slate-400 text-[10px] uppercase tracking-wider text-center">
+                    <th class="p-2 border border-slate-600">Cantidad</th>
+                    <th class="p-2 border border-slate-600">C. Unitario</th>
+                    <th class="p-2 border border-slate-600">Costo Total</th>
+                    <th class="p-2 border border-slate-600">Cantidad</th>
+                    <th class="p-2 border border-slate-600">C. Unitario</th>
+                    <th class="p-2 border border-slate-600">Costo Total</th>
+                    <th class="p-2 border border-slate-600">Cantidad</th>
+                    <th class="p-2 border border-slate-600">C. Unitario</th>
+                    <th class="p-2 border border-slate-600">Costo Total</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -142,8 +146,8 @@
                         {{ $mov->cantidad_entrada > 0 ? number_format($mov->cantidad_entrada, 2) : '-' }}
                     </td>
                     <td class="p-3 border-r border-slate-100 text-right text-slate-500 bg-green-50/30">
-                        @if($mov->cantidad_entrada > 0)
-                            {{ number_format($mov->costo_entrada > 0 ? $mov->costo_entrada : ($mov->total_entrada / $mov->cantidad_entrada), 6) }}
+                        @if($mov->cantidad_entrada > 0 && $mov->total_entrada > 0)
+                            {{ number_format($mov->total_entrada / $mov->cantidad_entrada, 6) }}
                         @else
                             -
                         @endif
@@ -157,8 +161,8 @@
                         {{ $mov->cantidad_salida > 0 ? number_format($mov->cantidad_salida, 2) : '-' }}
                     </td>
                     <td class="p-3 border-r border-slate-100 text-right text-slate-500 bg-red-50/30">
-                        @if($mov->cantidad_salida > 0)
-                            {{ number_format($mov->costo_salida > 0 ? $mov->costo_salida : ($mov->total_salida / $mov->cantidad_salida), 6) }}
+                        @if($mov->cantidad_salida > 0 && $mov->total_salida > 0)
+                            {{ number_format($mov->total_salida / $mov->cantidad_salida, 6) }}
                         @else
                             -
                         @endif
@@ -335,3 +339,7 @@ window.cerrarModalDesglose = function() {
     }
 </style>
 @endsection
+"""
+
+with codecs.open(filepath, 'w', 'utf-8') as f:
+    f.write(content)

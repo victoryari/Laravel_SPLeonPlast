@@ -76,15 +76,19 @@
                                             <i class="fas fa-tint"></i>
                                         </div>
                                         <div>
-                                            <h4 class="font-bold text-slate-800 text-sm uppercase">{{ $primerLote->descripcion_producto_proceso }}</h4>
-                                            <p class="text-xs text-slate-500 mt-0.5">Código: {{ $codigoProducto }} | {{ $lotes->count() }} lotes pendientes</p>
+                                            <p class="font-bold text-slate-800 text-sm">Código: {{ $codigoProducto }} <span class="text-slate-500 font-normal">| {{ $lotes->count() }} lotes pendientes</span></p>
+                                            <p class="text-xs text-slate-500 mt-0.5">{{ $primerLote->descripcion_producto_proceso ?: ($primerLote->producto->descripcion ?? 'Descripción no disponible') }}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-4">
+                                        @php $totalKilos = $lotes->sum('cantidad'); @endphp
+                                        <div class="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                                            {{ number_format($totalKilos, 2) }} {{ $primerLote->codigo_unidad_medida ?? 'KG' }}
+                                        </div>
                                         <!-- Botón de Aprobación Global -->
                                         <form action="{{ route('inventario.procesar_recepcion_produccion_global', ['idop' => $idop, 'codigo_producto' => $codigoProducto]) }}" method="POST" class="flex items-center gap-2" onsubmit="event.stopPropagation();">
                                             @csrf
-                                            <select name="codigo_almacen" class="px-2 py-1 border border-emerald-200 rounded-lg text-xs text-emerald-800 bg-white outline-none focus:border-emerald-500 max-w-[150px] truncate" onclick="event.stopPropagation();" required>
+                                            <select name="codigo_almacen" class="px-2 py-1 border border-emerald-200 rounded-lg text-xs text-emerald-800 bg-white outline-none focus:border-emerald-500 max-w-37.5 truncate" onclick="event.stopPropagation();" required>
                                                 <option value="{{ $primerLote->codigo_almacen }}">{{ $primerLote->almacen->descripcion ?? 'ALM-PEP' }}</option>
                                                 @foreach($almacenes as $a)
                                                     @if($a->codigo_almacen != $primerLote->codigo_almacen)
@@ -92,7 +96,7 @@
                                                     @endif
                                                 @endforeach
                                             </select>
-                                            <input type="date" name="fecha_recepcion" value="{{ \Carbon\Carbon::parse($primerLote->fecha_ingreso)->format('Y-m-d') }}" class="px-2 py-1 border border-emerald-200 rounded-lg text-xs text-emerald-800 bg-white outline-none focus:border-emerald-500 max-w-[120px]" title="Fecha de Recepción (Kardex)" required onclick="event.stopPropagation();">
+                                            <input type="date" name="fecha_recepcion" value="{{ \Carbon\Carbon::parse($primerLote->fecha_ingreso)->format('Y-m-d') }}" class="px-2 py-1 border border-emerald-200 rounded-lg text-xs text-emerald-800 bg-white outline-none focus:border-emerald-500 max-w-30" title="Fecha de Recepción (Kardex)" required onclick="event.stopPropagation();">
                                             <button type="submit" onclick="return confirm('¿Está seguro de aprobar TODOS los {{ $lotes->count() }} lotes de este color al almacén seleccionado?');" 
                                                 class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-sm flex items-center gap-2">
                                                 <i class="fas fa-check-double"></i> Aprobar Todo

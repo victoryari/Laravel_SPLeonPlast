@@ -27,7 +27,7 @@
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-5">
-                            <x-form-group class="md:col-span-12 md:col-span-6" label="Fecha de Requerimiento" required>
+                            <x-form-group class="md:col-span-6" label="Fecha de Requerimiento" required>
                                 <input type="date" name="fecha_requerimiento" class="input-field" value="{{ $requerimiento->fecha_requerimiento ? \Carbon\Carbon::parse($requerimiento->fecha_requerimiento)->format('Y-m-d') : date('Y-m-d') }}" required>
                             </x-form-group>
                             <x-form-group class="md:col-span-6" label="Orden de Producción (opcional)">
@@ -47,6 +47,14 @@
                             </div>
                             <x-form-group class="md:col-span-12" label="Motivo">
                                 <input type="text" name="motivo" class="input-field" value="{{ $requerimiento->motivo }}" maxlength="500">
+                            </x-form-group>
+                            <x-form-group class="md:col-span-12" label="Almacén de Destino" required>
+                                <select name="codigo_almacen" class="input-field" required>
+                                    <option value="">-- Seleccione Almacén --</option>
+                                    @foreach($almacenes as $almacen)
+                                        <option value="{{ $almacen->codigo_almacen }}" {{ $requerimiento->codigo_almacen == $almacen->codigo_almacen ? 'selected' : '' }}>{{ $almacen->descripcion }}</option>
+                                    @endforeach
+                                </select>
                             </x-form-group>
                         </div>
                         <x-form-group label="Observaciones">

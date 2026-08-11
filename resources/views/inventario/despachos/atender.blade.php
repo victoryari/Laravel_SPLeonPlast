@@ -34,18 +34,29 @@
         @csrf
 
         <x-card class="mb-6">
-            <div class="p-4 flex items-center justify-between bg-slate-50 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <div class="bg-blue-100 p-2 rounded-full text-blue-600">
-                        <i class="fas fa-calendar-alt"></i>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-lg">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-100 p-2 rounded-full text-blue-600">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800">Fecha de Despacho</h3>
+                            <p class="text-xs text-slate-500">Esta fecha se utilizará para Kardex.</p>
+                        </div>
                     </div>
                     <div>
-                        <h3 class="text-sm font-bold text-slate-800">Fecha de Despacho</h3>
-                        <p class="text-xs text-slate-500">Esta fecha se utilizará para todos los movimientos de Kardex generados.</p>
+                        <input type="date" name="fecha_despacho" value="{{ now()->format('Y-m-d') }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" required>
                     </div>
                 </div>
-                <div>
-                    <input type="date" name="fecha_despacho" value="{{ now()->format('Y-m-d') }}" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" required>
+                <div class="flex items-center gap-3 border-t md:border-t-0 md:border-l border-slate-200 pt-4 md:pt-0 md:pl-4">
+                    <div class="bg-emerald-100 p-2 rounded-full text-emerald-600">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Almacén de Destino Solicitado</h3>
+                        <p class="text-sm text-slate-700 font-semibold">{{ $requerimiento->almacen->descripcion ?? $requerimiento->codigo_almacen ?? 'No especificado' }}</p>
+                    </div>
                 </div>
             </div>
         </x-card>
@@ -68,7 +79,7 @@
                     </div>
                     <label class="inline-flex items-center cursor-pointer ml-2 bg-white px-2 py-1 rounded-lg shadow-sm border border-slate-200">
                         <input type="checkbox" class="sr-only peer omitir-linea-checkbox" data-index="{{ $index }}" {{ count($linea['lotes']) == 0 ? 'checked disabled' : '' }}>
-                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                        <div class="relative w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:inset-s-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
                         <span class="ms-2 text-xs font-bold text-slate-600 uppercase tracking-wide">Omitir</span>
                     </label>
                 </div>
@@ -84,7 +95,7 @@
                         <select class="w-full border border-slate-300 rounded-lg text-sm px-2 py-1 select-destino" data-target=".hidden-destino-{{ $index }}" id="select-destino-{{ $index }}" required>
                             <option value="">-- Seleccione Almacén Destino --</option>
                             @foreach($almacenes as $alm)
-                                <option value="{{ $alm->codigo_almacen }}" {{ $det->codigo_almacen_destino == $alm->codigo_almacen ? 'selected' : '' }}>{{ $alm->descripcion }}</option>
+                                <option value="{{ $alm->codigo_almacen }}" {{ ($det->codigo_almacen_destino ?? $requerimiento->codigo_almacen) == $alm->codigo_almacen ? 'selected' : '' }}>{{ $alm->descripcion }}</option>
                             @endforeach
                         </select>
                     </div>

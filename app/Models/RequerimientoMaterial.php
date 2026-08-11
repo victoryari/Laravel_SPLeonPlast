@@ -17,6 +17,7 @@ class RequerimientoMaterial extends Model
         'fecha_requerimiento',
         'idop',
         'id_proceso',
+        'codigo_almacen',
         'motivo',
         'estado',
         'usuario_creacion',
@@ -28,6 +29,11 @@ class RequerimientoMaterial extends Model
     public function detalles()
     {
         return $this->hasMany(DetalleRequerimientoMaterial::class, 'id_requerimiento', 'id_requerimiento');
+    }
+
+    public function almacen()
+    {
+        return $this->belongsTo(Almacen::class, 'codigo_almacen', 'codigo_almacen');
     }
 
     public function ordenProduccion()
