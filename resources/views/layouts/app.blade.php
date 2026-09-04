@@ -9,6 +9,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .swal2-popup { font-size: 0.85rem !important; padding: 1.25rem !important; border-radius: 1rem !important; }
+        .swal2-title { font-size: 1.15rem !important; font-weight: 700 !important; }
+        .swal2-html-container { font-size: 0.85rem !important; line-height: 1.5 !important; margin: 0.75em 1em 0.5em 1em !important; }
+        .swal2-styled.swal2-confirm, .swal2-styled.swal2-cancel { font-size: 0.8rem !important; padding: 0.4rem 1.25rem !important; border-radius: 0.5rem !important; }
+    </style>
     @stack('styles')
 </head>
 <body class="font-sans leading-normal tracking-normal text-slate-800">
@@ -732,7 +738,7 @@
             
             const href = link.getAttribute('href');
             // Check if it's a valid internal link for navigation
-            if (href && !href.startsWith('#') && !href.startsWith('javascript:') && link.getAttribute('target') !== '_blank') {
+            if (!e.defaultPrevented && href && !href.startsWith('#') && !href.startsWith('javascript:') && link.getAttribute('target') !== '_blank') {
                 const loader = document.getElementById('global-loader');
                 if (loader) {
                     loader.classList.remove('hidden');

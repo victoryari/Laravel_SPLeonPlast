@@ -6,7 +6,7 @@
     <x-page-header title="Registrar Centro de Trabajo" subtitle="Registre un nuevo centro de trabajo en el sistema." />
 
     <x-card class="p-6">
-        <form action="{{ route('procesos_produccion.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('centros_trabajo.store') }}" method="POST" class="space-y-6">
             @csrf
             
             <x-form-group label="Código del Centro" required :error="$errors->first('codigo')">

@@ -51,11 +51,12 @@ class ProcesoProduccionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'codigo' => 'required|string|max:15|unique:proceso_produccion,codigo',
+            'codigo' => 'required|integer|unique:proceso_produccion,codigo',
             'descripcion' => 'required|string|max:150',
             'codigo_almacen' => 'nullable|string|max:10|exists:almacen,codigo_almacen',
         ], [
             'codigo.required' => 'El código es obligatorio.',
+            'codigo.integer' => 'El código debe ser un número entero.',
             'codigo.unique' => 'Este código de proceso ya está registrado.',
             'descripcion.required' => 'La descripción es obligatoria.',
             'codigo_almacen.exists' => 'El almacén seleccionado no es válido.',

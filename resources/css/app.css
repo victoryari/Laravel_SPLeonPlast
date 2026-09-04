@@ -250,3 +250,29 @@
     body { background: white !important; }
     .card { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
 }
+
+/* SweetAlert Modal Styling — Reducido 2pt para mejor legibilidad */
+.swal2-popup {
+    font-size: 0.85rem !important;
+    padding: 1.25rem !important;
+    border-radius: 1rem !important;
+}
+
+.swal2-title {
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+}
+
+.swal2-html-container {
+    font-size: 0.85rem !important;
+    line-height: 1.5 !important;
+    margin: 0.75em 1em 0.5em 1em !important;
+}
+
+.swal2-styled.swal2-confirm, 
+.swal2-styled.swal2-cancel {
+    font-size: 0.8rem !important;
+    padding: 0.4rem 1.25rem !important;
+    border-radius: 0.5rem !important;
+}
+

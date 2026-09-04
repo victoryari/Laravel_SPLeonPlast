@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ProductoProceso;
+use App\Models\Molde;
+use Illuminate\Support\Facades\DB;
 
 class ProductoProcesoController extends Controller
 {
     public function index()
     {
         $productos_proceso = ProductoProceso::where('estado', 1)
+            ->withCount('moldes')
             ->orderBy('codigo', 'asc')
             ->get();
 
@@ -18,7 +21,9 @@ class ProductoProcesoController extends Controller
 
     public function create()
     {
-        return view('tablas_maestras.productos_proceso.create');
+        $moldes = Molde::activos()->orderBy('descripcion', 'asc')->get();
+
+        return view('tablas_maestras.productos_proceso.create', compact('moldes'));
     }
 
     public function store(Request $request)
@@ -26,20 +31,44 @@ class ProductoProcesoController extends Controller
         $request->validate([
             'codigo' => 'required|string|max:20|unique:producto_proceso,codigo',
             'descripcion' => 'required|string|max:100',
+            'moldes' => 'nullable|array',
+            'moldes.*' => 'string|exists:molde,codigo',
         ], [
             'codigo.required' => 'El código es obligatorio.',
             'codigo.unique' => 'Este código ya existe en el sistema.',
             'descripcion.required' => 'La descripción es obligatoria.',
         ]);
 
-        ProductoProceso::create([
-            'codigo' => strtoupper($request->codigo),
-            'descripcion' => $request->descripcion,
-            'estado' => 1,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->route('productos_proceso.index')
-            ->with('success', 'Producto de proceso creado correctamente.');
+            $producto = ProductoProceso::create([
+                'codigo' => strtoupper($request->codigo),
+                'descripcion' => $request->descripcion,
+                'estado' => 1,
+            ]);
+
+            // Guardar moldes seleccionados
+            if ($request->filled('moldes')) {
+                $inserts = [];
+                foreach ($request->moldes as $codigoMolde) {
+                    $inserts[] = [
+                        'codigo_producto_proceso' => $producto->codigo,
+                        'codigo_molde' => $codigoMolde,
+                    ];
+                }
+                DB::table('producto_molde')->insert($inserts);
+            }
+
+            DB::commit();
+
+            return redirect()->route('productos_proceso.index')
+                ->with('success', 'Producto de proceso creado correctamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Error al crear: ' . $e->getMessage());
+        }
     }
 
     public function edit($codigo)
@@ -51,7 +80,13 @@ class ProductoProcesoController extends Controller
                 ->with('error', 'No se puede editar un registro anulado.');
         }
 
-        return view('tablas_maestras.productos_proceso.edit', compact('producto'));
+        $moldes = Molde::activos()->orderBy('descripcion', 'asc')->get();
+        $moldes_vinculados = DB::table('producto_molde')
+            ->where('codigo_producto_proceso', $codigo)
+            ->pluck('codigo_molde')
+            ->toArray();
+
+        return view('tablas_maestras.productos_proceso.edit', compact('producto', 'moldes', 'moldes_vinculados'));
     }
 
     public function update(Request $request, $codigo)
@@ -60,16 +95,42 @@ class ProductoProcesoController extends Controller
 
         $request->validate([
             'descripcion' => 'required|string|max:100',
+            'moldes' => 'nullable|array',
+            'moldes.*' => 'string|exists:molde,codigo',
         ], [
             'descripcion.required' => 'La descripción es obligatoria.',
         ]);
 
-        $producto->update([
-            'descripcion' => $request->descripcion,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->route('productos_proceso.index')
-            ->with('success', 'Producto de proceso actualizado.');
+            $producto->update([
+                'descripcion' => $request->descripcion,
+            ]);
+
+            // Sincronizar moldes: eliminar existentes y reinsertar
+            DB::table('producto_molde')->where('codigo_producto_proceso', $codigo)->delete();
+
+            if ($request->filled('moldes')) {
+                $inserts = [];
+                foreach ($request->moldes as $codigoMolde) {
+                    $inserts[] = [
+                        'codigo_producto_proceso' => $codigo,
+                        'codigo_molde' => $codigoMolde,
+                    ];
+                }
+                DB::table('producto_molde')->insert($inserts);
+            }
+
+            DB::commit();
+
+            return redirect()->route('productos_proceso.index')
+                ->with('success', 'Producto de proceso actualizado.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Error al actualizar: ' . $e->getMessage());
+        }
     }
 
     public function destroy($codigo)

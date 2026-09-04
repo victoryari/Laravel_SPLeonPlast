@@ -332,13 +332,15 @@ class OrdenProcesoController extends Controller
         $estado_proceso_actual = strtoupper(trim($proceso->estado_avance ?? 'PENDIENTE'));
         if (empty($estado_proceso_actual)) $estado_proceso_actual = 'PENDIENTE';
 
+        $desc_proceso_upper = strtoupper(DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('descripcion') ?? '');
         $es_actividad = ($proceso->codigo_proceso == '1');
-        $es_mezclado = ($proceso->codigo_proceso == '16');
-        $es_inyectado = ($proceso->codigo_proceso == '15');
-        $es_ensamblado = ($proceso->codigo_proceso == '10');
-        $es_molido = ($proceso->codigo_proceso == '18');
-        $es_troquelado = ($proceso->codigo_proceso == '17');
-        $es_horneado = ($proceso->codigo_proceso == '13');
+        $es_mezclado = ($proceso->codigo_proceso == '16') || str_contains($desc_proceso_upper, 'MEZCLADO');
+        $es_inyectado = ($proceso->codigo_proceso == '15') || str_contains($desc_proceso_upper, 'INYECTADO');
+        $es_ensamblado_manual = str_contains($desc_proceso_upper, 'ENSAMBLADO MANUAL');
+        $es_ensamblado = ($proceso->codigo_proceso == '10') || (str_contains($desc_proceso_upper, 'ENSAMBLADO') && !$es_ensamblado_manual);
+        $es_molido = ($proceso->codigo_proceso == '18') || str_contains($desc_proceso_upper, 'MOLIDO');
+        $es_troquelado = ($proceso->codigo_proceso == '17') || str_contains($desc_proceso_upper, 'TROQUELADO');
+        $es_horneado = ($proceso->codigo_proceso == '13') || str_contains($desc_proceso_upper, 'HORNEADO');
         $peso_inicial = $orden->cantidad;
         $tara = $orden->tara;
         $peso_neto = max(0, floatval($peso_inicial) - floatval($tara));
@@ -370,6 +372,81 @@ class OrdenProcesoController extends Controller
             ->orderBy('codigo')
             ->get();
 
+        if ($es_ensamblado || $es_ensamblado_manual) {
+            $almacen_ensamblado = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
+            
+            // 1. Obtener lotes producidos en esta OP
+            $lotes_op = DB::table('produccion_ingresos_proceso')
+                ->where('idop', $idop)
+                ->pluck('lote_produccion')
+                ->toArray();
+                
+            // 2. Buscar stock de esos lotes en el almacén de ensamblado
+            $cascaras_disponibles = collect();
+            if (!empty($lotes_op)) {
+                $cascaras_disponibles = DB::table('inventario as i')
+                    ->join('produccion_ingresos_proceso as p', 'i.lote', '=', 'p.lote_produccion')
+                    ->where('i.codigo_almacen', $almacen_ensamblado)
+                    ->where('i.stock_actual', '>', 0)
+                    ->whereIn('i.lote', $lotes_op)
+                    ->select('i.codigo_producto', 'p.codigo_molde')
+                    ->groupBy('i.codigo_producto', 'p.codigo_molde')
+                    ->get();
+            }
+
+            // 3. Filtrar fórmulas
+            $formulas_disponibles = $formulas_disponibles->filter(function($f) use ($cascaras_disponibles) {
+                if ($cascaras_disponibles->isEmpty()) return false;
+
+                $materiales = DB::table('composicion_formula')
+                    ->where('codigo_formula', $f->codigo)
+                    ->get();
+                
+                $tieneCascaraValida = false;
+                foreach ($materiales as $m) {
+                    if (str_starts_with($m->codigo_producto, 'CA')) {
+                        foreach ($cascaras_disponibles as $c) {
+                            $matchMolde = empty($m->codigo_molde) || $m->codigo_molde === $c->codigo_molde;
+                            if ($c->codigo_producto === $m->codigo_producto && $matchMolde) {
+                                $tieneCascaraValida = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+                return $tieneCascaraValida;
+            })->values();
+        }
+
+        $inventario_merma_clip = collect();
+        $inventario_merma_cascara = collect();
+        if ($es_ensamblado || $es_ensamblado_manual) {
+            $almacen_ensamblado = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
+            
+            $stock_ensamblado = DB::table('inventario as i')
+                ->join('producto as p', 'i.codigo_producto', '=', 'p.codigo')
+                ->leftJoin('unidad_medida as u', 'p.codigo_unidad_medida', '=', 'u.codigo')
+                ->where('i.codigo_almacen', $almacen_ensamblado)
+                ->where('i.stock_actual', '>', 0)
+                ->select(
+                    'i.codigo_producto', 
+                    'p.descripcion', 
+                    'p.codigo_tipo_producto', 
+                    'u.descripcion as unidad_medida',
+                    DB::raw('SUM(i.stock_actual) as stock_total')
+                )
+                ->groupBy('i.codigo_producto', 'p.descripcion', 'p.codigo_tipo_producto', 'u.descripcion')
+                ->get();
+                
+            $inventario_merma_clip = $stock_ensamblado->filter(function($i) {
+                return str_contains(strtoupper($i->descripcion), 'CLIP') && !str_starts_with($i->codigo_producto, 'CA');
+            })->values();
+
+            $inventario_merma_cascara = $stock_ensamblado->filter(function($i) {
+                return str_starts_with($i->codigo_producto, 'CA') || str_contains(strtoupper($i->descripcion), 'CASCARA');
+            })->values();
+        }
+
         $registrados = ComponenteOrdenProduccion::where('id_proceso', $id)->where('estado', 1)->orderBy('fecha_inicio', 'asc')->orderBy('hora_inicio', 'asc')->get();
         $tiene_componentes = ($registrados->count() > 0);
 
@@ -380,7 +457,7 @@ class OrdenProcesoController extends Controller
 
         // Agrupar por fórmula y fecha de creación (Cargas)
         $cargas_agrupadas = collect();
-        if ($es_inyectado || $es_mezclado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado) {
+        if ($es_inyectado || $es_mezclado || $es_ensamblado || $es_ensamblado_manual || $es_molido || $es_troquelado || $es_horneado) {
             $cargas_agrupadas = $registrados->groupBy(function($item) {
                 // If it doesn't have a formula, group it as MANUAL
                 $formula = $item->codigo_formula_produccion ?? 'MANUAL';
@@ -448,6 +525,16 @@ class OrdenProcesoController extends Controller
 
         $centros_trabajo = $query_centros->get();
 
+        // Si no hay centros vinculados para ensamblado manual, mostrar los que digan ensamblado manual (fallback)
+        if ($centros_trabajo->isEmpty() && $es_ensamblado_manual) {
+            $centros_trabajo = DB::table('centro_trabajo_produccion')
+                ->select('codigo', 'descripcion')
+                ->where('descripcion', 'LIKE', '%ENSAMBLADO MANUAL%')
+                ->where('estado', 1)
+                ->get();
+        }
+
+
         $almacenes = DB::table('almacen')->where('activo', 1)->get();
         $proceso_produccion_almacen = DB::table('proceso_produccion')->where('codigo', $proceso->codigo_proceso)->value('codigo_almacen');
 
@@ -456,8 +543,8 @@ class OrdenProcesoController extends Controller
         $producto_sugerido = null;
 
         return view('produccion.procesos.ejecucion', compact(
-            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_molido', 'es_troquelado', 'es_horneado', 'peso_inicial', 'tara', 'peso_neto', 'peso_consumido',
-            'formulas_disponibles', 'registrados', 'cargas_agrupadas', 'tiene_componentes', 'tipos_producto',
+            'orden', 'proceso', 'estado_proceso_actual', 'es_actividad', 'es_mezclado', 'es_inyectado', 'es_ensamblado', 'es_ensamblado_manual', 'es_molido', 'es_troquelado', 'es_horneado', 'peso_inicial', 'tara', 'peso_neto', 'peso_consumido',
+            'formulas_disponibles', 'inventario_merma_clip', 'inventario_merma_cascara', 'registrados', 'cargas_agrupadas', 'tiene_componentes', 'tipos_producto',
             'colores', 'unidades', 'trabajadores', 'moldes', 'centros_trabajo', 'almacenes', 'proceso_produccion_almacen', 'producto_sugerido'
         ));
     }
@@ -746,6 +833,10 @@ class OrdenProcesoController extends Controller
                 throw new \Exception("Debe seleccionar un Almacén de Consumo.");
             }
 
+            $nomProductos = DB::table('producto')
+                ->whereIn('codigo', array_keys($cantidades_agrupadas))
+                ->pluck('descripcion', 'codigo');
+
             foreach ($cantidades_agrupadas as $codigo_prod => $cant_req) {
                 $query_disp = DB::table('inventario as i')
                     ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
@@ -761,7 +852,8 @@ class OrdenProcesoController extends Controller
 
                 if ($stock_disp < $cant_req) {
                     $alm_msg = $codigo_almacen_consumo ? " en el almacén seleccionado ($codigo_almacen_consumo)" : " en almacén";
-                    $faltantes[] = "[$codigo_prod] Req: " . number_format($cant_req, 2) . " | Disp: " . number_format($stock_disp, 2) . $alm_msg;
+                    $nombre_prod = $nomProductos[$codigo_prod] ?? $codigo_prod;
+                    $faltantes[] = "[$nombre_prod] Req: " . number_format($cant_req, 2) . " | Disp: " . number_format($stock_disp, 2) . $alm_msg;
                 }
             }
 
@@ -802,7 +894,11 @@ class OrdenProcesoController extends Controller
                 $codigo_molde = !empty($comp['codigo_molde']) ? $comp['codigo_molde'] : null;
                 $codigo_trabajador = !empty($comp['codigo_trabajador']) ? $comp['codigo_trabajador'] : null;
 
-                if (!empty($codigo_formula)) {
+                $tipo_op_origen = $request->input('tipo_operacion_origen', 'inyectado');
+                
+                if (in_array($tipo_op_origen, ['merma_clip', 'recuperado_clip', 'merma_cascara'])) {
+                    // No agrupar PEPs para mermas directas. Es sólo consumo/salida directa.
+                } elseif (!empty($codigo_formula)) {
                     $codigo_pep = $this->determinarCodigoPEP($codigo_formula);
                     if (empty($codigo_pep)) {
                         throw new \Exception("La fórmula [$codigo_formula] no tiene un Producto Resultante asociado.");
@@ -906,11 +1002,24 @@ class OrdenProcesoController extends Controller
                 $idComponente = $componente->id_op_componentes;
 
                 $cantidad_restante = $cantidad;
+                $es_clip_recuperado = false;
+                if ($request->input('usar_clip_recuperado') == 1) {
+                    $desc_prod = strtolower($descProducto[$codigo_producto] ?? '');
+                    if (str_contains($desc_prod, 'clip')) {
+                        $es_clip_recuperado = true;
+                    }
+                }
+
                 $query_lotes = DB::table('inventario as i')
                     ->join('almacen as a', 'i.codigo_almacen', '=', 'a.codigo_almacen')
                     ->where('i.codigo_producto', $codigo_producto)
-                    ->where('a.activo', 1)
-                    ->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); });
+                    ->where('a.activo', 1);
+                    
+                if ($es_clip_recuperado) {
+                    $query_lotes->where('i.estado', 0)->where('i.lote', 'LIKE', '%-REC');
+                } else {
+                    $query_lotes->where(function($q) { $q->where('i.estado', 1)->orWhereNull('i.estado'); });
+                }
 
                 if ($codigo_almacen_consumo) {
                     $query_lotes->where('i.codigo_almacen', $codigo_almacen_consumo);
@@ -973,8 +1082,9 @@ class OrdenProcesoController extends Controller
                 }
 
                 if ($cantidad_restante > 0) {
+                    $desc_prod = DB::table('producto')->where('codigo', $codigo_producto)->value('descripcion') ?? $codigo_producto;
                     throw new \Exception(
-                        "Stock insuficiente para el producto {$codigo_producto}. "
+                        "Stock insuficiente para el producto {$desc_prod}. "
                         . "Faltan " . number_format($cantidad_restante, 4) . " unidades."
                     );
                 }
@@ -1019,6 +1129,94 @@ class OrdenProcesoController extends Controller
                 ->where('numero_referencia', $numero_referencia)
                 ->where('documento_referencia', 'PRODUCCION')
                 ->update(['tiene_kardex' => true]);
+
+            if (in_array($request->input('tipo_operacion_origen'), ['merma_clip', 'recuperado_clip']) && $request->input('destino_merma_clip') === 'recuperado') {
+                foreach ($consumosResumen as $resumen) {
+                    if ($resumen['cantidad'] <= 0) continue;
+                    
+                    $lote_recuperado = $resumen['lote'] . '-REC';
+                    $almacen_rec = $resumen['almacen'];
+                    $codigo_prod_rec = $resumen['producto'];
+                    $cantidad_rec = $resumen['cantidad'];
+                    $costo_unitario_rec = $resumen['cantidad'] > 0 ? round($resumen['total_costo'] / $resumen['cantidad'], 9) : 0;
+                    $total_costo_rec = $resumen['total_costo'];
+
+                    $invExistente = DB::table('inventario')
+                        ->where('codigo_producto', $codigo_prod_rec)
+                        ->where('codigo_almacen', $almacen_rec)
+                        ->where('lote', $lote_recuperado)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($invExistente) {
+                        DB::table('inventario')->where('id_inventario', $invExistente->id_inventario)->update([
+                            'stock_actual' => $invExistente->stock_actual + $cantidad_rec,
+                            'fecha_ultimo_movimiento' => $fecha_movimiento_general,
+                            'usuario_ultimo_movimiento' => $usuario_id
+                        ]);
+                    } else {
+                        DB::table('inventario')->insert([
+                            'codigo_almacen' => $almacen_rec,
+                            'codigo_producto' => $codigo_prod_rec,
+                            'lote' => $lote_recuperado,
+                            'estado' => 0, // Rechazado / Recuperado
+                            'stock_actual' => $cantidad_rec,
+                            'costo_promedio' => $costo_unitario_rec,
+                            'ultimo_costo' => $costo_unitario_rec,
+                            'fecha_ultimo_movimiento' => $fecha_movimiento_general,
+                            'usuario_ultimo_movimiento' => $usuario_id
+                        ]);
+                    }
+
+                    $movIngId = DB::table('movimientos_inventario')->insertGetId([
+                        'codigo_almacen' => $almacen_rec,
+                        'codigo_producto' => $codigo_prod_rec,
+                        'lote' => $lote_recuperado,
+                        'tipo_movimiento' => 'INGRESO',
+                        'cantidad' => $cantidad_rec,
+                        'costo_unitario' => $costo_unitario_rec,
+                        'total' => $total_costo_rec,
+                        'documento_referencia' => 'PRODUCCION',
+                        'numero_referencia' => $numero_referencia,
+                        'idop' => $idop,
+                        'observaciones' => 'Ingreso de clip recuperado',
+                        'usuario_movimiento' => $usuario_id,
+                        'fecha_movimiento' => $fecha_movimiento_general,
+                        'estado' => 1,
+                        'tiene_kardex' => true
+                    ]);
+
+                    $stockActualRec = DB::table('inventario')
+                        ->where('codigo_producto', $codigo_prod_rec)
+                        ->where('codigo_almacen', $almacen_rec)
+                        ->sum('stock_actual') ?? 0;
+
+                    $totalSaldoRec = $stockActualRec * $costo_unitario_rec;
+
+                    DB::table('kardex')->insert([
+                        'codigo_almacen'       => $almacen_rec,
+                        'codigo_producto'      => $codigo_prod_rec,
+                        'lote'                 => $lote_recuperado,
+                        'fecha_movimiento'     => $fecha_movimiento_general,
+                        'tipo_movimiento'      => 'INGRESO',
+                        'documento'            => 'PRODUCCION',
+                        'numero_documento'     => $numero_referencia,
+                        'cantidad_entrada'     => $cantidad_rec,
+                        'costo_entrada'        => $costo_unitario_rec,
+                        'total_entrada'        => round($total_costo_rec, 2),
+                        'cantidad_salida'      => 0,
+                        'costo_salida'         => 0,
+                        'total_salida'         => 0,
+                        'cantidad_saldo'       => max(0, $stockActualRec),
+                        'costo_promedio'       => $costo_unitario_rec,
+                        'total_saldo'          => round($totalSaldoRec, 9),
+                        'codigo_referencia_movimiento' => $movIngId,
+                        'observaciones'        => 'Ingreso clip recuperado',
+                        'usuario_registro'     => $usuario_id
+                    ]);
+                    $trace_movimientos++;
+                }
+            }
 
             $productos_resultantes = json_decode($request->productos_resultantes_json ?? '[]', true);
             $productos_manuales = [];
@@ -1440,8 +1638,9 @@ class OrdenProcesoController extends Controller
                 }
 
                 if ($cantidad_restante > 0) {
+                    $desc_prod = DB::table('producto')->where('codigo', $codigo_producto)->value('descripcion') ?? $codigo_producto;
                     throw new \Exception(
-                        "Stock insuficiente para el producto {$codigo_producto}. "
+                        "Stock insuficiente para el producto {$desc_prod}. "
                         . "Faltan " . number_format($cantidad_restante, 4) . " unidades."
                     );
                 }
@@ -2042,121 +2241,144 @@ class OrdenProcesoController extends Controller
                 }
             }
 
-            // 1. Obtener los componentes de la fórmula
-            $request_formula = new Request();
-            $request_formula->merge([
-                'codigo_formula' => $codigo_formula,
-                'codigo_molde' => $codigo_molde,
-                'codigo_almacen' => $codigo_almacen_consumo
-            ]);
-            $response = $this->getFormulaComponents($request_formula);
-            $formula_data = json_decode($response->getContent(), true);
-
-            if (!isset($formula_data['success']) || !$formula_data['success']) {
-                throw new \Exception("No se pudo obtener la fórmula: " . ($formula_data['message'] ?? ''));
-            }
-
-            $componentes_formula = $formula_data['componentes'];
-            
-            // Si es Molido o Ensamblado o Limpieza, necesitamos el peso total para sacar proporción (KG)
-            $pesoTotalFormula = 0;
-            $es_ensamblado_molido = in_array($tipo_operacion, ['recuperado_molido', 'recuperado_maquina', 'ensamblado']) || ($proceso->codigo_proceso == '10'); // 10 = ensamblado
-            $es_limpieza = ($tipo_operacion === 'limpieza');
-            
-            // Primer pase: Filtrar y calcular el peso total de los componentes que quedan
-            $componentes_a_procesar = [];
-            foreach ($componentes_formula as $comp) {
-                if ($es_limpieza) {
-                    $desc = strtoupper($comp['descripcion_producto'] ?? '');
-                    $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO');
-                    if ($esPigmento) {
-                        continue; // Ignorar el colorante
-                    }
-                }
-                $componentes_a_procesar[] = $comp;
-                if ($es_ensamblado_molido || $es_limpieza) {
-                    $pesoTotalFormula += floatval($comp['cantidad_nominal']);
-                }
-            }
-
-            $usar_reciclado = $request->input('usar_reciclado', 0);
-            $cantidad_reciclado = floatval($request->input('cantidad_reciclado', 0));
-            $extraCantReciclado = ($usar_reciclado == 1) ? $cantidad_reciclado : 0;
-
-            if ($extraCantReciclado > 0) {
-                if (empty($formula_data['codigo_material_reciclado'])) {
-                    throw new \Exception("La fórmula seleccionada no tiene configurado un Material Reciclado en Tablas Maestras.");
-                }
-            }
-
-            $nueva_cantidad_total = max(0, $cantidad_total - $extraCantReciclado);
-
-            // Segundo pase: Preparar los componentes a insertar con la distribucion correcta
-            $pesoVirgin = 0;
-            foreach ($componentes_a_procesar as $comp) {
-                $desc = strtoupper($comp['descripcion_producto'] ?? '');
-                $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO') || $comp['codigo_tipo_producto'] === 'PIG';
-                if (!$esPigmento) {
-                    $pesoVirgin += floatval($comp['cantidad_nominal']);
-                }
-            }
-
             $componentes_a_insertar = [];
-            foreach ($componentes_a_procesar as $comp) {
-                $cant = floatval($comp['cantidad_nominal']);
-                $um = $comp['codigo_unidad_medida'];
-                $desc = strtoupper($comp['descripcion_producto'] ?? '');
-                $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO') || $comp['codigo_tipo_producto'] === 'PIG';
+            
+            if (in_array($tipo_operacion, ['merma_clip', 'recuperado_clip', 'merma_cascara'])) {
+                // Registro directo de inventario (sin fórmula)
+                $producto = DB::table('producto')->where('codigo', $codigo_formula)->first();
+                if (!$producto) throw new \Exception("Producto no encontrado en la base de datos.");
+                
+                $componentes_a_insertar[] = [
+                    'codigo_producto' => $producto->codigo,
+                    'cantidad' => $cantidad_total,
+                    'codigo_unidad_medida' => $producto->codigo_unidad_medida,
+                    'codigo_molde' => null,
+                    'codigo_tipo_producto' => $producto->codigo_tipo_producto
+                ];
+                
+                $codigo_formula = null; // Important: Clear so it doesn't fail foreign key constraint on formula_produccion
+                
+                $extraCantReciclado = 0;
+            } else {
+                // 1. Obtener los componentes de la fórmula
+                $request_formula = new Request();
+                $request_formula->merge([
+                    'codigo_formula' => $codigo_formula,
+                    'codigo_molde' => $codigo_molde,
+                    'codigo_almacen' => $codigo_almacen_consumo
+                ]);
+                $response = $this->getFormulaComponents($request_formula);
+                $formula_data = json_decode($response->getContent(), true);
 
-                if ($es_ensamblado_molido || $es_limpieza) {
-                    if ($pesoTotalFormula > 0) {
-                        $cant = $nueva_cantidad_total * ($cant / $pesoTotalFormula);
-                    } else {
-                        $cant = 0;
-                    }
-                    $um = 'KG';
-                } else if ($tipo_operacion === 'mezclado') {
-                    if ($nueva_cantidad_total <= 1) {
+                if (!isset($formula_data['success']) || !$formula_data['success']) {
+                    throw new \Exception("No se pudo obtener la fórmula: " . ($formula_data['message'] ?? ''));
+                }
+
+                $componentes_formula = $formula_data['componentes'];
+                
+                // Si es Molido o Ensamblado o Limpieza, necesitamos el peso total para sacar proporción (KG)
+                $pesoTotalFormula = 0;
+                $es_ensamblado_molido = in_array($tipo_operacion, ['recuperado_molido', 'recuperado_maquina', 'ensamblado']) || ($proceso->codigo_proceso == '10'); // 10 = ensamblado
+                $es_limpieza = ($tipo_operacion === 'limpieza');
+                
+                // Primer pase: Filtrar y calcular el peso total de los componentes que quedan
+                $componentes_a_procesar = [];
+                foreach ($componentes_formula as $comp) {
+                    if ($es_limpieza) {
+                        $desc = strtoupper($comp['descripcion_producto'] ?? '');
+                        $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO');
                         if ($esPigmento) {
-                            $cant = $nueva_cantidad_total; // 100% de la diferencia es pigmento
+                            continue; // Ignorar el colorante
+                        }
+                    }
+                    $componentes_a_procesar[] = $comp;
+                    if ($es_ensamblado_molido || $es_limpieza) {
+                        $pesoTotalFormula += floatval($comp['cantidad_nominal']);
+                    }
+                }
+
+                $usar_reciclado = $request->input('usar_reciclado', 0);
+                $cantidad_reciclado = floatval($request->input('cantidad_reciclado', 0));
+                $extraCantReciclado = ($usar_reciclado == 1) ? $cantidad_reciclado : 0;
+
+                if ($extraCantReciclado > 0) {
+                    if (empty($formula_data['codigo_material_reciclado'])) {
+                        throw new \Exception("La fórmula seleccionada no tiene configurado un Material Reciclado en Tablas Maestras.");
+                    }
+                }
+
+                $nueva_cantidad_total = max(0, $cantidad_total - $extraCantReciclado);
+
+                // Segundo pase: Preparar los componentes a insertar con la distribucion correcta
+                $pesoVirgin = 0;
+                foreach ($componentes_a_procesar as $comp) {
+                    $desc = strtoupper($comp['descripcion_producto'] ?? '');
+                    $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO') || $comp['codigo_tipo_producto'] === 'PIG';
+                    if (!$esPigmento) {
+                        $pesoVirgin += floatval($comp['cantidad_nominal']);
+                    }
+                }
+
+                foreach ($componentes_a_procesar as $comp) {
+                    $cant = floatval($comp['cantidad_nominal']);
+                    $um = $comp['codigo_unidad_medida'];
+                    $desc = strtoupper($comp['descripcion_producto'] ?? '');
+                    $esPigmento = str_contains($desc, 'COLOR') || str_contains($desc, 'MASTERBATCH') || str_contains($desc, 'PIGMENTO') || $comp['codigo_tipo_producto'] === 'PIG';
+
+                    if ($es_ensamblado_molido || $es_limpieza) {
+                        if ($pesoTotalFormula > 0) {
+                            $cant = $nueva_cantidad_total * ($cant / $pesoTotalFormula);
                         } else {
-                            $cant = 0; // 0 resina
+                            $cant = 0;
+                        }
+                        $um = 'KG';
+                    } else if ($tipo_operacion === 'mezclado') {
+                        if ($nueva_cantidad_total <= 1) {
+                            if ($esPigmento) {
+                                $cant = $nueva_cantidad_total; // 100% de la diferencia es pigmento
+                            } else {
+                                $cant = 0; // 0 resina
+                            }
+                        } else {
+                            $cant = $nueva_cantidad_total * $cant;
+                        }
+                        if ($um === 'GR') {
+                            $cant = $cant / 1000;
+                            $um = 'KG';
                         }
                     } else {
+                        // Es Inyectado
                         $cant = $nueva_cantidad_total * $cant;
+                        if ($um === 'GR') {
+                            $cant = $cant / 1000;
+                            $um = 'KG';
+                        }
                     }
-                    if ($um === 'GR') {
-                        $cant = $cant / 1000;
-                        $um = 'KG';
-                    }
-                } else {
-                    // Es Inyectado
-                    $cant = $nueva_cantidad_total * $cant;
-                    if ($um === 'GR') {
-                        $cant = $cant / 1000;
-                        $um = 'KG';
+
+                    if ($cant > 0) {
+                        $componentes_a_insertar[] = [
+                            'codigo_producto' => $comp['codigo_producto'],
+                            'cantidad' => $cant,
+                            'codigo_unidad_medida' => $um,
+                            'codigo_molde' => $comp['codigo_molde'] ?? $codigo_molde,
+                            'codigo_tipo_producto' => $comp['codigo_tipo_producto']
+                        ];
                     }
                 }
 
-                if ($cant > 0) {
+                if ($extraCantReciclado > 0 && !empty($formula_data["codigo_material_reciclado"])) {
                     $componentes_a_insertar[] = [
-                        'codigo_producto' => $comp['codigo_producto'],
-                        'cantidad' => $cant,
-                        'codigo_unidad_medida' => $um,
-                        'codigo_molde' => $comp['codigo_molde'] ?? $codigo_molde,
-                        'codigo_tipo_producto' => $comp['codigo_tipo_producto']
+                        "codigo_producto" => $formula_data["codigo_material_reciclado"],
+                        "cantidad" => $extraCantReciclado,
+                        "codigo_unidad_medida" => "KG",
+                        "codigo_molde" => $codigo_molde,
+                        "codigo_tipo_producto" => "REC"
                     ];
                 }
             }
 
-            if ($extraCantReciclado > 0 && !empty($formula_data["codigo_material_reciclado"])) {
-                $componentes_a_insertar[] = [
-                    "codigo_producto" => $formula_data["codigo_material_reciclado"],
-                    "cantidad" => $extraCantReciclado,
-                    "codigo_unidad_medida" => "KG",
-                    "codigo_molde" => $codigo_molde,
-                    "codigo_tipo_producto" => "REC"
-                ];
+            if (empty($componentes_a_insertar)) {
+                throw new \Exception("No hay componentes válidos para registrar.");
             }
 
             // 2. Construir el arreglo en formato de la función original
@@ -2190,7 +2412,9 @@ class OrdenProcesoController extends Controller
             $fakeRequest->merge([
                 'componentes_json' => json_encode($componentes_payload),
                 'codigo_almacen_consumo' => $codigo_almacen_consumo,
-                'tipo_operacion_origen' => $tipo_operacion // Pasamos el tipo de operación para distinguir Limpieza/Merma
+                'tipo_operacion_origen' => $tipo_operacion, // Pasamos el tipo de operación para distinguir Limpieza/Merma
+                'destino_merma_clip' => $request->input('destino_merma_clip'),
+                'usar_clip_recuperado' => $request->input('usar_clip_recuperado')
             ]);
             $fakeRequest->headers->set('X-Requested-With', 'XMLHttpRequest'); // Force AJAX
 

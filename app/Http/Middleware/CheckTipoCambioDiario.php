@@ -36,7 +36,7 @@ class CheckTipoCambioDiario
         if ($fechaCache !== $hoy) {
             try {
                 // Consultar API Sunat
-                $response = Http::timeout(5)->get('https://api.apis.net.pe/v1/tipo-cambio-sunat');
+                $response = Http::withoutVerifying()->timeout(5)->get('https://api.apis.net.pe/v1/tipo-cambio-sunat');
 
                 if ($response->successful()) {
                     $data = $response->json();

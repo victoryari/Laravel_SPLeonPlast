@@ -13,11 +13,20 @@
         </x-slot:actions>
     </x-page-header>
 
-    <x-table :headers="['Código', 'Descripción', ['label' => 'Acciones', 'class' => 'text-center']]">
+    <x-table :headers="['Código', 'Descripción', 'Moldes', ['label' => 'Acciones', 'class' => 'text-center']]">
         @forelse ($productos_proceso as $producto)
             <tr class="hover:bg-slate-50/50 transition duration-150">
                 <td class="px-4 md:px-6 py-3 md:py-4 font-bold text-slate-900">{{ $producto->codigo }}</td>
                 <td class="px-4 md:px-6 py-3 md:py-4 text-slate-700">{{ $producto->descripcion }}</td>
+                <td class="px-4 md:px-6 py-3 md:py-4">
+                    @if($producto->moldes_count > 0)
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            <i class="fas fa-cogs text-[10px]"></i> {{ $producto->moldes_count }}
+                        </span>
+                    @else
+                        <span class="text-xs text-slate-400">Sin asignar</span>
+                    @endif
+                </td>
                 <td class="px-4 md:px-6 py-3 md:py-4 text-center space-x-2">
                     <a href="{{ route('productos_proceso.edit', $producto->codigo) }}" class="btn-icon btn-icon-edit" title="Editar">
                         <i class="fas fa-edit"></i>
@@ -33,7 +42,7 @@
             </tr>
         @empty
             <tr>
-                <td colspan="3" class="px-6 py-8 text-center text-slate-500 bg-slate-50">
+                <td colspan="4" class="px-6 py-8 text-center text-slate-500 bg-slate-50">
                     <i class="fas fa-inbox text-3xl mb-3 text-slate-400"></i>
                     <p>No se encontraron productos de proceso activos.</p>
                 </td>

@@ -30,4 +30,14 @@ class ProductoProceso extends Model
             'codigo_proceso'
         )->withPivot('secuencia', 'id')->withTimestamps()->orderBy('secuencia', 'asc');
     }
+
+    public function moldes()
+    {
+        return $this->belongsToMany(
+            Molde::class,
+            'producto_molde',
+            'codigo_producto_proceso',
+            'codigo_molde'
+        );
+    }
 }

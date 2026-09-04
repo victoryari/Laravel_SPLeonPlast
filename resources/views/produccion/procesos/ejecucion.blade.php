@@ -25,10 +25,10 @@
     </div>
 
     <!-- Cargador de Fórmulas -->
-    @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado) && $estado_proceso_actual !== 'COMPLETADO')
+    @if(($es_mezclado || $es_inyectado || $es_ensamblado || $es_ensamblado_manual || $es_molido || $es_troquelado || $es_horneado) && $estado_proceso_actual !== 'COMPLETADO')
     <div class="bg-white rounded-xl shadow-md border-t-4 border-orange-500 mb-6 overflow-hidden">
         <div class="bg-slate-50 border-b border-slate-200">
-            @if($es_inyectado || $es_troquelado || $es_horneado)
+            @if($es_inyectado || $es_troquelado || $es_horneado || $es_ensamblado || $es_ensamblado_manual)
             <ul class="flex flex-wrap text-sm font-medium text-center text-slate-500 border-b border-slate-200" id="op-tabs">
                 @if($es_inyectado || $es_troquelado || $es_horneado)
                 <li class="me-2">
@@ -37,25 +37,36 @@
                     </a>
                 </li>
                 @endif
+                @if($es_ensamblado || $es_ensamblado_manual)
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('merma_pura')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-merma_pura">Merma</a>
+                    <a href="#" onclick="switchOpTab('ensamblado')" class="inline-block p-4 text-blue-600 bg-white border-t border-l border-r border-slate-200 rounded-t-lg active" id="tab-ensamblado">Producción ({{ $es_ensamblado_manual ? 'Ensamblado Manual' : 'Ensamblado' }})</a>
                 </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('merma_clip')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-merma_clip">Merma Clip</a>
+                </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('recuperado_clip')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-recuperado_clip">Clip Recuperado</a>
+                </li>
+                <li class="me-2">
+                    <a href="#" onclick="switchOpTab('merma_cascara')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-merma_cascara">Cáscara para molido</a>
+                </li>
+                @endif
                 @if($es_inyectado)
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('recuperado_molido')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-recuperado_molido">Recuperado para Moler</a>
+                    <a href="#" onclick="switchOpTab('recuperado_molido')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-recuperado_molido">Recuperado para Moler</a>
                 </li>
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('limpieza')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-limpieza">Limpieza/Purga</a>
+                    <a href="#" onclick="switchOpTab('limpieza')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-limpieza">Limpieza/Purga</a>
                 </li>
                 <li class="me-2">
-                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50" id="tab-recuperado_maquina">Molido de Máquina</a>
+                    <a href="#" onclick="switchOpTab('recuperado_maquina')" class="inline-block p-4 border-b-0 hover:text-slate-600 hover:bg-slate-50 text-slate-500" id="tab-recuperado_maquina">Molido de Máquina</a>
                 </li>
                 @endif
             </ul>
             @else
             <div class="px-6 py-4 flex items-center">
                 <h2 class="text-lg font-bold text-slate-800">
-                    <i class="fas fa-flask mr-2 text-orange-500"></i>{{ $es_molido ? 'Cargar Fórmula de Molido' : ($es_ensamblado ? 'Cargar Fórmula de Ensamblado' : 'Cargar Fórmula de Mezclado') }}
+                    <i class="fas fa-flask mr-2 text-orange-500"></i>{{ $es_molido ? 'Cargar Fórmula de Molido' : 'Cargar Fórmula de Mezclado' }}
                 </h2>
             </div>
             @endif
@@ -91,13 +102,13 @@
             @endif
         </div>
         <div class="p-6 bg-white">
-            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado || $es_troquelado || $es_horneado ? 'inyectado' : ($es_mezclado ? 'mezclado' : ($es_ensamblado ? 'ensamblado' : '')) }}">
+            <input type="hidden" id="tipo_operacion" value="{{ $es_inyectado || $es_troquelado || $es_horneado ? 'inyectado' : ($es_mezclado ? 'mezclado' : ($es_ensamblado || $es_ensamblado_manual ? 'ensamblado' : '')) }}">
             
             <div class="flex flex-wrap items-end gap-4">
                 
-                @if($es_inyectado || $es_ensamblado || $es_molido || $es_troquelado || $es_horneado || $es_mezclado)
+                @if($es_inyectado || $es_ensamblado || $es_ensamblado_manual || $es_molido || $es_troquelado || $es_horneado || $es_mezclado)
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado ? 'Ensambladora (Centro)' : ($es_mezclado ? 'Mezcladora (Centro)' : 'Inyectora (Centro)')))) }}</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl_centro">{{ $es_troquelado ? 'Troqueladora (Centro)' : ($es_horneado ? 'Horno (Centro)' : ($es_molido ? 'Molino (Centro)' : ($es_ensamblado || $es_ensamblado_manual ? 'Ensambladora (Centro)' : ($es_mezclado ? 'Mezcladora (Centro)' : 'Inyectora (Centro)')))) }}</label>
                     <select id="centro_global" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($centros_trabajo as $ct)
@@ -121,12 +132,32 @@
                 </div>
                 @endif
                 
-                <div class="flex-1 min-w-50">
-                    <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl_formula">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado ? 'Producto a Ensamblar' : 'Fórmula/Color') }}</label>
+                <div class="flex-1 min-w-50" id="wrapper_formula">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1" id="lbl_formula">{{ $es_molido ? 'Producto a Moler' : ($es_ensamblado || $es_ensamblado_manual ? 'Producto a Ensamblar' : 'Fórmula/Color') }}</label>
                     <select id="formula_selector" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
                         <option value="">-- Seleccione --</option>
                         @foreach($formulas_disponibles as $fm)
                             <option value="{{ $fm->codigo }}">{{ $fm->codigo }} - {{ $fm->descripcion }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-50 hidden" id="wrapper_inventario_clip">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Inventario Clip</label>
+                    <select id="inventario_selector_clip" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                        <option value="">-- Seleccione --</option>
+                        @foreach($inventario_merma_clip as $ic)
+                            <option value="{{ $ic->codigo_producto }}">{{ $ic->codigo_producto }} - {{ $ic->descripcion }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-50 hidden" id="wrapper_inventario_cascara">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Producto</label>
+                    <select id="cascara_selector" class="w-full border-slate-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-sm py-2 px-3">
+                        <option value="">-- Seleccione --</option>
+                        @foreach($inventario_merma_cascara as $ic)
+                            <option value="{{ $ic->codigo_producto }}">{{ $ic->codigo_producto }} - {{ $ic->descripcion }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -138,6 +169,14 @@
             </div>
 
             <div class="flex flex-wrap items-end gap-4 mt-2">
+                @if($es_ensamblado_manual)
+                <div class="flex items-center mt-2 border border-blue-200 bg-blue-50 rounded-lg p-2 gap-3" id="panel_clip_recuperado">
+                    <label class="flex items-center text-sm font-semibold text-blue-800 cursor-pointer" title="Consume exclusivamente clips con estado rechazado y lote -REC">
+                        <input type="checkbox" id="chk_usar_clip_recuperado" class="rounded text-blue-600 focus:ring-blue-500 mr-2">
+                        Usar Clip Recuperado (Priorizar Lote -REC)
+                    </label>
+                </div>
+                @endif
                 @if($es_inyectado || $es_mezclado)
                 <div class="flex items-center mt-2 border border-orange-200 bg-orange-50 rounded-lg p-2 gap-3" id="panel_reciclado">
                     <label class="flex items-center text-sm font-semibold text-orange-800 cursor-pointer">
@@ -229,7 +268,7 @@
                 <div class="flex-1"></div>
 
                 <button type="button" onclick="cargarEjecucionAgrupada()" class="px-5 py-2 {{ $es_inyectado || $es_troquelado || $es_horneado ? 'bg-orange-600 hover:bg-orange-700' : 'bg-primary hover:bg-primary-dark' }} text-white font-medium rounded-md shadow-sm transition" id="btn_cargar">
-                    <i class="fas fa-box-open mr-2"></i>Cargar {{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : ($es_mezclado ? 'Fórmula' : ($es_ensamblado ? 'Ensamblado' : ($es_molido ? 'Molido' : 'Inyectado')))) }}
+                    <i class="fas fa-box-open mr-2"></i>Cargar {{ $es_troquelado ? 'Troquelado' : ($es_horneado ? 'Horneado' : ($es_mezclado ? 'Fórmula' : ($es_ensamblado || $es_ensamblado_manual ? 'Ensamblado' : ($es_molido ? 'Molido' : 'Inyectado')))) }}
                 </button>
             </div>
 
@@ -263,7 +302,7 @@
 
     <!-- Detalle de Componentes -->
     <!-- Hidden input for stock check when the form block is hidden -->
-    @if(!($es_mezclado || $es_inyectado || $es_ensamblado || $es_molido) || $estado_proceso_actual === 'COMPLETADO')
+    @if(!($es_mezclado || $es_inyectado || $es_ensamblado || $es_ensamblado_manual || $es_molido) || $estado_proceso_actual === 'COMPLETADO')
         <input type="hidden" id="codigo_almacen_consumo" value="{{ $proceso_produccion_almacen ?? '' }}">
     @endif
 
@@ -304,7 +343,7 @@
                             </tr>
                         </thead>
                         <tbody id="tbody_items" class="bg-white divide-y divide-slate-200">
-                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado || $es_ensamblado || $es_molido) && isset($cargas_agrupadas) && $cargas_agrupadas->count() > 0)
+                            @if(($es_inyectado || $es_mezclado || $es_troquelado || $es_horneado || $es_ensamblado || $es_ensamblado_manual || $es_molido) && isset($cargas_agrupadas) && $cargas_agrupadas->count() > 0)
                                 @foreach($cargas_agrupadas as $key => $grupo)
                                     @php
                                         // Extraer datos comunes del primer componente del grupo
@@ -331,13 +370,21 @@
                                             </span>
                                         </td>
                                         <td class="px-3 py-3">
-                                            <div class="text-sm text-slate-900 font-bold">
-                                                {{ $nombreColorDisplay ?? ($first->descripcion_formula_produccion ?? 'Registro Manual') }}
+                                            <div class="col-span-12 md:col-span-3 lg:col-span-3 flex items-center justify-start h-full">
+                                                <div class="text-sm font-bold text-slate-800 break-words mb-1">
+                                                    @if(in_array($first->tipo_operacion, ['merma_clip', 'recuperado_clip', 'merma_cascara']))
+                                                        {{ $first->descripcion_producto }}
+                                                    @else
+                                                        {{ $nombreColorDisplay ?? ($first->descripcion_formula_produccion ?? 'Registro Manual') }}
+                                                    @endif
+                                                </div>
+                                                @if(!in_array($first->tipo_operacion, ['merma_clip', 'recuperado_clip', 'merma_cascara']))
+                                                    <div class="text-xs text-slate-500 break-words">{{ $first->codigo_formula_produccion ?? 'N/A' }}</div>
+                                                @endif
                                                 @if($first->codigo_color)
                                                     <span class="ml-2 px-2 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700">{{ $first->codigo_color }}</span>
                                                 @endif
                                             </div>
-                                            <div class="text-[10px] text-slate-500">{{ $first->codigo_formula_produccion ?? 'N/A' }}</div>
                                         </td>
                                         <td class="px-3 py-3 whitespace-nowrap text-sm text-slate-500">{{ $first->codigo_centro_trabajo }}</td>
                                         @if($es_inyectado)
@@ -354,8 +401,9 @@
                                             $textLabel = 'PRODUCCIÓN';
                                             if($first->codigo_tipo_producto === 'ACT' || $first->codigo_tipo_producto === 'MANUAL') { $bgLabel = 'bg-teal-100 text-teal-800'; $textLabel = 'ACTIVIDAD'; }
                                             elseif($first->tipo_operacion === 'limpieza') { $bgLabel = 'bg-red-100 text-red-800'; $textLabel = 'LIMPIEZA'; }
+                                            elseif($first->tipo_operacion === 'merma_clip') { $bgLabel = 'bg-orange-100 text-orange-800'; $textLabel = 'MERMA'; }
+                                            elseif(str_contains($first->tipo_operacion ?? '', 'molido') || str_contains($first->tipo_operacion ?? '', 'maquina') || $first->tipo_operacion === 'recuperado_clip' || $first->tipo_operacion === 'merma_cascara') { $bgLabel = 'bg-purple-100 text-purple-800'; $textLabel = 'RECICLADO'; }
                                             elseif(str_contains($first->tipo_operacion ?? '', 'merma')) { $bgLabel = 'bg-orange-100 text-orange-800'; $textLabel = 'MERMA'; }
-                                            elseif(str_contains($first->tipo_operacion ?? '', 'molido') || str_contains($first->tipo_operacion ?? '', 'maquina')) { $bgLabel = 'bg-purple-100 text-purple-800'; $textLabel = 'RECICLADO'; }
                                         @endphp
                                         <td class="px-3 py-3 text-center whitespace-nowrap">
                                             <span class="px-2 py-1 text-[10px] font-semibold rounded-full {{ $bgLabel }}">{{ $textLabel }}</span>
@@ -382,7 +430,7 @@
                                         @if($es_inyectado)
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_molde }}</td>
                                         @endif
-                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-slate-700">{{ number_format(floor($r->cantidad * 100) / 100, 2, '.', '') }}</td>
+                                        <td class="px-3 py-2 whitespace-nowrap text-xs font-semibold text-slate-700">{{ number_format($r->cantidad, 2) }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_unidad_medida }}</td>
                                         <td class="px-3 py-2 whitespace-nowrap text-xs text-slate-500">{{ $r->codigo_trabajador }}</td>
                                         <td colspan="2" class="px-3 py-2 text-xs text-slate-400">Detalle Interno</td>
@@ -441,7 +489,6 @@
                                         <i class="fas fa-trash-alt"></i>
                                     </button>
                                     @endif
-                                    <x-badge color="emerald">OK</x-badge>
                                 </td>
                             </tr>
 
@@ -727,6 +774,14 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+        const wrapFormula = document.getElementById('wrapper_formula');
+        const wrapClip = document.getElementById('wrapper_inventario_clip');
+        const wrapCascara = document.getElementById('wrapper_inventario_cascara');
+        const panelClipRecuperado = document.getElementById('panel_clip_recuperado');
+        
+        if (wrapClip) wrapClip.classList.add('hidden');
+        if (wrapCascara) wrapCascara.classList.add('hidden');
+        
         const almacenSelect = document.getElementById('codigo_almacen_consumo');
         if (almacenSelect) {
             almacenSelect.addEventListener('change', verificarStock);
@@ -1268,7 +1323,7 @@
 
     function switchOpTab(tabName) {
         document.getElementById('tipo_operacion').value = tabName;
-        const tabs = ['inyectado', 'merma_pura', 'recuperado_molido', 'limpieza', 'recuperado_maquina'];
+        const tabs = ['inyectado', 'ensamblado', 'merma_pura', 'recuperado_molido', 'limpieza', 'recuperado_maquina', 'merma_clip', 'recuperado_clip', 'merma_cascara'];
         tabs.forEach(t => {
             const el = document.getElementById('tab-' + t);
             if (el) {
@@ -1280,26 +1335,53 @@
             }
         });
 
+        const wrapFormula = document.getElementById('wrapper_formula');
+        const wrapClip = document.getElementById('wrapper_inventario_clip');
+        const wrapCascara = document.getElementById('wrapper_inventario_cascara');
+        const panelClipRecuperado = document.getElementById('panel_clip_recuperado');
+        
+        if (wrapFormula) wrapFormula.classList.add('hidden');
+        if (wrapClip) wrapClip.classList.add('hidden');
+        if (wrapCascara) wrapCascara.classList.add('hidden');
+        if (panelClipRecuperado) panelClipRecuperado.classList.add('hidden');
+
         const btn = document.getElementById('btn_cargar');
         const lblFormula = document.getElementById('lbl_formula');
         
         if (tabName === 'inyectado') {
+            if (wrapFormula) wrapFormula.classList.remove('hidden');
             btn.innerHTML = `<i class="fas fa-box-open mr-2"></i>Cargar ${esTroquelado ? 'Troquelado' : 'Inyectado'}`;
             btn.className = 'px-5 py-2 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-md shadow-sm transition';
-            lblFormula.innerText = 'Fórmula/Color';
-        } else if (tabName === 'merma_pura') {
-            btn.innerHTML = '<i class="fas fa-trash-alt mr-2"></i>Registrar Merma';
+        } else if (tabName === 'ensamblado') {
+            if (wrapFormula) wrapFormula.classList.remove('hidden');
+            if (panelClipRecuperado) panelClipRecuperado.classList.remove('hidden');
+            btn.innerHTML = `<i class="fas fa-box-open mr-2"></i>Cargar ${typeof esEnsambladoManual !== 'undefined' && esEnsambladoManual ? 'Ensamblado Manual' : 'Ensamblado'}`;
+            btn.className = 'px-5 py-2 bg-primary hover:bg-primary-dark text-white font-medium rounded-md shadow-sm transition';
+        } else if (tabName === 'merma_clip') {
+            if (wrapClip) wrapClip.classList.remove('hidden');
+            btn.innerHTML = '<i class="fas fa-trash-alt mr-2"></i>Registrar Merma Clip';
             btn.className = 'px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md shadow-sm transition';
+        } else if (tabName === 'recuperado_clip') {
+            if (wrapClip) wrapClip.classList.remove('hidden');
+            btn.innerHTML = '<i class="fas fa-recycle mr-2"></i>Registrar Clip Recuperado';
+            btn.className = 'px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm transition';
+        } else if (tabName === 'merma_cascara') {
+            if (wrapCascara) wrapCascara.classList.remove('hidden');
+            btn.innerHTML = '<i class="fas fa-recycle mr-2"></i>Registrar Cáscara para molido';
+            btn.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-sm transition';
             lblFormula.innerText = 'Color de Cáscara Original';
         } else if (tabName === 'recuperado_molido') {
+            if (wrapFormula) wrapFormula.classList.remove('hidden');
             btn.innerHTML = '<i class="fas fa-recycle mr-2"></i>Registrar Molido';
             btn.className = 'px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-md shadow-sm transition';
             lblFormula.innerText = 'Fórmula Original';
         } else if (tabName === 'limpieza') {
+            if (wrapFormula) wrapFormula.classList.remove('hidden');
             btn.innerHTML = '<i class="fas fa-broom mr-2"></i>Registrar Purga';
             btn.className = 'px-5 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-md shadow-sm transition';
             lblFormula.innerText = 'Color Purgado';
         } else if (tabName === 'recuperado_maquina') {
+            if (wrapFormula) wrapFormula.classList.remove('hidden');
             btn.innerHTML = '<i class="fas fa-cogs mr-2"></i>Reg. Rec. Máquina';
             btn.className = 'px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-md shadow-sm transition';
             lblFormula.innerText = 'Fórmula Original';
@@ -1309,13 +1391,27 @@
     function cargarEjecucionAgrupada() {
         const inputTipo = document.getElementById('tipo_operacion');
         if (!inputTipo || !inputTipo.value) {
-            // Fallback al flujo anterior si es mezclado/ensamblado
             cargarComponentes();
             return;
         }
         
         const tipo_operacion = inputTipo.value;
-        const formula = document.getElementById('formula_selector').value;
+        let operacion_para_backend = tipo_operacion;
+        let destino_merma_clip = 'desecho';
+
+        let formula = document.getElementById('formula_selector').value;
+        
+        if (tipo_operacion === 'merma_clip') {
+            formula = document.getElementById('inventario_selector_clip').value;
+            destino_merma_clip = 'desecho';
+        } else if (tipo_operacion === 'recuperado_clip') {
+            formula = document.getElementById('inventario_selector_clip').value;
+            operacion_para_backend = 'recuperado_clip';
+            destino_merma_clip = 'recuperado';
+        } else if (tipo_operacion === 'merma_cascara') {
+            formula = document.getElementById('cascara_selector').value;
+        }
+
         const cantidad = document.getElementById('cantidad_global').value;
         const molde = document.getElementById('molde_global') ? document.getElementById('molde_global').value : '';
         const centro = document.getElementById('centro_global') ? document.getElementById('centro_global').value : '';
@@ -1324,9 +1420,7 @@
         const hora_ini = document.getElementById('hora_ini_global').value;
         const hora_fin = document.getElementById('hora_fin_global').value;
         const almacen = document.getElementById('codigo_almacen_consumo') ? document.getElementById('codigo_almacen_consumo').value : '';
-        
-        // No enviamos el codigo_color con el texto completo para evitar Data Too Long
-        let color = '';
+        const color = '';
 
         if (!formula || !cantidad || !trabajador || !centro) {
             Swal.fire('Atención', 'Seleccione fórmula, centro, trabajador y cantidad.', 'warning');
@@ -1338,9 +1432,12 @@
         const usar_reciclado = chkReciclado && chkReciclado.checked ? 1 : 0;
         const cantidad_reciclado = usar_reciclado ? (parseFloat(inputCantReciclado.value) || 0) : 0;
 
+        const chkClipRecuperado = document.getElementById('chk_usar_clip_recuperado');
+        const usar_clip_recuperado = chkClipRecuperado && chkClipRecuperado.checked ? 1 : 0;
+
         const payload = {
             _token: '{{ csrf_token() }}',
-            tipo_operacion: tipo_operacion,
+            tipo_operacion: operacion_para_backend,
             codigo_formula: formula,
             cantidad_total: cantidad,
             codigo_molde: molde,

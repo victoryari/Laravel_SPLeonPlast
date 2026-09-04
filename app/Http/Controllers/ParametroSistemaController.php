@@ -67,7 +67,7 @@ class ParametroSistemaController extends Controller
             // Usamos la API pública de apis.net.pe para obtener el tipo de cambio de la SUNAT
             // Nota: Algunas APIs pueden requerir token. Si es pública como esta, puede variar.
             // Para asegurar funcionalidad, podemos usar esta o un fallback si falla.
-            $response = Http::timeout(10)->get('https://api.apis.net.pe/v1/tipo-cambio-sunat');
+            $response = Http::withoutVerifying()->timeout(10)->get('https://api.apis.net.pe/v1/tipo-cambio-sunat');
 
             if ($response->successful()) {
                 $data = $response->json();
